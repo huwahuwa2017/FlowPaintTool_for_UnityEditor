@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -465,7 +465,9 @@ namespace FlowPaintTool
             _paintModeMesh = Instantiate(_maskModeMesh);
             _paintModeMesh.subMeshCount = 1;
 
-            Camera.main.gameObject.AddComponent<CameraControl2>();
+            Camera camera = Camera.main;
+            camera.nearClipPlane = 0.001f;
+            camera.gameObject.AddComponent<CameraControl2>();
 
             MeshCollider targetCollider = gameObject.AddComponent<MeshCollider>();
             targetCollider.sharedMesh = _startMesh;
@@ -494,13 +496,13 @@ namespace FlowPaintTool
 
             if (Input.GetKey(KeyCode.R))
             {
-                _brushSize += scrollDelta / 50f;
+                _brushSize *= 1f + (scrollDelta * 0.05f);
                 inspectorUpdate = true;
             }
 
             if (Input.GetKey(KeyCode.F))
             {
-                _brushStrength += scrollDelta / 50f;
+                _brushStrength *= 1f + (scrollDelta * 0.05f);
                 inspectorUpdate = true;
             }
 
