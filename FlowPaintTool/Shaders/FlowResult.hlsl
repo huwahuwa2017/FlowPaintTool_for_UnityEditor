@@ -31,8 +31,8 @@ struct G2F
 
 sampler2D _MainTex;
 
-float _TessFactor = 100.0;
-float _DirectionScale = 0.04;
+float _DisplayNormalAmount;
+float _DisplayNormalLength;
 
 static float _Reciprocal3 = 1.0 / 3.0;
 
@@ -81,8 +81,7 @@ V2G HullShaderStage(InputPatch<V2G, 3> input, uint id : SV_OutputControlPointID)
 TessellationFactor PatchConstantFunction(InputPatch<V2G, 3> input)
 {
     float area = length(cross(input[1].wPos - input[0].wPos, input[2].wPos - input[0].wPos)) * 0.5;
-    float temp_4 = min(sqrt(area) * _TessFactor, 64.0);
-    //temp_4 = floor(temp_4 * 0.5) * 2.0;
+    float temp_4 = min(sqrt(area) * _DisplayNormalAmount, 64.0);
     
     TessellationFactor output;
     output.tessFactor[0] = max(temp_4, 1.0);
@@ -119,9 +118,9 @@ void GeometryShaderStage(triangle V2G input[3], inout TriangleStream<G2F> stream
     float3 temp1 = normalize(cross(viewDir, wDirection));
     
     float3 pos0 = wPos;
-    float3 pos1 = wPos + (wDirection * 0.5 + temp1 * 0.02) * _DirectionScale;
-    float3 pos2 = wPos + (wDirection * 0.5 - temp1 * 0.02) * _DirectionScale;
-    float3 pos3 = wPos + wDirection * _DirectionScale;
+    float3 pos1 = wPos + (wDirection * 0.5 + temp1 * 0.02) * _DisplayNormalLength;
+    float3 pos2 = wPos + (wDirection * 0.5 - temp1 * 0.02) * _DisplayNormalLength;
+    float3 pos3 = wPos + wDirection * _DisplayNormalLength;
     
     G2F output = (G2F) 0;
     
@@ -140,7 +139,7 @@ void GeometryShaderStage(triangle V2G input[3], inout TriangleStream<G2F> stream
     output.directionDisplay = false;
     stream.Append(output);
     
-    if (!any(color))
+    if ((!any(color)) || (_DisplayNormalAmount == 0.0))
         return;
     
     stream.RestartStrip();
