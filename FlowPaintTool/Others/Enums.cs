@@ -1,11 +1,5 @@
 ﻿namespace FlowPaintTool
 {
-    public enum StartMeshLoadMode
-    {
-        Assets,
-        HierarchyGameObject
-    }
-
     public enum StartTextureLoadMode
     {
         Assets,

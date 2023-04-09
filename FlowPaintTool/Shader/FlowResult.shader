@@ -4,8 +4,8 @@
 	{
 		[NoScaleOffset]
 		_MainTex("Main Texture", 2D) = "white" {}
-		_DisplayNormalAmount("Display Normal Amount", Float) = 64.0
-		_DisplayNormalLength("Display Normal Length", Float) = 0.02
+		_TessFactor("TessFactor", Float) = 64.0
+		_DirectionScale("DirectionScale", Float) = 0.02
 	}
 
 	SubShader
