@@ -21,7 +21,7 @@ namespace FlowPaintTool
 
         private Vector3Int _speedVector = Vector3Int.zero;
 
-        private bool _key_w, _key_a, _key_s, _key_d, _key_e, _key_q, _key_leftShift;
+        private bool _key_w, _key_a, _key_s, _key_d, _key_space, _key_leftControl, _key_leftShift;
 
         private void Start()
         {
@@ -34,8 +34,8 @@ namespace FlowPaintTool
             _key_a = Input.GetKey(KeyCode.A);
             _key_s = Input.GetKey(KeyCode.S);
             _key_d = Input.GetKey(KeyCode.D);
-            _key_e = Input.GetKey(KeyCode.E);
-            _key_q = Input.GetKey(KeyCode.Q);
+            _key_space = Input.GetKey(KeyCode.Space);
+            _key_leftControl = Input.GetKey(KeyCode.LeftControl);
             _key_leftShift = Input.GetKey(KeyCode.LeftShift);
 
             if (Input.GetMouseButton(2))
@@ -56,8 +56,8 @@ namespace FlowPaintTool
 
             if (_key_d) _speedVector.x += 1;
             if (_key_a) _speedVector.x -= 1;
-            if (_key_e) _speedVector.y += 1;
-            if (_key_q) _speedVector.y -= 1;
+            if (_key_space) _speedVector.y += 1;
+            if (_key_leftControl) _speedVector.y -= 1;
             if (_key_w) _speedVector.z += 1;
             if (_key_s) _speedVector.z -= 1;
 
@@ -66,7 +66,7 @@ namespace FlowPaintTool
                 _speedVector.x -= Math.Sign(_speedVector.x);
             }
 
-            if (!(_key_e || _key_q))
+            if (!(_key_space || _key_leftControl))
             {
                 _speedVector.y -= Math.Sign(_speedVector.y);
             }
