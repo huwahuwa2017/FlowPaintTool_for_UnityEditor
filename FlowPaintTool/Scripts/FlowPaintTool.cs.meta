@@ -1,0 +1,27 @@
+fileFormatVersion: 2
+guid: 6c63a6f006ab1de4c9c40387f044ee56
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences:
+  - _flowPaintMaterial: {fileID: 2100000, guid: 5bb9e0ac0dcd4964995d80095110fc3b,
+      type: 2}
+  - _colorPaintMaterial: {fileID: 2100000, guid: 694c3c56e2854804393814f8a7f7a3f9,
+      type: 2}
+  - _fillMaterial: {fileID: 2100000, guid: 6bfc4fb899ef4184b9363ecf20685859, type: 2}
+  - _cutoutMaterial: {fileID: 2100000, guid: f7cc8b09ae6f6f1489358dc15bb30a25, type: 2}
+  - _fillBleedMaterial: {fileID: 2100000, guid: 2af4c2c6cd8f36e4d9fe7a077eede320,
+      type: 2}
+  - _bleedMaterial: {fileID: 2100000, guid: d67c9b575014ae240ba65506a8e16752, type: 2}
+  - _flowResultMaterial: {fileID: 2100000, guid: dd0cae9ab1a0a5b4594e99e8d2703992,
+      type: 2}
+  - _colorResultMaterial: {fileID: 2100000, guid: f035f5ff558b4db4baf7ebe59453dc84,
+      type: 2}
+  - _material_MaskOff: {fileID: 2100000, guid: b346d3dddb9e119479a2143682a95ed5, type: 2}
+  - _material_MaskOn: {fileID: 2100000, guid: 66b3d84b280c23048999db53c1fb9705, type: 2}
+  - _test: {fileID: 11400000, guid: 67461725cb06f8b42af5c7519beb274e, type: 2}
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
