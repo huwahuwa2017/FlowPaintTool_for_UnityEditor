@@ -19,10 +19,8 @@ MonoImporter:
       type: 2}
   - _material_MaskOff: {fileID: 2100000, guid: b346d3dddb9e119479a2143682a95ed5, type: 2}
   - _material_MaskOn: {fileID: 2100000, guid: 66b3d84b280c23048999db53c1fb9705, type: 2}
-  - _rangeVisualizationPrefab: {fileID: 397955714262424194, guid: e61f00e9c08c3cc4abc2c2d9d578ff34,
+  - _cs_adjacentPolygon: {fileID: 7200000, guid: 64b9ef2a511dc1440b231129636551ac,
       type: 3}
-  - _startTexture: {instanceID: 0}
-  - _startMesh: {instanceID: 0}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

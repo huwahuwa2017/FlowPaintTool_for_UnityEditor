@@ -19,7 +19,7 @@ Shader "FlowPaintTool2/WireFrame"
 
 		Pass
 		{
-			Cull Off
+			//Cull Off
 
 			CGPROGRAM
 

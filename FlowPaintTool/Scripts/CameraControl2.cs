@@ -5,23 +5,11 @@ namespace FlowPaintTool
 {
     public class CameraControl2 : MonoBehaviour
     {
-        [SerializeField]
-        private float _verticalSpeed = 2f;
-
-        [SerializeField]
-        private float _horizontalSpeed = 2f;
-
-        [SerializeField]
-        private float _moveSpeed = 0.05f;
-
-        [SerializeField]
-        private int _inertia = 8;
-
         private Vector3 _eulerAngle = Vector3.zero;
 
         private Vector3Int _speedVector = Vector3Int.zero;
 
-        private bool _key_w, _key_a, _key_s, _key_d, _key_space, _key_leftControl, _key_leftShift;
+        private bool _key_w, _key_a, _key_s, _key_d, _key_e, _key_q, _key_leftShift;
 
         private void Start()
         {
@@ -34,14 +22,16 @@ namespace FlowPaintTool
             _key_a = Input.GetKey(KeyCode.A);
             _key_s = Input.GetKey(KeyCode.S);
             _key_d = Input.GetKey(KeyCode.D);
-            _key_space = Input.GetKey(KeyCode.Space);
-            _key_leftControl = Input.GetKey(KeyCode.LeftControl);
+            _key_e = Input.GetKey(KeyCode.E);
+            _key_q = Input.GetKey(KeyCode.Q);
             _key_leftShift = Input.GetKey(KeyCode.LeftShift);
 
             if (Input.GetMouseButton(2))
             {
-                _eulerAngle.x -= Input.GetAxis("Mouse Y") * _verticalSpeed;
-                _eulerAngle.y += Input.GetAxis("Mouse X") * _horizontalSpeed;
+                FlowPaintToolEditorData fpted = FlowPaintToolControl.FPT_EditorData;
+
+                _eulerAngle.x -= Input.GetAxis("Mouse Y") * fpted.CameraVerticalRotateSpeed;
+                _eulerAngle.y += Input.GetAxis("Mouse X") * fpted.CameraVerticalRotateSpeed;
 
                 _eulerAngle.x = Mathf.DeltaAngle(0, _eulerAngle.x);
                 _eulerAngle.y = Mathf.DeltaAngle(0, _eulerAngle.y);
@@ -52,12 +42,10 @@ namespace FlowPaintTool
 
         private void FixedUpdate()
         {
-            _inertia = Math.Max(_inertia, 1);
-
             if (_key_d) _speedVector.x += 1;
             if (_key_a) _speedVector.x -= 1;
-            if (_key_space) _speedVector.y += 1;
-            if (_key_leftControl) _speedVector.y -= 1;
+            if (_key_e) _speedVector.y += 1;
+            if (_key_q) _speedVector.y -= 1;
             if (_key_w) _speedVector.z += 1;
             if (_key_s) _speedVector.z -= 1;
 
@@ -66,7 +54,7 @@ namespace FlowPaintTool
                 _speedVector.x -= Math.Sign(_speedVector.x);
             }
 
-            if (!(_key_space || _key_leftControl))
+            if (!(_key_e || _key_q))
             {
                 _speedVector.y -= Math.Sign(_speedVector.y);
             }
@@ -76,12 +64,14 @@ namespace FlowPaintTool
                 _speedVector.z -= Math.Sign(_speedVector.z);
             }
 
-            _speedVector.x = Mathf.Clamp(_speedVector.x, -_inertia, _inertia);
-            _speedVector.y = Mathf.Clamp(_speedVector.y, -_inertia, _inertia);
-            _speedVector.z = Mathf.Clamp(_speedVector.z, -_inertia, _inertia);
+            FlowPaintToolEditorData fpted = FlowPaintToolControl.FPT_EditorData;
 
-            float moveSpeed = (_key_leftShift) ? _moveSpeed * 3f : _moveSpeed;
-            Vector3 speed = (Vector3)_speedVector / _inertia * moveSpeed;
+            _speedVector.x = Mathf.Clamp(_speedVector.x, -fpted.CameraInertia, fpted.CameraInertia);
+            _speedVector.y = Mathf.Clamp(_speedVector.y, -fpted.CameraInertia, fpted.CameraInertia);
+            _speedVector.z = Mathf.Clamp(_speedVector.z, -fpted.CameraInertia, fpted.CameraInertia);
+
+            float moveSpeed = (_key_leftShift) ? fpted.CameraMoveSpeed * 3f : fpted.CameraMoveSpeed;
+            Vector3 speed = (Vector3)_speedVector / fpted.CameraInertia * moveSpeed;
             transform.position += transform.rotation * speed;
         }
     }
