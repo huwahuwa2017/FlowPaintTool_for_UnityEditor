@@ -1,9 +1,10 @@
 ﻿#include "UnityCG.cginc"
+#include "TargetUVChannel.hlsl"
 
 struct I2V
 {
     float4 lPos : POSITION;
-    float2 uv : TEXCOORD0;
+    float2 uv : TARGET_UV_CHANNEL;
 };
 
 struct V2F
@@ -19,6 +20,14 @@ static int2 _OffsetArray[4] =
 {
     int2(1, 0), int2(-1, 0), int2(0, 1), int2(0, -1)
 };
+
+uint2 IsOutOfRange(in float2 range, in int2 index, out bool outOfRange)
+{
+    outOfRange = index.x < 0 || index.y < 0 || index.x >= range.x || index.y >= range.y;
+    return uint2(index) * (!outOfRange);
+}
+
+
 
 V2F VertexShaderStage_Fill(I2V input)
 {
@@ -37,28 +46,7 @@ float4 FragmentShaderStage_Fill(V2F input) : SV_Target
     return 1.0;
 }
 
-V2F VertexShaderStage_Cutout(I2V input)
-{
-    V2F output = (V2F) 0;
-    output.cPos = UnityObjectToClipPos(input.lPos);
-    return output;
-}
 
-float4 FragmentShaderStage_Cutout(V2F input) : SV_Target
-{
-    uint2 index = uint2(input.cPos.xy);
-    
-    float4 color = _MainTex[index];
-    bool flag = _FillTex[index].r > 0.5;
-    
-    return lerp(0.0, color, flag);
-}
-
-uint2 IsOutOfRange(in float2 range, in int2 index, out bool outOfRange)
-{
-    outOfRange = index.x < 0 || index.y < 0 || index.x >= range.x || index.y >= range.y;
-    return uint2(index) * (!outOfRange);
-}
 
 V2F VertexShaderStage_FillBleed(I2V input)
 {
@@ -87,6 +75,27 @@ float4 FragmentShaderStage_FillBleed(V2F input) : SV_Target
     
     return result != 0.0;
 }
+
+
+
+V2F VertexShaderStage_Cutout(I2V input)
+{
+    V2F output = (V2F) 0;
+    output.cPos = UnityObjectToClipPos(input.lPos);
+    return output;
+}
+
+float4 FragmentShaderStage_Cutout(V2F input) : SV_Target
+{
+    uint2 index = uint2(input.cPos.xy);
+    
+    float4 color = _MainTex[index];
+    bool flag = _FillTex[index].r > 0.5;
+    
+    return lerp(0.0, color, flag);
+}
+
+
 
 V2F VertexShaderStage_Bleed(I2V input)
 {

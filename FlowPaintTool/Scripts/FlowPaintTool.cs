@@ -14,6 +14,9 @@ namespace FlowPaintTool
 {
     public class FlowPaintTool : MonoBehaviour
     {
+        private static readonly int _mainTexSPID = Shader.PropertyToID("_MainTex");
+        private static readonly int _fillTexSPID = Shader.PropertyToID("_FillTex");
+
         private static readonly int _modelMatrixSPID = Shader.PropertyToID("_ModelMatrix");
         private static readonly int _inverseModelMatrixSPID = Shader.PropertyToID("_InverseModelMatrix");
         private static readonly int _hitPositionSPID = Shader.PropertyToID("_HitPosition");
@@ -36,6 +39,21 @@ namespace FlowPaintTool
         private static float _displayNormalLength = 0.02f;
         private static float _displayNormalAmount = 64f;
 
+        public static FlowPaintTool _activeInstance = null;
+
+        public static FlowPaintTool ActiveInstance
+        {
+            get
+            {
+                if (_activeInstance != null && _activeInstance._selected)
+                {
+                    return _activeInstance;
+                }
+
+                return null;
+            }
+        }
+
         public static bool EnableMaskMode { get; set; } = false;
         public static bool EnableMaterialView { get; set; } = false;
 
@@ -53,7 +71,7 @@ namespace FlowPaintTool
             set => _brushStrength = Mathf.Clamp01(value);
         }
 
-        public static BrushType BrushType { get; set; } = BrushType.Smooth;
+        public static BrushTypeEnum BrushType { get; set; } = BrushTypeEnum.Smooth;
 
         //UI未実装　0.01固定
         public static float BrushMoveSensitivity { get; set; } = 0.01f;
@@ -84,48 +102,61 @@ namespace FlowPaintTool
         public static bool EditB { get; set; } = true;
         public static bool EditA { get; set; } = true;
 
+
+
+        [SerializeField]
+        private Material _fillMaterial = null;
+        [SerializeField]
+        private Material _fillBleedMaterial = null;
+
         [SerializeField]
         private Material _flowPaintMaterial = null;
         [SerializeField]
         private Material _colorPaintMaterial = null;
         [SerializeField]
-        private Material _fillMaterial = null;
-        [SerializeField]
         private Material _cutoutMaterial = null;
-        [SerializeField]
-        private Material _fillBleedMaterial = null;
         [SerializeField]
         private Material _bleedMaterial = null;
         [SerializeField]
         private Material _flowResultMaterial = null;
         [SerializeField]
         private Material _colorResultMaterial = null;
+
         [SerializeField]
         private Material _material_MaskOff = null;
         [SerializeField]
         private Material _material_MaskOn = null;
+
         [SerializeField]
         private ComputeShader _cs_adjacentPolygon = null;
 
         private FlowPaintToolData _fptData = default;
 
-        private bool _selected = false;
-
         private Mesh _paintModeMesh = null;
         private Mesh _maskModeMesh = null;
 
-        private PolygonData[] _polygonList = null;
-        private List<PolygonData[]> _duplicatePolygonListList = new List<PolygonData[]>();
+        private int _polygonCount = 0;
+
+        private Vector3Int[] _pd_VertexIndexArray = null;
+        private int[] _pd_SubMeshIndexArray = null;
+        private Vector3Int[] _pd_AdjacentIndexArray = null;
+        private bool[] _pd_DuplicateUVArray = null;
+        private List<int[]> _duplicatePolygonIndexArrayList = new List<int[]>();
+        private bool[] _pd_MaskArray = null;
+        private bool[] _pd_MaskResultArray = null;
+        private Vector3[] _pd_CenterArray = null;
 
         private string _outputRenderTexturePath = string.Empty;
         private RenderTexture _outputRenderTexture = null;
         private RenderTexture[] _fillTextureArray = null;
-        private Material _copyCutoutMaterial = null;
+
         private Material _copyFlowPaintMaterial = null;
         private Material _copyColorPaintMaterial = null;
+        private Material _copyCutoutMaterial = null;
+        private Material[] _copyBleedMaterialArray = null;
         private Material _copyFlowResultMaterial = null;
         private Material _copyColorResultMaterial = null;
-        private Material[] _bleedMaterialArray = null;
+
         private CommandBuffer _bleedCommandBuffer = null;
         private CommandBuffer _flowPaintCommandBuffer = null;
         private CommandBuffer _colorPaintCommandBuffer = null;
@@ -135,12 +166,10 @@ namespace FlowPaintTool
         private GameObject _maskRender = null;
         private GameObject _meshColider = null;
 
+        private bool _selected = false;
         private Matrix4x4 _preMatrix = Matrix4x4.zero;
         private Vector3 _preHitPosition = Vector3.zero;
         private bool _preHit = false;
-
-        private bool _preInputKeyPlus = false;
-        private bool _preInputKeyMinus = false;
 
         public void SetData(FlowPaintToolData fptData)
         {
@@ -164,13 +193,18 @@ namespace FlowPaintTool
             List<Vector2> uvs = new List<Vector2>();
             _fptData._startMesh.GetUVs(_fptData._targetUVChannel, uvs);
             int[] triangles = _fptData._startMesh.triangles;
-            int triangleCount = triangles.Length / 3;
+            _polygonCount = triangles.Length / 3;
 
+            _pd_VertexIndexArray = new Vector3Int[_polygonCount];
+            _pd_SubMeshIndexArray = new int[_polygonCount];
+            _pd_DuplicateUVArray = new bool[_polygonCount];
+            _pd_MaskArray = new bool[_polygonCount];
+            _pd_MaskResultArray = new bool[_polygonCount];
+            _pd_CenterArray = new Vector3[_polygonCount];
 
-
+            // Generate _polygonList Start
             int subMeshCount = _fptData._startMesh.subMeshCount;
             int triangleIndex = 0;
-            _polygonList = new PolygonData[triangleCount];
 
             for (int subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex)
             {
@@ -179,19 +213,21 @@ namespace FlowPaintTool
 
                 for (int index = 0; index < subMeshTriangleArrayLength; index += 3)
                 {
-                    _polygonList[triangleIndex] = new PolygonData(subMeshIndex, triangleIndex, subMeshTriangles[index], subMeshTriangles[index + 1], subMeshTriangles[index + 2]);
+                    Vector3Int vertexIndex = new Vector3Int(subMeshTriangles[index], subMeshTriangles[index + 1], subMeshTriangles[index + 2]);
+                    _pd_VertexIndexArray[triangleIndex] = vertexIndex;
+                    _pd_SubMeshIndexArray[triangleIndex] = subMeshIndex;
                     ++triangleIndex;
                 }
             }
+            // Generate polygon list End
 
-
-
+            // Compute shader Start
             ComputeBuffer cb_Vertices = new ComputeBuffer(vertices.Count(), Marshal.SizeOf(typeof(Vector3)));
             ComputeBuffer cb_UVs = new ComputeBuffer(uvs.Count(), Marshal.SizeOf(typeof(Vector2)));
             ComputeBuffer cb_Triangles = new ComputeBuffer(triangles.Count(), Marshal.SizeOf(typeof(int)));
-            ComputeBuffer cb_AdjacentResult = new ComputeBuffer(triangleCount, Marshal.SizeOf(typeof(Vector3Int)));
-            ComputeBuffer cb_CenterUVResult = new ComputeBuffer(triangleCount, Marshal.SizeOf(typeof(Vector2)));
-            ComputeBuffer cb_DuplicateResult = new ComputeBuffer(triangleCount, Marshal.SizeOf(typeof(int)));
+            ComputeBuffer cb_AdjacentResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector3Int)));
+            ComputeBuffer cb_CenterUVResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector2)));
+            ComputeBuffer cb_DuplicateResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(int)));
 
             cb_Vertices.SetData(vertices);
             cb_UVs.SetData(uvs);
@@ -200,7 +236,7 @@ namespace FlowPaintTool
             int adjacent_Main_KI = _cs_adjacentPolygon.FindKernel("Adjacent_Main");
             int duplicate_Main_KI = _cs_adjacentPolygon.FindKernel("Duplicate_Main");
 
-            _cs_adjacentPolygon.SetInt("_TriangleCount", triangleCount);
+            _cs_adjacentPolygon.SetInt("_TriangleCount", _polygonCount);
             _cs_adjacentPolygon.SetFloat("_Epsilon", _fptData._uv_Epsilon);
 
             _cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Vertices", cb_Vertices);
@@ -208,16 +244,16 @@ namespace FlowPaintTool
             _cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Triangles", cb_Triangles);
             _cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_AdjacentResult", cb_AdjacentResult);
             _cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_CenterUVResult", cb_CenterUVResult);
-            _cs_adjacentPolygon.Dispatch(adjacent_Main_KI, triangleCount, 1, 1);
+            _cs_adjacentPolygon.Dispatch(adjacent_Main_KI, _polygonCount, 1, 1);
 
-            Vector3Int[] adjacentResult = new Vector3Int[triangleCount];
-            cb_AdjacentResult.GetData(adjacentResult);
+            _pd_AdjacentIndexArray = new Vector3Int[_polygonCount];
+            cb_AdjacentResult.GetData(_pd_AdjacentIndexArray);
 
             _cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_CenterUVResult", cb_CenterUVResult);
             _cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_DuplicateResult", cb_DuplicateResult);
-            _cs_adjacentPolygon.Dispatch(duplicate_Main_KI, triangleCount, 1, 1);
+            _cs_adjacentPolygon.Dispatch(duplicate_Main_KI, _polygonCount, 1, 1);
 
-            int[] duplicateResult = new int[triangleCount];
+            int[] duplicateResult = new int[_polygonCount];
             cb_DuplicateResult.GetData(duplicateResult);
 
             cb_Vertices.Release();
@@ -226,63 +262,54 @@ namespace FlowPaintTool
             cb_AdjacentResult.Release();
             cb_CenterUVResult.Release();
             cb_DuplicateResult.Release();
+            // Compute shader End
 
+            // Generate _duplicatePolygonListList Start
+            bool[] checkIndex = new bool[_polygonCount];
 
-
-            for (int index = 0; index < triangleCount; ++index)
-            {
-                _polygonList[index].AdjacentPolygonIndex = adjacentResult[index];
-            }
-
-
-
-            bool[] checkIndex = new bool[triangleCount];
-
-            for (int startIndex = 0; startIndex < triangleCount; ++startIndex)
+            for (int startIndex = 0; startIndex < _polygonCount; ++startIndex)
             {
                 int duplicateIndex = duplicateResult[startIndex];
 
                 if (duplicateIndex == -1 || checkIndex[duplicateIndex]) continue;
 
                 checkIndex[duplicateIndex] = true;
-                ConcurrentBag<PolygonData> duplicatePolygonList = new ConcurrentBag<PolygonData>();
+                List<int> duplicatePolygonIndexList = new List<int>();
 
-                for (int index = startIndex; index < triangleCount; ++index)
+                for (int index = startIndex; index < _polygonCount; ++index)
                 {
                     if (duplicateResult[index] != duplicateIndex) continue;
 
-                    _polygonList[index].DuplicateUV = true;
-                    duplicatePolygonList.Add(_polygonList[index]);
+                    _pd_DuplicateUVArray[index] = true;
+                    duplicatePolygonIndexList.Add(index);
                 }
 
-                _polygonList[duplicateIndex].DuplicateUV = true;
-                duplicatePolygonList.Add(_polygonList[duplicateIndex]);
-                _duplicatePolygonListList.Add(duplicatePolygonList.ToArray());
+                _pd_DuplicateUVArray[duplicateIndex] = true;
+                duplicatePolygonIndexList.Add(duplicateIndex);
+                _duplicatePolygonIndexArrayList.Add(duplicatePolygonIndexList.ToArray());
             }
+            // Generate _duplicatePolygonListList End
         }
 
         private void GenerateOutputRenderTexture()
         {
-            string path = AssetDatabase.GetAssetPath(_fillMaterial);
-            path = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(path)), $"RT{GetInstanceID()}.renderTexture");
-
             GraphicsFormat graphicsFormat = _fptData._actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
             RenderTextureDescriptor rtd = new RenderTextureDescriptor(_fptData._outputTextureResolution.x, _fptData._outputTextureResolution.y, graphicsFormat, 0);
             _outputRenderTexture = new RenderTexture(rtd);
             _outputRenderTexture.filterMode = FilterMode.Point;
 
+            string path = AssetDatabase.GetAssetPath(_fillMaterial);
+            path = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(path)), $"RT{GetInstanceID()}.renderTexture");
             AssetDatabase.CreateAsset(_outputRenderTexture, path);
-            AssetDatabase.SaveAssets();
-
             _outputRenderTexturePath = path;
 
             if (_fptData._textureExist)
             {
-                if (_fptData._startTextureLoadMode == StartTextureLoadMode.Assets)
+                if (_fptData._startTextureLoadMode == StartTextureLoadModeEnum.Assets)
                 {
                     Graphics.Blit(_fptData._startTexture, _outputRenderTexture);
                 }
-                else if (_fptData._startTextureLoadMode == StartTextureLoadMode.FilePath)
+                else if (_fptData._startTextureLoadMode == StartTextureLoadModeEnum.FilePath)
                 {
                     GraphicsFormat temp0 = _fptData._actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
                     Texture2D texture = new Texture2D(0, 0, temp0, TextureCreationFlags.None);
@@ -303,10 +330,22 @@ namespace FlowPaintTool
             }
         }
 
+        private void TargetUVChannel(Material mat)
+        {
+            mat.DisableKeyword("UV_CHANNEL_0");
+            mat.DisableKeyword("UV_CHANNEL_1");
+            mat.DisableKeyword("UV_CHANNEL_2");
+            mat.DisableKeyword("UV_CHANNEL_3");
+            mat.DisableKeyword("UV_CHANNEL_4");
+            mat.DisableKeyword("UV_CHANNEL_5");
+            mat.DisableKeyword("UV_CHANNEL_6");
+            mat.DisableKeyword("UV_CHANNEL_7");
+
+            mat.EnableKeyword("UV_CHANNEL_" + _fptData._targetUVChannel);
+        }
+
         private void GenerateCommandBuffer()
         {
-            int mainTexSPID = Shader.PropertyToID("_MainTex");
-            int fillTexSPID = Shader.PropertyToID("_FillTex");
             int[] tempTexSPIDs = new int[] { Shader.PropertyToID("_TempTex0"), Shader.PropertyToID("_TempTex1") };
 
             RenderTextureDescriptor rtd_main = _outputRenderTexture.descriptor;
@@ -314,6 +353,9 @@ namespace FlowPaintTool
             rtd_R8.graphicsFormat = GraphicsFormat.R8_UNorm;
 
             // Texture Generate Start
+            TargetUVChannel(_fillMaterial);
+            TargetUVChannel(_fillBleedMaterial);
+
             _fillTextureArray = new RenderTexture[Math.Max(_fptData._bleedRange, 1)];
             _fillTextureArray[0] = new RenderTexture(rtd_R8);
 
@@ -336,27 +378,27 @@ namespace FlowPaintTool
             }
             // Texture Generate End
 
-            // Material Generate Start
-            _bleedMaterialArray = new Material[_fptData._bleedRange];
+            // Material Generate And Setting Start
+            _copyBleedMaterialArray = new Material[_fptData._bleedRange];
 
             for (int index = 0; index < _fptData._bleedRange; ++index)
             {
-                Material temp0 = Instantiate(_bleedMaterial);
-                temp0.SetTexture(fillTexSPID, _fillTextureArray[index]);
-                _bleedMaterialArray[index] = temp0;
+                Material copyBleedMaterial = Instantiate(_bleedMaterial);
+                TargetUVChannel(copyBleedMaterial);
+                _copyBleedMaterialArray[index] = copyBleedMaterial;
             }
 
-            _copyCutoutMaterial = Instantiate(_cutoutMaterial);
             _copyFlowPaintMaterial = Instantiate(_flowPaintMaterial);
             _copyColorPaintMaterial = Instantiate(_colorPaintMaterial);
+            _copyCutoutMaterial = Instantiate(_cutoutMaterial);
             _copyFlowResultMaterial = Instantiate(_flowResultMaterial);
             _copyColorResultMaterial = Instantiate(_colorResultMaterial);
 
-            _copyCutoutMaterial.SetTexture(fillTexSPID, _fillTextureArray[0]);
-            _copyFlowPaintMaterial.SetTexture(mainTexSPID, _outputRenderTexture);
-            _copyColorPaintMaterial.SetTexture(mainTexSPID, _outputRenderTexture);
-            _copyFlowResultMaterial.SetTexture(mainTexSPID, _outputRenderTexture);
-            _copyColorResultMaterial.SetTexture(mainTexSPID, _outputRenderTexture);
+            TargetUVChannel(_copyFlowPaintMaterial);
+            TargetUVChannel(_copyColorPaintMaterial);
+            TargetUVChannel(_copyCutoutMaterial);
+            TargetUVChannel(_copyFlowResultMaterial);
+            TargetUVChannel(_copyColorResultMaterial);
 
             if (_fptData._actualSRGB)
             {
@@ -368,7 +410,7 @@ namespace FlowPaintTool
                 _copyFlowResultMaterial.DisableKeyword("IS_SRGB");
                 _copyColorResultMaterial.DisableKeyword("IS_SRGB");
             }
-            // Material Generate End
+            // Material Generate And Setting End
 
             // _bleedCommandBuffer Generate Start
             _bleedCommandBuffer = new CommandBuffer();
@@ -381,7 +423,7 @@ namespace FlowPaintTool
             for (int index = 0; index < _fptData._bleedRange; ++index)
             {
                 temp1 = 1 - temp1;
-                _bleedCommandBuffer.Blit(tempTexSPIDs[1 - temp1], tempTexSPIDs[temp1], _bleedMaterialArray[index]);
+                _bleedCommandBuffer.Blit(tempTexSPIDs[1 - temp1], tempTexSPIDs[temp1], _copyBleedMaterialArray[index]);
             }
 
             _bleedCommandBuffer.Blit(tempTexSPIDs[temp1], _outputRenderTexture);
@@ -440,22 +482,24 @@ namespace FlowPaintTool
 
         private void MaskModeMeshTriangleUpdate()
         {
-            List<int> triangleList0 = new List<int>(_polygonList.Length);
-            List<int> triangleList1 = new List<int>(_polygonList.Length);
+            List<int> triangleList0 = new List<int>(_polygonCount);
+            List<int> triangleList1 = new List<int>(_polygonCount);
 
-            foreach (PolygonData polygonData in _polygonList)
+            for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
             {
-                if (polygonData.Mask)
+                Vector3Int vIndex = _pd_VertexIndexArray[pIndex];
+
+                if (_pd_MaskArray[pIndex])
                 {
-                    triangleList1.Add(polygonData.IndexA);
-                    triangleList1.Add(polygonData.IndexB);
-                    triangleList1.Add(polygonData.IndexC);
+                    triangleList1.Add(vIndex.x);
+                    triangleList1.Add(vIndex.y);
+                    triangleList1.Add(vIndex.z);
                 }
                 else
                 {
-                    triangleList0.Add(polygonData.IndexA);
-                    triangleList0.Add(polygonData.IndexB);
-                    triangleList0.Add(polygonData.IndexC);
+                    triangleList0.Add(vIndex.x);
+                    triangleList0.Add(vIndex.y);
+                    triangleList0.Add(vIndex.z);
                 }
             }
 
@@ -506,10 +550,7 @@ namespace FlowPaintTool
 
         public ConcurrentBag<int> GetAllConnectedTriangles(IEnumerable<int> triangleIndexs)
         {
-            int[] triangles = _fptData._startMesh.triangles;
-            int triangleCount = triangles.Length / 3;
-            bool[] connectedTriangles = new bool[triangleCount];
-
+            bool[] connectedTriangles = new bool[_polygonCount];
             ConcurrentBag<int> queue = new ConcurrentBag<int>(triangleIndexs);
             ConcurrentBag<int> adjacentTriangles = new ConcurrentBag<int>();
 
@@ -525,7 +566,7 @@ namespace FlowPaintTool
                     connectedTriangles[currentTriangleIndex] = true;
                     adjacentTriangles.Add(currentTriangleIndex);
 
-                    Vector3Int temp30 = _polygonList[currentTriangleIndex].AdjacentPolygonIndex;
+                    Vector3Int temp30 = _pd_AdjacentIndexArray[currentTriangleIndex];
                     queue.Add(temp30.x);
                     queue.Add(temp30.y);
                     queue.Add(temp30.z);
@@ -535,27 +576,27 @@ namespace FlowPaintTool
             return adjacentTriangles;
         }
 
-        private void LinkSelectionPlus()
+        public void SelectLinkedPlus()
         {
-            IEnumerable<int> temp0 = _polygonList.Where(I => !I.Mask).Select(I => I.TriangleIndex);
+            IEnumerable<int> temp0 = Enumerable.Range(0, _polygonCount).Where(I => !_pd_MaskArray[I]);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
             foreach (int temp2 in temp1)
             {
-                _polygonList[temp2].Mask = false;
+                _pd_MaskArray[temp2] = false;
             }
 
             MaskModeMeshTriangleUpdate();
         }
 
-        private void LinkSelectionMinus()
+        public void SelectLinkedMinus()
         {
-            IEnumerable<int> temp0 = _polygonList.Where(I => I.Mask).Select(I => I.TriangleIndex);
+            IEnumerable<int> temp0 = Enumerable.Range(0, _polygonCount).Where(I => _pd_MaskArray[I]);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
             foreach (int temp2 in temp1)
             {
-                _polygonList[temp2].Mask = true;
+                _pd_MaskArray[temp2] = true;
             }
 
             MaskModeMeshTriangleUpdate();
@@ -565,66 +606,69 @@ namespace FlowPaintTool
         {
             _selected = Selection.activeTransform == transform;
 
-            if (!_selected || !EnableMaskMode) return;
-
-            bool inputKeyPlus = Input.GetKey(KeyCode.KeypadPlus);
-            bool inputKeyMinus = Input.GetKey(KeyCode.KeypadMinus);
-
-            if (!_preInputKeyPlus && inputKeyPlus)
+            if (_selected)
             {
-                LinkSelectionPlus();
+                _activeInstance = this;
+            }
+        }
+
+        private void SetTexture()
+        {
+            for (int index = 0; index < _fptData._bleedRange; ++index)
+            {
+                _copyBleedMaterialArray[index].SetTexture(_fillTexSPID, _fillTextureArray[index]);
             }
 
-            if (!_preInputKeyMinus && inputKeyMinus)
-            {
-                LinkSelectionMinus();
-            }
-
-            _preInputKeyPlus = inputKeyPlus;
-            _preInputKeyMinus = inputKeyMinus;
+            _copyFlowPaintMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
+            _copyColorPaintMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
+            _copyCutoutMaterial.SetTexture(_fillTexSPID, _fillTextureArray[0]);
+            _copyFlowResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
+            _copyColorResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
         }
 
         private void PaintModeMeshTriangleUpdate(Vector3 hitPosition)
         {
-            foreach (PolygonData polygonData in _polygonList)
+            for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
             {
-                polygonData.MaskResult = polygonData.DuplicateUV || polygonData.Mask;
+                _pd_MaskResultArray[pIndex] = _pd_DuplicateUVArray[pIndex] || _pd_MaskArray[pIndex];
             }
 
-            foreach (PolygonData[] duplicatePolygonList in _duplicatePolygonListList)
+            foreach (int[] duplicatePolygonList in _duplicatePolygonIndexArrayList)
             {
                 float minSqrDistance = float.MaxValue;
-                PolygonData targetPolygonData = null;
+                int targetPolygonIndex = -1;
 
-                foreach (PolygonData duplicatePolygon in duplicatePolygonList)
+                for (int index = 0; index < duplicatePolygonList.Length; index++)
                 {
-                    if (duplicatePolygon.Mask) continue;
+                    int pIndex = duplicatePolygonList[index];
 
-                    float sqrDistance = (hitPosition - duplicatePolygon.Center).sqrMagnitude;
+                    if (_pd_MaskArray[pIndex]) continue;
+
+                    float sqrDistance = (hitPosition - _pd_CenterArray[pIndex]).sqrMagnitude;
 
                     if (sqrDistance < minSqrDistance)
                     {
                         minSqrDistance = sqrDistance;
-                        targetPolygonData = duplicatePolygon;
+                        targetPolygonIndex = pIndex;
                     }
                 }
 
-                if (targetPolygonData != null)
+                if (targetPolygonIndex != -1)
                 {
-                    targetPolygonData.MaskResult = false;
+                    _pd_MaskResultArray[targetPolygonIndex] = false;
                 }
             }
 
-            List<int> triangleList0 = new List<int>(_polygonList.Length);
+            List<int> triangleList0 = new List<int>(_polygonCount);
 
-            foreach (PolygonData polygonData in _polygonList)
+            for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
             {
-                if (!polygonData.MaskResult)
-                {
-                    triangleList0.Add(polygonData.IndexA);
-                    triangleList0.Add(polygonData.IndexB);
-                    triangleList0.Add(polygonData.IndexC);
-                }
+                if (_pd_MaskResultArray[pIndex]) continue;
+
+                Vector3Int vIndex = _pd_VertexIndexArray[pIndex];
+                triangleList0.Add(vIndex.x);
+                triangleList0.Add(vIndex.y);
+                triangleList0.Add(vIndex.z);
             }
 
             _paintModeMesh.SetTriangles(triangleList0, 0);
@@ -660,14 +704,11 @@ namespace FlowPaintTool
 
                 _copyFlowPaintMaterial.SetMatrix(_modelMatrixSPID, temp0);
                 _copyFlowPaintMaterial.SetVector(_hitPositionSPID, _preHitPosition);
-
                 _copyFlowPaintMaterial.SetInt(_brushTypeSPID, (int)BrushType);
                 _copyFlowPaintMaterial.SetFloat(_brushSizeSPID, BrushSize);
                 _copyFlowPaintMaterial.SetFloat(_brushStrengthSPID, BrushStrength);
-
                 _copyFlowPaintMaterial.SetMatrix(_inverseModelMatrixSPID, Matrix4x4.Inverse(temp0));
                 _copyFlowPaintMaterial.SetVector(_paintDirectionSPID, paintDirection);
-
                 _copyFlowPaintMaterial.SetInt(_fixedHeightSPID, Convert.ToInt32(FixedHeight));
                 _copyFlowPaintMaterial.SetFloat(_fixedHeightMinSPID, FixedHeightMin);
                 _copyFlowPaintMaterial.SetFloat(_fixedHeightMaxSPID, FixedHeightMax);
@@ -715,13 +756,10 @@ namespace FlowPaintTool
 
                 _copyColorPaintMaterial.SetMatrix(_modelMatrixSPID, temp0);
                 _copyColorPaintMaterial.SetVector(_hitPositionSPID, _preHitPosition);
-
                 _copyColorPaintMaterial.SetInt(_brushTypeSPID, (int)BrushType);
                 _copyColorPaintMaterial.SetFloat(_brushSizeSPID, BrushSize);
                 _copyColorPaintMaterial.SetFloat(_brushStrengthSPID, BrushStrength);
-
                 _copyColorPaintMaterial.SetColor(_PaintColorSPID, PaintColor);
-
                 _copyColorPaintMaterial.SetInt(_EditRGBASPID, temp1);
 
                 Graphics.ExecuteCommandBuffer(_colorPaintCommandBuffer);
@@ -747,17 +785,16 @@ namespace FlowPaintTool
             bool rightClick = Input.GetMouseButton(1);
 
             Vector3 hitPosition = raycastHit.point;
-            //float distance = (hitPosition - Camera.main.transform.position).magnitude;
 
             float sqrRange = BrushSize * BrushSize;
 
             if (leftClick || rightClick)
             {
-                foreach (PolygonData polygonData in _polygonList)
+                for (int index = 0; index < _polygonCount; index++)
                 {
-                    if ((hitPosition - polygonData.Center).sqrMagnitude < sqrRange)
+                    if ((hitPosition - _pd_CenterArray[index]).sqrMagnitude < sqrRange)
                     {
-                        polygonData.Mask = rightClick;
+                        _pd_MaskArray[index] = rightClick;
                     }
                 }
 
@@ -774,22 +811,38 @@ namespace FlowPaintTool
             {
                 _preMatrix = matrix;
 
-                Vector3[] vertexPositionArray = _fptData._startMesh.vertices;
-                int maxIndex = vertexPositionArray.Length;
+                Vector3[] vpArray = _fptData._startMesh.vertices;
+                int maxIndex = vpArray.Length;
 
                 for (int index = 0; index < maxIndex; ++index)
                 {
-                    vertexPositionArray[index] = matrix.MultiplyPoint3x4(vertexPositionArray[index]);
+                    vpArray[index] = matrix.MultiplyPoint3x4(vpArray[index]);
                 }
 
-                foreach (PolygonData polygonData in _polygonList)
+                for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
                 {
-                    polygonData.CenterRecalculation(vertexPositionArray);
+                    Vector3Int vIndex = _pd_VertexIndexArray[pIndex];
+
+                    _pd_CenterArray[pIndex] = (vpArray[vIndex.x] + vpArray[vIndex.y] + vpArray[vIndex.z]) / 3f;
                 }
             }
             // CenterRecalculation End
 
-            if (!_selected) return;
+            SetTexture();
+
+            if (!_selected)
+            {
+                _flowPaintRender.SetActive(false);
+                _colorPaintRender.SetActive(false);
+                _maskRender.SetActive(false);
+
+                if (ActiveInstance == null)
+                {
+                    _fptData._sorceRenderer.enabled = true;
+                }
+
+                return;
+            }
 
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             bool hit = Physics.Raycast(ray, out RaycastHit raycastHit, 100f);
@@ -798,11 +851,11 @@ namespace FlowPaintTool
             {
                 FixedUpdate_Mask(hit, raycastHit);
             }
-            else if (_fptData._paintMode == PaintMode.FlowPaintMode)
+            else if (_fptData._paintMode == PaintModeEnum.FlowPaintMode)
             {
                 FixedUpdate_FlowPaint(hit, raycastHit);
             }
-            else if (_fptData._paintMode == PaintMode.ColorPaintMode)
+            else if (_fptData._paintMode == PaintModeEnum.ColorPaintMode)
             {
                 FixedUpdate_ColorPaint(hit, raycastHit);
             }
@@ -817,7 +870,7 @@ namespace FlowPaintTool
             EnableMaterialView = false;
             BrushSize = 0.1f;
             BrushStrength = 0.5f;
-            BrushType = BrushType.Smooth;
+            BrushType = BrushTypeEnum.Smooth;
             BrushMoveSensitivity = 0.01f;
 
             FixedHeight = false;
@@ -844,8 +897,6 @@ namespace FlowPaintTool
         {
             private FlowPaintTool _instance = null;
 
-            private GUIStyle _guiStyle = null;
-
             private void OnEnable()
             {
                 _instance = target as FlowPaintTool;
@@ -871,7 +922,7 @@ namespace FlowPaintTool
             {
                 if (!GUILayout.Button("Output PNG File")) return;
 
-                string filePath = EditorUtility.SaveFilePanel("Output PNG File", "Assets/FlowPaintTool", "texture", "png");
+                string filePath = EditorUtility.SaveFilePanel("Output PNG File", "Assets", "texture", "png");
                 if (string.IsNullOrEmpty(filePath)) return;
 
                 Texture2D copyTexture2D = RenderTextureToTexture2D(_instance._outputRenderTexture);
@@ -886,7 +937,6 @@ namespace FlowPaintTool
                 {
                     filePath = filePath.Remove(0, appDataPath.Length - 6);
                     AssetDatabase.ImportAsset(filePath);
-
                     TextureImporter texImporter = AssetImporter.GetAtPath(filePath) as TextureImporter;
                     texImporter.sRGBTexture = _instance._fptData._actualSRGB;
                 }
@@ -896,19 +946,13 @@ namespace FlowPaintTool
             {
                 EditorGUILayout.Space(5);
                 Rect pos = EditorGUILayout.GetControlRect(false, 1f);
-                EditorGUI.DrawRect(pos, _guiStyle.normal.textColor);
+                EditorGUI.DrawRect(pos, GUI.skin.label.normal.textColor);
                 EditorGUILayout.Space(5);
             }
 
             private void CommonUI()
             {
-                EditorGUILayout.BeginHorizontal();
-                {
-                    GUILayout.FlexibleSpace();
-                    EditorGUILayout.LabelField("Path of RenderTexture for preview");
-                    GUILayout.FlexibleSpace();
-                }
-                EditorGUILayout.EndHorizontal();
+                EditorGUILayout.LabelField("Path of RenderTexture for preview", FlowPaintTool_EditorWindow.CenterLabel);
 
                 EditorGUILayout.TextField(_instance._outputRenderTexturePath);
 
@@ -931,7 +975,7 @@ namespace FlowPaintTool
                 EditorGUILayout.LabelField("Brush settings");
                 BrushSize = EditorGUILayout.FloatField("Size", BrushSize);
                 BrushStrength = EditorGUILayout.FloatField("Strength", BrushStrength);
-                BrushType = (BrushType)EditorGUILayout.EnumPopup("Type", BrushType);
+                BrushType = (BrushTypeEnum)EditorGUILayout.EnumPopup("Type", BrushType);
 
                 Line();
             }
@@ -1007,11 +1051,27 @@ namespace FlowPaintTool
 
                 EditorGUILayout.BeginHorizontal();
                 {
+                    if (GUILayout.Button("Select linked (Mask off)"))
+                    {
+                        _instance.SelectLinkedPlus();
+                    }
+
+                    if (GUILayout.Button("Select linked (Mask on)"))
+                    {
+                        _instance.SelectLinkedMinus();
+                    }
+                }
+                EditorGUILayout.EndHorizontal();
+
+                EditorGUILayout.Space(20);
+
+                EditorGUILayout.BeginHorizontal();
+                {
                     if (GUILayout.Button("All Mask"))
                     {
-                        foreach (PolygonData polygonData in _instance._polygonList)
+                        for (int pIndex = 0; pIndex < _instance._polygonCount; pIndex++)
                         {
-                            polygonData.Mask = true;
+                            _instance._pd_MaskArray[pIndex] = true;
                         }
 
                         _instance.MaskModeMeshTriangleUpdate();
@@ -1019,9 +1079,9 @@ namespace FlowPaintTool
 
                     if (GUILayout.Button("All Unmask"))
                     {
-                        foreach (PolygonData polygonData in _instance._polygonList)
+                        for (int pIndex = 0; pIndex < _instance._polygonCount; pIndex++)
                         {
-                            polygonData.Mask = false;
+                            _instance._pd_MaskArray[pIndex] = false;
                         }
 
                         _instance.MaskModeMeshTriangleUpdate();
@@ -1029,9 +1089,9 @@ namespace FlowPaintTool
 
                     if (GUILayout.Button("All Inversion"))
                     {
-                        foreach (PolygonData polygonData in _instance._polygonList)
+                        for (int pIndex = 0; pIndex < _instance._polygonCount; pIndex++)
                         {
-                            polygonData.Mask = !polygonData.Mask;
+                            _instance._pd_MaskArray[pIndex] = !_instance._pd_MaskArray[pIndex];
                         }
 
                         _instance.MaskModeMeshTriangleUpdate();
@@ -1051,11 +1111,11 @@ namespace FlowPaintTool
                     {
                         if (GUILayout.Button("Mask"))
                         {
-                            foreach (PolygonData polygonData in _instance._polygonList)
+                            for (int pIndex = 0; pIndex < _instance._polygonCount; pIndex++)
                             {
-                                if (polygonData.SubMeshIndex != index) continue;
+                                if (_instance._pd_SubMeshIndexArray[pIndex] != index) continue;
 
-                                polygonData.Mask = true;
+                                _instance._pd_MaskArray[pIndex] = true;
                             }
 
                             _instance.MaskModeMeshTriangleUpdate();
@@ -1063,11 +1123,11 @@ namespace FlowPaintTool
 
                         if (GUILayout.Button("Unmask"))
                         {
-                            foreach (PolygonData polygonData in _instance._polygonList)
+                            for (int pIndex = 0; pIndex < _instance._polygonCount; pIndex++)
                             {
-                                if (polygonData.SubMeshIndex != index) continue;
+                                if (_instance._pd_SubMeshIndexArray[pIndex] != index) continue;
 
-                                polygonData.Mask = false;
+                                _instance._pd_MaskArray[pIndex] = false;
                             }
 
                             _instance.MaskModeMeshTriangleUpdate();
@@ -1075,11 +1135,11 @@ namespace FlowPaintTool
 
                         if (GUILayout.Button("Inversion"))
                         {
-                            foreach (PolygonData polygonData in _instance._polygonList)
+                            for (int pIndex = 0; pIndex < _instance._polygonCount; pIndex++)
                             {
-                                if (polygonData.SubMeshIndex != index) continue;
+                                if (_instance._pd_SubMeshIndexArray[pIndex] != index) continue;
 
-                                polygonData.Mask = !polygonData.Mask;
+                                _instance._pd_MaskArray[pIndex] = !_instance._pd_MaskArray[pIndex];
                             }
 
                             _instance.MaskModeMeshTriangleUpdate();
@@ -1091,19 +1151,17 @@ namespace FlowPaintTool
 
             public override void OnInspectorGUI()
             {
-                _guiStyle = new GUIStyle(GUI.skin.label);
-
                 FlowPaintToolData fptData = _instance._fptData;
 
                 if (EnableMaskMode)
                 {
                     MaskUI();
                 }
-                else if (fptData._paintMode == PaintMode.FlowPaintMode)
+                else if (fptData._paintMode == PaintModeEnum.FlowPaintMode)
                 {
                     FlowPaintUI();
                 }
-                else if (fptData._paintMode == PaintMode.ColorPaintMode)
+                else if (fptData._paintMode == PaintModeEnum.ColorPaintMode)
                 {
                     ColorPaintUI();
                 }

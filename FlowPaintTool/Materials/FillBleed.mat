@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: FillBleed
   m_Shader: {fileID: 4800000, guid: 8502ced023fa9494b9d2960a6bdc071c, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: UV_CHANNEL_0
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0

@@ -1,11 +1,11 @@
 StructuredBuffer<float3> _Vertices;
 StructuredBuffer<float2> _UVs;
-StructuredBuffer<int> _Triangles;
+StructuredBuffer<uint> _Triangles;
 RWStructuredBuffer<int3> _AdjacentResult;
 RWStructuredBuffer<float2> _CenterUVResult;
 RWStructuredBuffer<int> _DuplicateResult;
 
-int _TriangleCount;
+uint _TriangleCount;
 float _Epsilon;
 
 static float _ReciprocalThree = 1.0 / 3.0;
@@ -44,10 +44,10 @@ bool ShareEdgeC_Vector2(float2 a, float2 b, float2 c, float2 d, float2 e, float2
 [numthreads(1, 1, 1)]
 void Adjacent_Main(uint id : SV_DispatchThreadID)
 {
-    int temp0 = id * 3;
-    int index0 = _Triangles[temp0];
-    int index1 = _Triangles[temp0 + 1];
-    int index2 = _Triangles[temp0 + 2];
+    uint temp0 = id * 3;
+    uint index0 = _Triangles[temp0];
+    uint index1 = _Triangles[temp0 + 1];
+    uint index2 = _Triangles[temp0 + 2];
 
     float3 a = _Vertices[index0];
     float3 b = _Vertices[index1];
@@ -62,12 +62,12 @@ void Adjacent_Main(uint id : SV_DispatchThreadID)
 
     int3 result = -1;
     
-    for (int index = 0; index < _TriangleCount; ++index)
+    for (uint index = 0; index < _TriangleCount; ++index)
     {
-        int temp1 = index * 3;
-        int index3 = _Triangles[temp1];
-        int index4 = _Triangles[temp1 + 1];
-        int index5 = _Triangles[temp1 + 2];
+        uint temp1 = index * 3;
+        uint index3 = _Triangles[temp1];
+        uint index4 = _Triangles[temp1 + 1];
+        uint index5 = _Triangles[temp1 + 2];
 
         float2 j = _UVs[index3];
         float2 k = _UVs[index4];
@@ -104,7 +104,7 @@ void Duplicate_Main(uint id : SV_DispatchThreadID)
 {
     float2 myUV = _CenterUVResult[id];
     
-    for (int index = 0; index < id; ++index)
+    for (uint index = 0; index < id; ++index)
     {
         float2 temp0 = _CenterUVResult[index] - myUV;
         

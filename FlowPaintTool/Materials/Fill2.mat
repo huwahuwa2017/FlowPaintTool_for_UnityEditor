@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Fill2
   m_Shader: {fileID: 4800000, guid: a4f2094ffc9c1564ab48e9b527ab9f95, type: 3}
-  m_ShaderKeywords: 
+  m_ShaderKeywords: UV_CHANNEL_0
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0

@@ -20,8 +20,10 @@ namespace FlowPaintTool
 
         private bool _preInputKeyTab = false;
         private bool _preInputKeyZ = false;
+        private bool _preInputKeyPlus = false;
+        private bool _preInputKeyMinus = false;
 
-        public bool Started { get; set; } = false;
+        private bool _focus = false;
 
         public FlowPaintTool_EditorWindow FPT_EditorWindow { get; set; } = null;
 
@@ -38,8 +40,6 @@ namespace FlowPaintTool
                 AssetDatabase.CreateAsset(_fptEditorData, path);
             }
 
-            Started = true;
-
             _rangeVisualization = Instantiate(_rangeVisualizationPrefab);
             _rangeVisualization.transform.SetParent(transform, false);
 
@@ -50,23 +50,28 @@ namespace FlowPaintTool
 
         private void Update()
         {
+            bool inputKeyTab = Input.GetKey(KeyCode.Tab);
+            bool inputKeyZ = Input.GetKey(KeyCode.Z);
+            bool inputKeyPlus = Input.GetKey(KeyCode.KeypadPlus);
+            bool inputKeyMinus = Input.GetKey(KeyCode.KeypadMinus);
+
+
+
             float scrollDelta = Input.mouseScrollDelta.y;
 
             bool inspectorUpdate = false;
 
             if (Input.GetKey(KeyCode.R))
             {
-                FlowPaintTool.BrushSize *= 1f + (scrollDelta * 0.05f);
+                FlowPaintTool.BrushSize += Math.Max(FlowPaintTool.BrushSize, 0.001f) * scrollDelta * 0.1f;
                 inspectorUpdate = true;
             }
 
             if (Input.GetKey(KeyCode.F))
             {
-                FlowPaintTool.BrushStrength *= 1f + (scrollDelta * 0.05f);
+                FlowPaintTool.BrushStrength += scrollDelta * 0.05f;
                 inspectorUpdate = true;
             }
-
-            bool inputKeyTab = Input.GetKey(KeyCode.Tab);
 
             if (!_preInputKeyTab && inputKeyTab)
             {
@@ -74,17 +79,11 @@ namespace FlowPaintTool
                 inspectorUpdate = true;
             }
 
-            _preInputKeyTab = inputKeyTab;
-
-            bool inputKeyZ = Input.GetKey(KeyCode.Z);
-
             if (!_preInputKeyZ && inputKeyZ)
             {
                 FlowPaintTool.EnableMaterialView = !FlowPaintTool.EnableMaterialView;
                 inspectorUpdate = true;
             }
-
-            _preInputKeyZ = inputKeyZ;
 
             if (inspectorUpdate && (FPT_EditorWindow != null))
             {
@@ -94,6 +93,33 @@ namespace FlowPaintTool
                 EditorWindow inspectorWindow = EditorWindow.GetWindow(type, false, null, false);
                 inspectorWindow.Repaint();
             }
+
+
+
+            FlowPaintTool fpt = FlowPaintTool.ActiveInstance;
+
+            if (fpt != null)
+            {
+                if (FlowPaintTool.EnableMaskMode)
+                {
+                    if (!_preInputKeyPlus && inputKeyPlus)
+                    {
+                        fpt.SelectLinkedPlus();
+                    }
+
+                    if (!_preInputKeyMinus && inputKeyMinus)
+                    {
+                        fpt.SelectLinkedMinus();
+                    }
+                }
+            }
+
+
+
+            _preInputKeyTab = inputKeyTab;
+            _preInputKeyZ = inputKeyZ;
+            _preInputKeyPlus = inputKeyPlus;
+            _preInputKeyMinus = inputKeyMinus;
         }
 
         private void FixedUpdate()
@@ -107,6 +133,25 @@ namespace FlowPaintTool
             temp0.rotation = Camera.main.transform.rotation;
             temp0.localScale = new Vector3(FlowPaintTool.BrushSize, FlowPaintTool.BrushSize, FlowPaintTool.BrushSize) * 2f;
         }
+
+        private void OnGUI()
+        {
+            if (!_focus)
+            {
+                GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
+                GUILayout.Label("Paused", GUI.skin.box);
+                GUILayout.FlexibleSpace();
+                GUILayout.Label("Paused", GUI.skin.box);
+                GUILayout.EndArea();
+            }
+        }
+
+        private void OnApplicationFocus(bool focus)
+        {
+            _focus = focus;
+        }
+
+
 
         [CustomEditor(typeof(FlowPaintToolControl))]
         public class FlowPaintToolControl_InspectorUI : Editor

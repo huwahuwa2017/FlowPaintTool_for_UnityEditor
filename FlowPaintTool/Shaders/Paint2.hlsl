@@ -1,11 +1,12 @@
 #include "UnityCG.cginc"
+#include "TargetUVChannel.hlsl"
 
 struct I2V
 {
     float4 lPos : POSITION;
     float3 normal : NORMAL;
     float4 tangent : TANGENT;
-    float2 uv : TEXCOORD0;
+    float2 uv : TARGET_UV_CHANNEL;
 };
 
 struct V2F

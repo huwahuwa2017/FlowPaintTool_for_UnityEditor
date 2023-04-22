@@ -6,6 +6,10 @@ namespace FlowPaintTool
 {
     public class FlowPaintTool_EditorWindow : EditorWindow
     {
+        public static GUIStyle CenterLabel { get; private set; } = null;
+
+        public static GUIStyle BigCenterLabel { get; private set; } = null;
+
         [MenuItem("FlowPaintTool/Open")]
         private static void Open()
         {
@@ -20,7 +24,7 @@ namespace FlowPaintTool
         {
             bool isError = false;
 
-            if (_fptData.CheckTextureAndSRGB() && (_fptData._paintMode == PaintMode.FlowPaintMode))
+            if (_fptData.SRGBCheck() && (_fptData._paintMode == PaintModeEnum.FlowPaintMode))
             {
                 EditorGUILayout.HelpBox("Using sRGB textures in FlowPaintMode will not give accurate results\nPlease turn off sRGB", MessageType.Error);
                 isError = true;
@@ -58,34 +62,28 @@ namespace FlowPaintTool
 
         private void OnGUI()
         {
+            GUIStyle temp0 = new GUIStyle(GUI.skin.label);
+            temp0.alignment = TextAnchor.MiddleCenter;
+            CenterLabel = temp0;
+
+            GUIStyle temp1 = new GUIStyle(temp0);
+            temp1.fontSize = temp1.fontSize * 2;
+            BigCenterLabel = temp1;
+
+
+
             bool started = EditorApplication.isPlaying;
 
             GUILayout.Space(40);
 
             if (!started)
             {
-                GUIStyle guiStyle = new GUIStyle(GUI.skin.label);
-                guiStyle.fontSize = guiStyle.fontSize * 2;
-
-                EditorGUILayout.BeginHorizontal();
-                {
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("3D Flow Paint Tool", guiStyle);
-                    GUILayout.FlexibleSpace();
-                }
-                EditorGUILayout.EndHorizontal();
-
-                EditorGUILayout.BeginHorizontal();
-                {
-                    GUILayout.FlexibleSpace();
-                    GUILayout.Label("Version 12", guiStyle);
-                    GUILayout.FlexibleSpace();
-                }
-                EditorGUILayout.EndHorizontal();
+                GUILayout.Label("3D Flow Paint Tool", BigCenterLabel);
+                GUILayout.Label("Version 16", BigCenterLabel);
 
                 GUILayout.Space(40);
 
-                if(GUILayout.Button("Check GitHub"))
+                if (GUILayout.Button("Check GitHub"))
                 {
                     Application.OpenURL("https://github.com/huwahuwa2017/3D_FlowPaintTool/releases");
                 }
@@ -116,7 +114,7 @@ namespace FlowPaintTool
                 return;
             }
 
-            _fptData._paintMode = (PaintMode)EditorGUILayout.EnumPopup("PaintMode", _fptData._paintMode);
+            _fptData._paintMode = (PaintModeEnum)EditorGUILayout.EnumPopup("PaintMode", _fptData._paintMode);
 
             GUILayout.Space(20);
 
@@ -125,13 +123,13 @@ namespace FlowPaintTool
 
             GUILayout.Space(20);
 
-            _fptData._startTextureLoadMode = (StartTextureLoadMode)EditorGUILayout.EnumPopup("StartTextureLoadMode", _fptData._startTextureLoadMode);
+            _fptData._startTextureLoadMode = (StartTextureLoadModeEnum)EditorGUILayout.EnumPopup("StartTextureLoadMode", _fptData._startTextureLoadMode);
 
-            if (_fptData._startTextureLoadMode == StartTextureLoadMode.Assets)
+            if (_fptData._startTextureLoadMode == StartTextureLoadModeEnum.Assets)
             {
                 _fptData._startTexture = (Texture)EditorGUILayout.ObjectField("StartTexture", _fptData._startTexture, typeof(Texture), true);
             }
-            else if (_fptData._startTextureLoadMode == StartTextureLoadMode.FilePath)
+            else if (_fptData._startTextureLoadMode == StartTextureLoadModeEnum.FilePath)
             {
                 if (GUILayout.Button("Open file panel"))
                 {
@@ -149,16 +147,11 @@ namespace FlowPaintTool
 
             GUILayout.Space(20);
 
-            EditorGUILayout.BeginHorizontal();
-            {
-                GUILayout.FlexibleSpace();
-                GUILayout.Label("Advanced Settings");
-                GUILayout.FlexibleSpace();
-            }
-            EditorGUILayout.EndHorizontal();
+            GUILayout.Label("Advanced Settings", CenterLabel);
 
+            _fptData._targetUVChannel = EditorGUILayout.IntField("TargetUVChannel", _fptData._targetUVChannel);
             _fptData._bleedRange = EditorGUILayout.IntField("BleedRange", _fptData._bleedRange);
-            _fptData._uv_Epsilon = EditorGUILayout.FloatField("uv_Epsilon", _fptData._uv_Epsilon);
+            _fptData._uv_Epsilon = EditorGUILayout.FloatField("UV_Epsilon", _fptData._uv_Epsilon);
 
             GUILayout.Space(40);
 
@@ -181,6 +174,7 @@ namespace FlowPaintTool
                 _fptData._startMesh = temp4.sharedMesh;
             }
 
+            _fptData.ConsistencyCheck();
             bool isError = CheckError(flagSMR, flagMFMR);
 
             if (GUILayout.Button("Generate Paint tool object") && !isError)
