@@ -1,18 +1,18 @@
 ﻿namespace FlowPaintTool
 {
-    public enum StartTextureLoadModeEnum
+    public enum FPT_StartTextureLoadModeEnum
     {
         Assets,
         FilePath
     }
 
-    public enum PaintModeEnum
+    public enum FPT_PaintModeEnum
     {
         FlowPaintMode,
         ColorPaintMode
     }
 
-    public enum BrushTypeEnum
+    public enum FPT_BrushTypeEnum
     {
         Constant,
         Linear,

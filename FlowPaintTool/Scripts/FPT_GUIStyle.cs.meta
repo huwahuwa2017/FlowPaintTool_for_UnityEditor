@@ -1,10 +1,9 @@
 fileFormatVersion: 2
-guid: 9e1637d5afb86084aade35404049d3f2
+guid: 3036e8af8a694274e8c1cd7172716436
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences:
-  - _fptEditorData: {fileID: 11400000, guid: 8dd2085d5336e504c8536655b3da85ef, type: 2}
+  defaultReferences: []
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

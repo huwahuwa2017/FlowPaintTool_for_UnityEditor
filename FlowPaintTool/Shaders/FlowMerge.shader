@@ -1,4 +1,4 @@
-﻿Shader "FlowPaintTool2/Bleed2"
+﻿Shader "FlowPaintTool2/FlowMerge"
 {
 	Properties
 	{
@@ -14,7 +14,7 @@
 			CGPROGRAM
 
 			#pragma vertex VertexShaderStage
-			#pragma fragment FragmentShaderStage_Bleed
+			#pragma fragment FragmentShaderStage_FlowMerge
 
 			#include "BlitShader.hlsl"
 

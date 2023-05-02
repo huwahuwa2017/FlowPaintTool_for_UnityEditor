@@ -1,20 +1,12 @@
 ﻿using System;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
 namespace FlowPaintTool
 {
-    public class FlowPaintToolControl : MonoBehaviour
+    public class FPT_Parameter : MonoBehaviour
     {
-        private static FlowPaintToolEditorData _fptEditorData = null;
-
-        public static FlowPaintToolEditorData FPT_EditorData => _fptEditorData;
-
-
-
-        [SerializeField]
-        private GameObject _rangeVisualizationPrefab = null;
+        private FPT_EditorData _editorData = null;
 
         private GameObject _rangeVisualization = null;
 
@@ -22,30 +14,21 @@ namespace FlowPaintTool
         private bool _preInputKeyZ = false;
         private bool _preInputKeyPlus = false;
         private bool _preInputKeyMinus = false;
+        private bool _preInputKeyLeftBracket = false;
+        private bool _preInputKeyRightBracket = false;
 
         private bool _focus = false;
 
-        public FlowPaintTool_EditorWindow FPT_EditorWindow { get; set; } = null;
-
         private void Start()
         {
-            string path = AssetDatabase.GetAssetPath(_rangeVisualizationPrefab);
-            path = Path.Combine(Path.GetDirectoryName(path), "FlowPaintToolEditorData.asset");
+            _editorData = FPT_EditorWindow.EditorDataInstance;
 
-            _fptEditorData = AssetDatabase.LoadAssetAtPath<FlowPaintToolEditorData>(path);
-
-            if (_fptEditorData == null)
-            {
-                _fptEditorData = ScriptableObject.CreateInstance<FlowPaintToolEditorData>();
-                AssetDatabase.CreateAsset(_fptEditorData, path);
-            }
-
-            _rangeVisualization = Instantiate(_rangeVisualizationPrefab);
+            _rangeVisualization = Instantiate(FPT_EditorWindow.RequestAssetsInstance._rangeVisualizationPrefab);
             _rangeVisualization.transform.SetParent(transform, false);
 
             Camera camera = Camera.main;
             camera.nearClipPlane = Math.Min(camera.nearClipPlane, 0.01f);
-            camera.gameObject.AddComponent<CameraControl2>();
+            camera.gameObject.AddComponent<FPT_Camera>();
         }
 
         private void Update()
@@ -54,62 +37,82 @@ namespace FlowPaintTool
             bool inputKeyZ = Input.GetKey(KeyCode.Z);
             bool inputKeyPlus = Input.GetKey(KeyCode.KeypadPlus);
             bool inputKeyMinus = Input.GetKey(KeyCode.KeypadMinus);
+            bool inputKeyLeftBracket = Input.GetKey(KeyCode.LeftBracket);
+            bool inputKeyRightBracket = Input.GetKey(KeyCode.RightBracket);
 
 
 
             float scrollDelta = Input.mouseScrollDelta.y;
-
-            bool inspectorUpdate = false;
+            bool repaint = false;
 
             if (Input.GetKey(KeyCode.R))
             {
-                FlowPaintTool.BrushSize += Math.Max(FlowPaintTool.BrushSize, 0.001f) * scrollDelta * 0.1f;
-                inspectorUpdate = true;
+                _editorData.ChangeBrushSize(scrollDelta);
+                repaint = true;
             }
 
             if (Input.GetKey(KeyCode.F))
             {
-                FlowPaintTool.BrushStrength += scrollDelta * 0.05f;
-                inspectorUpdate = true;
+                _editorData.ChangeBrushStrength(scrollDelta);
+                repaint = true;
             }
 
             if (!_preInputKeyTab && inputKeyTab)
             {
-                FlowPaintTool.EnableMaskMode = !FlowPaintTool.EnableMaskMode;
-                inspectorUpdate = true;
+                _editorData.ChangeEnableMaskMode();
+                repaint = true;
             }
 
             if (!_preInputKeyZ && inputKeyZ)
             {
-                FlowPaintTool.EnableMaterialView = !FlowPaintTool.EnableMaterialView;
-                inspectorUpdate = true;
+                _editorData.ChangeEnableMaterialView();
+                repaint = true;
             }
 
-            if (inspectorUpdate && (FPT_EditorWindow != null))
+            if (repaint)
             {
-                FPT_EditorWindow.Repaint();
-
-                Type type = typeof(EditorWindow).Assembly.GetType("UnityEditor.InspectorWindow");
-                EditorWindow inspectorWindow = EditorWindow.GetWindow(type, false, null, false);
+                EditorWindow inspectorWindow = FPT_EditorWindow.GetInspectorWindow(false, null, false);
                 inspectorWindow.Repaint();
             }
 
 
 
-            FlowPaintTool fpt = FlowPaintTool.ActiveInstance;
+            FPT_Main fpt = FPT_Main.GetActiveInstance();
 
             if (fpt != null)
             {
-                if (FlowPaintTool.EnableMaskMode)
+                if (_editorData.GetEnableMaskMode())
                 {
                     if (!_preInputKeyPlus && inputKeyPlus)
                     {
-                        fpt.SelectLinkedPlus();
+                        fpt.GetMeshProcess().SelectLinkedPlus();
                     }
 
                     if (!_preInputKeyMinus && inputKeyMinus)
                     {
-                        fpt.SelectLinkedMinus();
+                        fpt.GetMeshProcess().SelectLinkedMinus();
+                    }
+                }
+                else
+                {
+                    repaint = false;
+
+                    if (!_preInputKeyLeftBracket && inputKeyLeftBracket)
+                    {
+                        fpt.GetShaderProcess().Undo();
+                        repaint = true;
+                    }
+
+                    if (!_preInputKeyRightBracket && inputKeyRightBracket)
+                    {
+                        fpt.GetShaderProcess().Redo();
+                        repaint = true;
+                    }
+
+                    if (repaint)
+                    {
+                        EditorWindow inspectorWindow = FPT_EditorWindow.GetInspectorWindow(false, null, false);
+                        inspectorWindow.Repaint();
                     }
                 }
             }
@@ -120,6 +123,8 @@ namespace FlowPaintTool
             _preInputKeyZ = inputKeyZ;
             _preInputKeyPlus = inputKeyPlus;
             _preInputKeyMinus = inputKeyMinus;
+            _preInputKeyLeftBracket = inputKeyLeftBracket;
+            _preInputKeyRightBracket = inputKeyRightBracket;
         }
 
         private void FixedUpdate()
@@ -127,11 +132,12 @@ namespace FlowPaintTool
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             bool hit = Physics.Raycast(ray, out RaycastHit raycastHit, 100f);
 
+            float scale = _editorData.GetBrushSize() * 2f;
             _rangeVisualization.SetActive(hit);
             Transform temp0 = _rangeVisualization.transform;
             temp0.position = raycastHit.point;
             temp0.rotation = Camera.main.transform.rotation;
-            temp0.localScale = new Vector3(FlowPaintTool.BrushSize, FlowPaintTool.BrushSize, FlowPaintTool.BrushSize) * 2f;
+            temp0.localScale = new Vector3(scale, scale, scale);
         }
 
         private void OnGUI()
@@ -153,8 +159,8 @@ namespace FlowPaintTool
 
 
 
-        [CustomEditor(typeof(FlowPaintToolControl))]
-        public class FlowPaintToolControl_InspectorUI : Editor
+        [CustomEditor(typeof(FPT_Parameter))]
+        public class FlowPaintTool_Control_InspectorUI : Editor
         {
             public override void OnInspectorGUI()
             {

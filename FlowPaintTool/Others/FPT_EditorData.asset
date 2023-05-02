@@ -10,8 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eeca00a5d6f9fb84aa14398cb7da45d9, type: 3}
-  m_Name: FlowPaintToolEditorData
+  m_Name: FPT_EditorData
   m_EditorClassIdentifier: 
   _cameraRotateSpeed: 2
   _moveSpeed: 0.05
   _inertia: 6
+  _undoMaxCount: 15

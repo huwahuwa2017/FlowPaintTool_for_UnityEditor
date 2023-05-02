@@ -13,7 +13,7 @@
 			#pragma vertex VertexShaderStage_FlowPaint
 			#pragma fragment FragmentShaderStage_FlowPaint
 
-			#include "Paint2.hlsl"
+			#include "DrawMeshShader.hlsl"
 
 			ENDCG
 		}

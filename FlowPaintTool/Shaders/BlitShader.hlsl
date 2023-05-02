@@ -1,10 +1,8 @@
 ﻿#include "UnityCG.cginc"
-#include "TargetUVChannel.hlsl"
 
 struct I2V
 {
     float4 lPos : POSITION;
-    float2 uv : TARGET_UV_CHANNEL;
 };
 
 struct V2F
@@ -12,8 +10,11 @@ struct V2F
     float4 cPos : SV_POSITION;
 };
 
-Texture2D _FillTex;
 Texture2D _MainTex;
+Texture2D _FillTex;
+Texture2D _PaintTex;
+Texture2D _DensityTex;
+
 float4 _MainTex_TexelSize;
 
 static int2 _OffsetArray[4] =
@@ -29,31 +30,14 @@ uint2 IsOutOfRange(in float2 range, in int2 index, out bool outOfRange)
 
 
 
-V2F VertexShaderStage_Fill(I2V input)
-{
-    V2F output = (V2F) 0;
-    output.cPos = float4(input.uv * 2.0 - 1.0, 0.0, 1.0);
-    
-#if UNITY_UV_STARTS_AT_TOP
-    output.cPos.y = -output.cPos.y;
-#endif
-    
-    return output;
-}
-
-float4 FragmentShaderStage_Fill(V2F input) : SV_Target
-{
-    return 1.0;
-}
-
-
-
-V2F VertexShaderStage_FillBleed(I2V input)
+V2F VertexShaderStage(I2V input)
 {
     V2F output = (V2F) 0;
     output.cPos = UnityObjectToClipPos(input.lPos);
     return output;
 }
+
+
 
 float4 FragmentShaderStage_FillBleed(V2F input) : SV_Target
 {
@@ -76,15 +60,6 @@ float4 FragmentShaderStage_FillBleed(V2F input) : SV_Target
     return result != 0.0;
 }
 
-
-
-V2F VertexShaderStage_Cutout(I2V input)
-{
-    V2F output = (V2F) 0;
-    output.cPos = UnityObjectToClipPos(input.lPos);
-    return output;
-}
-
 float4 FragmentShaderStage_Cutout(V2F input) : SV_Target
 {
     uint2 index = uint2(input.cPos.xy);
@@ -93,15 +68,6 @@ float4 FragmentShaderStage_Cutout(V2F input) : SV_Target
     bool flag = _FillTex[index].r > 0.5;
     
     return lerp(0.0, color, flag);
-}
-
-
-
-V2F VertexShaderStage_Bleed(I2V input)
-{
-    V2F output = (V2F) 0;
-    output.cPos = UnityObjectToClipPos(input.lPos);
-    return output;
 }
 
 float4 FragmentShaderStage_Bleed(V2F input) : SV_Target
@@ -127,4 +93,30 @@ float4 FragmentShaderStage_Bleed(V2F input) : SV_Target
     }
     
     return result / max(margeCount, 1);
+}
+
+float4 FragmentShaderStage_FlowMerge(V2F input) : SV_Target
+{
+    uint2 index = uint2(input.cPos.xy);
+    
+    float4 mColor = _MainTex[index];
+    float4 pColor = _PaintTex[index];
+    float density = _DensityTex[index].r;
+    
+    float3 mVector = mColor.rgb * 2.0 - 1.0;
+    float3 pVector = pColor.rgb * 2.0 - 1.0;
+    
+    float3 temp0 = normalize(lerp(mVector, pVector, density));
+    return float4(temp0 * 0.5 + 0.5, 1.0);
+}
+
+float4 FragmentShaderStage_ColorMerge(V2F input) : SV_Target
+{
+    uint2 index = uint2(input.cPos.xy);
+    
+    float4 mColor = _MainTex[index];
+    float4 pColor = _PaintTex[index];
+    float density = _DensityTex[index].r;
+    
+    return lerp(mColor, pColor, density);
 }

@@ -13,7 +13,7 @@
 			#pragma vertex VertexShaderStage_Fill
 			#pragma fragment FragmentShaderStage_Fill
 
-			#include "FillCutoutBleed.hlsl"
+			#include "DrawMeshShader.hlsl"
 
 			ENDCG
 		}
