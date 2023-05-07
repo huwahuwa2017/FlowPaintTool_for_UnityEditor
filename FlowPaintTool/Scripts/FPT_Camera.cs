@@ -1,12 +1,12 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+
+using System;
 using UnityEngine;
 
 namespace FlowPaintTool
 {
     public class FPT_Camera : MonoBehaviour
     {
-        private FPT_EditorData _editorData = FPT_EditorWindow.EditorDataInstance;
-
         private Vector3 _eulerAngle = Vector3.zero;
         private Vector3Int _speedVector = Vector3Int.zero;
         private bool _key_w, _key_a, _key_s, _key_d, _key_e, _key_q, _key_leftShift;
@@ -28,7 +28,7 @@ namespace FlowPaintTool
 
             if (Input.GetMouseButton(2))
             {
-                float cameraRotateSpeed = _editorData.GetCameraRotateSpeed();
+                float cameraRotateSpeed = FPT_EditorData.GetStaticInstance().GetCameraRotateSpeed();
 
                 _eulerAngle.x -= Input.GetAxis("Mouse Y") * cameraRotateSpeed;
                 _eulerAngle.y += Input.GetAxis("Mouse X") * cameraRotateSpeed;
@@ -64,13 +64,13 @@ namespace FlowPaintTool
                 _speedVector.z -= Math.Sign(_speedVector.z);
             }
 
-            int cameraInertia = _editorData.GetCameraInertia();
+            int cameraInertia = FPT_EditorData.GetStaticInstance().GetCameraInertia();
 
             _speedVector.x = Mathf.Clamp(_speedVector.x, -cameraInertia, cameraInertia);
             _speedVector.y = Mathf.Clamp(_speedVector.y, -cameraInertia, cameraInertia);
             _speedVector.z = Mathf.Clamp(_speedVector.z, -cameraInertia, cameraInertia);
 
-            float moveSpeed = _editorData.GetCameraMoveSpeed();
+            float moveSpeed = FPT_EditorData.GetStaticInstance().GetCameraMoveSpeed();
             moveSpeed = (_key_leftShift) ? moveSpeed * 3f : moveSpeed;
 
             Vector3 speed = (Vector3)_speedVector / cameraInertia * moveSpeed;
@@ -78,3 +78,5 @@ namespace FlowPaintTool
         }
     }
 }
+
+#endif
