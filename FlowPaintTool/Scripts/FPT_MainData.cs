@@ -1,4 +1,6 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
@@ -7,26 +9,35 @@ using UnityEngine.Experimental.Rendering;
 
 namespace FlowPaintTool
 {
+    using TextData = FPT_Language.FPT_MainDataText;
+
+    [Serializable]
     public struct FPT_MainData
     {
-        static public FPT_MainData Constructor()
+        public static FPT_MainData Constructor()
         {
             FPT_MainData fptData = new FPT_MainData();
             fptData.Reset();
             return fptData;
         }
 
+
+
         public FPT_PaintModeEnum _paintMode;
         public Mesh _startMesh;
         public Renderer _sorceRenderer;
-        public Vector2Int _outputTextureResolution;
-        public FPT_StartTextureLoadModeEnum _startTextureLoadMode;
+        public int _width;
+        public int _height;
+
+        public FPT_StartTextureLoadModeEnum _startTextureType;
         public Texture _startTexture;
         public string _startTextureFilePath;
         public bool _startTextureSRGB;
+
         public int _targetUVChannel;
         public int _bleedRange;
         public float _uv_Epsilon;
+        public int _maxUndoCount;
 
         public bool _textureExist;
         public bool _actualSRGB;
@@ -36,14 +47,18 @@ namespace FlowPaintTool
             _paintMode = FPT_PaintModeEnum.FlowPaintMode;
             _startMesh = null;
             _sorceRenderer = null;
-            _outputTextureResolution = new Vector2Int(1024, 1024);
-            _startTextureLoadMode = FPT_StartTextureLoadModeEnum.Assets;
+            _width = 1024;
+            _height = 1024;
+
+            _startTextureType = FPT_StartTextureLoadModeEnum.Assets;
             _startTexture = null;
             _startTextureFilePath = string.Empty;
             _startTextureSRGB = false;
+
+            _targetUVChannel = 0;
             _bleedRange = 4;
             _uv_Epsilon = 0.0001f;
-            _targetUVChannel = 0;
+            _maxUndoCount = 15;
 
             _textureExist = false;
             _actualSRGB = false;
@@ -51,22 +66,23 @@ namespace FlowPaintTool
 
         private void ConsistencyCheck()
         {
-            _outputTextureResolution.x = Math.Max(_outputTextureResolution.x, 0);
-            _outputTextureResolution.y = Math.Max(_outputTextureResolution.y, 0);
+            _width = Math.Max(_width, 0);
+            _height = Math.Max(_height, 0);
             _targetUVChannel = Math.Max(Math.Min(_targetUVChannel, 7), 0);
             _bleedRange = Math.Max(_bleedRange, 0);
             _uv_Epsilon = Math.Max(_uv_Epsilon, 0f);
+            _maxUndoCount = Math.Max(_maxUndoCount, 0);
         }
 
         private bool SRGBCheck()
         {
             bool result = false;
 
-            if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets)
+            if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
             {
                 result = _startTexture != null;
             }
-            else if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.FilePath)
+            else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
             {
                 result = File.Exists(_startTextureFilePath);
             }
@@ -77,11 +93,11 @@ namespace FlowPaintTool
 
             if (_textureExist && (PlayerSettings.colorSpace == ColorSpace.Linear))
             {
-                if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets)
+                if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
                 {
                     result = GraphicsFormatUtility.IsSRGBFormat(_startTexture.graphicsFormat);
                 }
-                else if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.FilePath)
+                else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
                 {
                     result = _startTextureSRGB;
                 }
@@ -91,31 +107,33 @@ namespace FlowPaintTool
             return result;
         }
 
-        private bool CheckError(bool flagSMR, bool flagMFMR)
+
+
+        private bool ErrorCheckGUI(bool flagSMR, bool flagMFMR)
         {
             bool isError = false;
 
             if (SRGBCheck() && (_paintMode == FPT_PaintModeEnum.FlowPaintMode))
             {
-                EditorGUILayout.HelpBox("Using sRGB textures in FlowPaintMode will not give accurate results\nPlease turn off sRGB", MessageType.Error);
+                EditorGUILayout.HelpBox(TextData.UsingSRGBTexturesInFlowPaintModeWillNot, MessageType.Error);
                 isError = true;
             }
 
             if (!(flagSMR || flagMFMR))
             {
-                EditorGUILayout.HelpBox("Please use either SkinnedMeshRenderer or a combination of MeshFilter and MeshRenderer", MessageType.Error);
+                EditorGUILayout.HelpBox(TextData.SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer, MessageType.Error);
                 return true;
             }
 
             if (_startMesh == null)
             {
-                EditorGUILayout.HelpBox("Mesh not set", MessageType.Error);
+                EditorGUILayout.HelpBox(TextData.MeshNotFound, MessageType.Error);
                 return true;
             }
 
             if (!_startMesh.isReadable)
             {
-                EditorGUILayout.HelpBox("Please allow Read/Write for the mesh", MessageType.Error);
+                EditorGUILayout.HelpBox(TextData.PleaseAllowReadWriteForTheMesh, MessageType.Error);
                 return true;
             }
 
@@ -124,7 +142,7 @@ namespace FlowPaintTool
 
             if (temp0.Count == 0)
             {
-                EditorGUILayout.HelpBox($"UV coordinate does not exist in UVchannel {_targetUVChannel}", MessageType.Error);
+                EditorGUILayout.HelpBox(TextData.UVCoordinateDoesNotExistInUVchannel + _targetUVChannel, MessageType.Error);
                 return true;
             }
 
@@ -133,26 +151,26 @@ namespace FlowPaintTool
 
         public void EditorWindowGUI(Transform selectTransform)
         {
-            _paintMode = (FPT_PaintModeEnum)EditorGUILayout.EnumPopup("PaintMode", _paintMode);
+            _paintMode = (FPT_PaintModeEnum)EditorGUILayout.EnumPopup(TextData.PaintMode, _paintMode);
 
             GUILayout.Space(20);
 
-            _outputTextureResolution.x = EditorGUILayout.IntField("OutputTextureWidth", _outputTextureResolution.x);
-            _outputTextureResolution.y = EditorGUILayout.IntField("OutputTextureHeight", _outputTextureResolution.y);
+            _width = EditorGUILayout.IntField(TextData.WidthOfTextureCreated, _width);
+            _height = EditorGUILayout.IntField(TextData.HeightOfTextureCreated, _height);
 
             GUILayout.Space(20);
 
-            _startTextureLoadMode = (FPT_StartTextureLoadModeEnum)EditorGUILayout.EnumPopup("StartTextureLoadMode", _startTextureLoadMode);
+            _startTextureType = (FPT_StartTextureLoadModeEnum)EditorGUILayout.EnumPopup(TextData.TypeOfStartingTexture, _startTextureType);
 
-            if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets)
+            if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
             {
-                _startTexture = (Texture)EditorGUILayout.ObjectField("StartTexture", _startTexture, typeof(Texture), true);
+                _startTexture = (Texture)EditorGUILayout.ObjectField(TextData.StartingTexture, _startTexture, typeof(Texture), true);
             }
-            else if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.FilePath)
+            else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
             {
-                if (GUILayout.Button("Open file panel"))
+                if (GUILayout.Button(TextData.OpenFilePanel))
                 {
-                    string filePath = EditorUtility.OpenFilePanel("Select Texture", string.Empty, string.Empty);
+                    string filePath = EditorUtility.OpenFilePanel(TextData.StartingTexture, string.Empty, string.Empty);
 
                     if (!string.IsNullOrEmpty(filePath))
                     {
@@ -160,18 +178,18 @@ namespace FlowPaintTool
                     }
                 }
 
-                _startTextureFilePath = EditorGUILayout.TextField("FilePath", _startTextureFilePath);
-                _startTextureSRGB = EditorGUILayout.Toggle("sRGB (Color Texture)", _startTextureSRGB);
+                _startTextureFilePath = EditorGUILayout.TextField(TextData.FilePath, _startTextureFilePath);
+                _startTextureSRGB = EditorGUILayout.Toggle(TextData.SRGBColorTexture, _startTextureSRGB);
             }
 
             GUILayout.Space(20);
 
-            GUILayout.Label("Advanced Settings", FPT_GUIStyle.GetCenterLabel());
+            GUILayout.Label(TextData.AdvancedSettings, FPT_GUIStyle.GetCenterLabel());
 
-            _targetUVChannel = EditorGUILayout.IntField("TargetUVChannel", _targetUVChannel);
-            _bleedRange = EditorGUILayout.IntField("BleedRange", _bleedRange);
-            _uv_Epsilon = EditorGUILayout.FloatField("UV_Epsilon", _uv_Epsilon);
-            FPT_EditorWindow.EditorDataInstance.ChangeUndoMaxCount();
+            _targetUVChannel = EditorGUILayout.IntField(TextData.TargetUVChannel, _targetUVChannel);
+            _bleedRange = EditorGUILayout.IntField(TextData.BleedRange, _bleedRange);
+            _uv_Epsilon = EditorGUILayout.FloatField(TextData.UVEpsilon, _uv_Epsilon);
+            _maxUndoCount = EditorGUILayout.IntField(TextData.MaxUndoCount, _maxUndoCount);
 
             GUILayout.Space(40);
 
@@ -195,10 +213,12 @@ namespace FlowPaintTool
             }
 
             ConsistencyCheck();
-            bool isError = CheckError(flagSMR, flagMFMR);
+            bool isError = ErrorCheckGUI(flagSMR, flagMFMR);
 
-            if (GUILayout.Button("Generate Paint tool object") && !isError)
+            if (GUILayout.Button(TextData.StartThePaintTool) && !isError)
             {
+                EditorUtility.SetDirty(FPT_EditorData.GetStaticInstance());
+
                 FPT_Parameter[] flowPaintToolControl = UnityEngine.Object.FindObjectsOfType<FPT_Parameter>();
 
                 if (flowPaintToolControl.Length == 0)
@@ -224,3 +244,5 @@ namespace FlowPaintTool
         }
     }
 }
+
+#endif

@@ -1,32 +1,53 @@
-﻿using System;
+﻿#if UNITY_EDITOR
+
+using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace FlowPaintTool
 {
+    using TextData = FPT_Language.FPT_EditorDataText;
+
     //[CreateAssetMenu(fileName = "Data", menuName = "FlowPaintTool/FPT_EditorData")]
     public class FPT_EditorData : ScriptableObject
     {
+        private static FPT_EditorData _staticInstance = null;
+
+        public static FPT_EditorData GetStaticInstance()
+        {
+            if (_staticInstance == null)
+            {
+                string path = AssetDatabase.GUIDToAssetPath("dbf48c8133b420242b2628a3104916fd");
+                _staticInstance = AssetDatabase.LoadAssetAtPath<FPT_EditorData>(path);
+            }
+
+            return _staticInstance;
+        }
+
+
+
+        [SerializeField]
+        private FPT_MainData _mainData = FPT_MainData.Constructor();
         [SerializeField]
         private float _cameraRotateSpeed = 2f;
         [SerializeField]
-        private float _moveSpeed = 0.05f;
+        private float _cameraMoveSpeed = 0.05f;
         [SerializeField]
-        private int _inertia = 6;
+        private int _cameraInertia = 6;
         [SerializeField]
-        private int _undoMaxCount = 15;
+        private FPT_LanguageTypeEnum _languageType = FPT_LanguageTypeEnum.Japanese;
 
         private bool _enableMaskMode = false;
-        private bool _enableMaterialView = false;
+        private bool _enablePreviewMode = false;
 
         private float _brushSize = 0.1f;
         private float _brushStrength = 1.0f;
-        private FPT_BrushTypeEnum _brushType = FPT_BrushTypeEnum.Smooth;
-        private float _brushMoveSensitivity = 0.01f; // UI未実装　0.01固定
+        private FPT_BrushShapeEnum _brushShape = FPT_BrushShapeEnum.Smooth;
+        private float _brushMoveSensitivity = 0.02f; // UI未実装　0.01固定
 
-        private bool _fixedHeight = false;
-        private float _fixedHeightMin = 0.5f;
-        private float _fixedHeightMax = 1f;
+        private bool _heightLimit = false;
+        private float _minHeight = 0.5f;
+        private float _maxHeight = 1f;
         private bool _fixedDirection = false;
         private Vector3 _fixedDirectionVector = Vector3.down;
         private float _displayNormalLength = 0.02f;
@@ -38,22 +59,23 @@ namespace FlowPaintTool
         private bool _editB = true;
         private bool _editA = true;
 
+        private bool _operationInstructions = true;
+
         public float GetCameraRotateSpeed() => _cameraRotateSpeed;
-        public float GetCameraMoveSpeed() => _moveSpeed;
-        public int GetCameraInertia() => _inertia;
-        public int GetUndoMaxCount() => _undoMaxCount;
+        public float GetCameraMoveSpeed() => _cameraMoveSpeed;
+        public int GetCameraInertia() => _cameraInertia;
 
         public bool GetEnableMaskMode() => _enableMaskMode;
-        public bool GetEnableMaterialView() => _enableMaterialView;
+        public bool GetEnablePreviewMode() => _enablePreviewMode;
 
         public float GetBrushSize() => _brushSize;
         public float GetBrushStrength() => _brushStrength;
-        public FPT_BrushTypeEnum GetBrushType() => _brushType;
+        public FPT_BrushShapeEnum GetBrushShape() => _brushShape;
         public float GetBrushMoveSensitivity() => _brushMoveSensitivity;
 
-        public bool GetFixedHeight() => _fixedHeight;
-        public float GetFixedHeightMin() => _fixedHeightMin;
-        public float GetFixedHeightMax() => _fixedHeightMax;
+        public bool GetHeightLimit() => _heightLimit;
+        public float GetMinHeight() => _minHeight;
+        public float GetMaxHeight() => _maxHeight;
         public bool GetFixedDirection() => _fixedDirection;
         public Vector3 GetFixedDirectionVector() => _fixedDirectionVector;
         public float GetDisplayNormalLength() => _displayNormalLength;
@@ -64,6 +86,8 @@ namespace FlowPaintTool
         public bool GetEditG() => _editG;
         public bool GetEditB() => _editB;
         public bool GetEditA() => _editA;
+
+        public bool GetOperationInstructions() => _operationInstructions;
 
 
 
@@ -82,9 +106,9 @@ namespace FlowPaintTool
         {
             var newValue = Math.Max(value, 0f);
 
-            if (newValue != _moveSpeed)
+            if (newValue != _cameraMoveSpeed)
             {
-                _moveSpeed = newValue;
+                _cameraMoveSpeed = newValue;
                 EditorUtility.SetDirty(this);
             }
         }
@@ -93,20 +117,20 @@ namespace FlowPaintTool
         {
             var newValue = Math.Max(value, 1);
 
-            if (newValue != _inertia)
+            if (newValue != _cameraInertia)
             {
-                _inertia = newValue;
+                _cameraInertia = newValue;
                 EditorUtility.SetDirty(this);
             }
         }
 
-        private void SetUndoMaxCount(int value)
+        private void SetLanguageType(FPT_LanguageTypeEnum value)
         {
-            var newValue = Math.Max(value, 0);
+            var newValue = value;
 
-            if (newValue != _undoMaxCount)
+            if (newValue != _languageType)
             {
-                _undoMaxCount = newValue;
+                _languageType = newValue;
                 EditorUtility.SetDirty(this);
             }
         }
@@ -131,7 +155,106 @@ namespace FlowPaintTool
             _displayNormalAmount = Math.Max(value, 0f);
         }
 
-        private void CommonUI(FPT_ShaderProcess shaderProcess)
+
+
+        public void ChangeBrushSize(float scrollDelta)
+        {
+            SetBrushSize(_brushSize + Math.Max(_brushSize, 0.001f) * scrollDelta * 0.1f);
+            FPT_EditorWindow.RepaintInspectorWindow();
+        }
+
+        public void ChangeBrushStrength(float scrollDelta)
+        {
+            SetBrushStrength(_brushStrength + scrollDelta * 0.05f);
+            FPT_EditorWindow.RepaintInspectorWindow();
+        }
+
+        public void ChangeEnableMaskMode()
+        {
+            _enableMaskMode = !_enableMaskMode;
+            FPT_EditorWindow.RepaintInspectorWindow();
+        }
+
+        public void ChangeEnableMaterialView()
+        {
+            if (_enableMaskMode) return;
+
+            _enablePreviewMode = !_enablePreviewMode;
+            FPT_EditorWindow.RepaintInspectorWindow();
+        }
+
+
+
+        public void UpdateLanguageType()
+        {
+            FPT_Language.ChangeLanguage(_languageType);
+        }
+
+        public void ChangeLanguageType(FPT_LanguageTypeEnum languageType)
+        {
+            SetLanguageType(languageType);
+            UpdateLanguageType();
+        }
+
+
+
+        public void DisableMaterialView()
+        {
+            _enablePreviewMode = false;
+        }
+
+
+
+        public void ChangeOperationInstructions()
+        {
+            _operationInstructions = !_operationInstructions;
+        }
+
+
+
+        public void ResetParameter()
+        {
+            _mainData = FPT_MainData.Constructor();
+            _cameraRotateSpeed = 2f;
+            _cameraMoveSpeed = 0.05f;
+            _cameraInertia = 6;
+            _languageType = FPT_LanguageTypeEnum.Japanese;
+
+            EditorUtility.SetDirty(this);
+
+            _enableMaskMode = false;
+            _enablePreviewMode = false;
+
+            _brushSize = 0.1f;
+            _brushStrength = 1.0f;
+            _brushShape = FPT_BrushShapeEnum.Smooth;
+            _brushMoveSensitivity = 0.02f;
+
+            _heightLimit = false;
+            _minHeight = 0.5f;
+            _maxHeight = 1f;
+            _fixedDirection = false;
+            _fixedDirectionVector = Vector3.down;
+            _displayNormalLength = 0.02f;
+            _displayNormalAmount = 64f;
+
+            _paintColor = Color.white;
+            _editR = true;
+            _editG = true;
+            _editB = true;
+            _editA = true;
+
+            _operationInstructions = true;
+        }
+
+
+
+        public void EditorWindowGUI(Transform selectTransform)
+        {
+            _mainData.EditorWindowGUI(selectTransform);
+        }
+
+        private void CommonGUI(FPT_ShaderProcess shaderProcess)
         {
             GUIStyle box = FPT_GUIStyle.GetBox();
 
@@ -141,66 +264,76 @@ namespace FlowPaintTool
 
             EditorGUILayout.Space(10);
 
-            _enableMaskMode = EditorGUILayout.Toggle("MaskMode", _enableMaskMode);
-            _enableMaterialView = EditorGUILayout.Toggle("ViewMode", _enableMaterialView);
+            _enableMaskMode = EditorGUILayout.Toggle(TextData.MaskMode, _enableMaskMode);
+            _enablePreviewMode = EditorGUILayout.Toggle(TextData.PreviewMode, _enablePreviewMode);
 
             EditorGUILayout.Space(10);
 
-            EditorGUILayout.LabelField("Camera settings");
+            EditorGUILayout.LabelField(TextData.CameraSettings);
             EditorGUILayout.BeginVertical(box);
             {
-                SetCameraRotateSpeed(EditorGUILayout.FloatField("Rotate Speed", _cameraRotateSpeed));
-                SetCameraMoveSpeed(EditorGUILayout.FloatField("Move Speed", _moveSpeed));
-                SetCameraInertia(EditorGUILayout.IntField("Inertia", _inertia));
+                SetCameraRotateSpeed(EditorGUILayout.FloatField(TextData.RotateSpeed, _cameraRotateSpeed));
+                SetCameraMoveSpeed(EditorGUILayout.FloatField(TextData.MoveSpeed, _cameraMoveSpeed));
+                SetCameraInertia(EditorGUILayout.IntField(TextData.Inertia, _cameraInertia));
             }
             EditorGUILayout.EndVertical();
 
             EditorGUILayout.Space(10);
 
-            EditorGUILayout.LabelField("Brush settings");
+            EditorGUILayout.LabelField(TextData.BrushSettings);
             EditorGUILayout.BeginVertical(box);
             {
-                SetBrushSize(EditorGUILayout.FloatField("Size", _brushSize));
-                SetBrushStrength(EditorGUILayout.FloatField("Strength", _brushStrength));
-                _brushType = (FPT_BrushTypeEnum)EditorGUILayout.EnumPopup("Type", _brushType);
+                SetBrushSize(EditorGUILayout.FloatField(TextData.Size, _brushSize));
+                SetBrushStrength(EditorGUILayout.FloatField(TextData.Strength, _brushStrength));
+                _brushShape = (FPT_BrushShapeEnum)EditorGUILayout.EnumPopup(TextData.Shape, _brushShape);
             }
             EditorGUILayout.EndVertical();
         }
 
-        private void FlowPaintUI(FPT_ShaderProcess shaderProcess)
+        private void FlowPaintGUI(FPT_ShaderProcess shaderProcess)
         {
             EditorGUILayout.Space(10);
 
-            EditorGUILayout.LabelField("Flow paint settings");
+            EditorGUILayout.LabelField(TextData.FlowPaintSettings);
             EditorGUILayout.BeginVertical(FPT_GUIStyle.GetBox());
             {
-                _fixedHeight = EditorGUILayout.Toggle("Fixed Height", _fixedHeight);
+                _heightLimit = EditorGUILayout.Toggle(TextData.HeightLimit, _heightLimit);
 
-                if (_fixedHeight)
+                if (_heightLimit)
                 {
                     EditorGUI.indentLevel++;
-                    float temp0 = EditorGUILayout.Slider("Fixed Height Min", _fixedHeightMin, -1f, 1f);
-                    float temp1 = EditorGUILayout.Slider("Fixed Height Max", _fixedHeightMax, -1f, 1f);
-                    _fixedHeightMin = Mathf.Clamp(temp0, -1f, temp1);
-                    _fixedHeightMax = Mathf.Clamp(temp1, temp0, 1f);
+
+                    float tempMin = EditorGUILayout.Slider(TextData.MinimumHeight, _minHeight, -1f, 1f);
+                    float tempMax = EditorGUILayout.Slider(TextData.MaximumHeight, _maxHeight, -1f, 1f);
+
+                    if (_minHeight != tempMin)
+                    {
+                        _minHeight = Mathf.Clamp(tempMin, -1f, _maxHeight);
+                    }
+
+                    if (_maxHeight != tempMax)
+                    {
+                        _maxHeight = Mathf.Clamp(tempMax, _minHeight, 1f);
+                    }
+
                     EditorGUI.indentLevel--;
                 }
 
                 EditorGUILayout.Space(10);
 
-                _fixedDirection = EditorGUILayout.Toggle("Fixed Direction", _fixedDirection);
+                _fixedDirection = EditorGUILayout.Toggle(TextData.FixedDirection, _fixedDirection);
 
                 if (_fixedDirection)
                 {
                     EditorGUI.indentLevel++;
-                    _fixedDirectionVector = EditorGUILayout.Vector3Field("Fixed Direction Vector", _fixedDirectionVector);
+                    _fixedDirectionVector = EditorGUILayout.Vector3Field(TextData.FixedDirectionVector, _fixedDirectionVector);
                     EditorGUI.indentLevel--;
                 }
 
                 EditorGUILayout.Space(10);
 
-                SetDisplayNormalLength(EditorGUILayout.FloatField("Display Normal Length", _displayNormalLength));
-                SetDisplayNormalAmount(EditorGUILayout.FloatField("Display Normal Amount", _displayNormalAmount));
+                SetDisplayNormalLength(EditorGUILayout.FloatField(TextData.DisplayNormalLength, _displayNormalLength));
+                SetDisplayNormalAmount(EditorGUILayout.FloatField(TextData.DisplayNormalAmount, _displayNormalAmount));
             }
             EditorGUILayout.EndVertical();
 
@@ -211,25 +344,25 @@ namespace FlowPaintTool
             EditorGUILayout.Space(20);
         }
 
-        private void ColorPaintUI(FPT_ShaderProcess shaderProcess)
+        private void ColorPaintGUI(FPT_ShaderProcess shaderProcess)
         {
             EditorGUILayout.Space(10);
 
-            EditorGUILayout.LabelField("Color paint settings");
+            EditorGUILayout.LabelField(TextData.ColorPaintSettings);
             EditorGUILayout.BeginVertical(FPT_GUIStyle.GetBox());
             {
-                _paintColor = EditorGUILayout.ColorField("Color", _paintColor);
+                _paintColor = EditorGUILayout.ColorField(TextData.Color, _paintColor);
 
                 EditorGUILayout.Space(10);
 
-                EditorGUILayout.LabelField("Edit channel");
+                EditorGUILayout.LabelField(TextData.SelectColorToEdit);
 
                 EditorGUILayout.BeginHorizontal();
                 {
-                    _editR = GUILayout.Toggle(_editR, "R");
-                    _editG = GUILayout.Toggle(_editG, "G");
-                    _editB = GUILayout.Toggle(_editB, "B");
-                    _editA = GUILayout.Toggle(_editA, "A");
+                    _editR = GUILayout.Toggle(_editR, TextData.R);
+                    _editG = GUILayout.Toggle(_editG, TextData.G);
+                    _editB = GUILayout.Toggle(_editB, TextData.B);
+                    _editA = GUILayout.Toggle(_editA, TextData.A);
                 }
                 EditorGUILayout.EndHorizontal();
             }
@@ -242,7 +375,7 @@ namespace FlowPaintTool
             GUILayout.Space(20);
         }
 
-        private void MaskUI(FPT_MeshProcess meshProcess)
+        private void MaskGUI(FPT_MeshProcess meshProcess)
         {
             EditorGUILayout.Space(20);
 
@@ -251,85 +384,22 @@ namespace FlowPaintTool
 
         public void InspectorGUI(FPT_MeshProcess meshProcess, FPT_ShaderProcess shaderProcess, FPT_PaintModeEnum paintMode)
         {
-            CommonUI(shaderProcess);
+            UpdateLanguageType();
+
+            CommonGUI(shaderProcess);
 
             if (_enableMaskMode)
             {
-                MaskUI(meshProcess);
+                MaskGUI(meshProcess);
             }
             else if (paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {
-                FlowPaintUI(shaderProcess);
+                FlowPaintGUI(shaderProcess);
             }
             else if (paintMode == FPT_PaintModeEnum.ColorPaintMode)
             {
-                ColorPaintUI(shaderProcess);
+                ColorPaintGUI(shaderProcess);
             }
-        }
-
-
-
-        public void ChangeUndoMaxCount()
-        {
-            SetUndoMaxCount(EditorGUILayout.IntField("TargetUVChannel", _undoMaxCount));
-        }
-
-        public void ChangeBrushSize(float scrollDelta)
-        {
-            SetBrushSize(_brushSize + Math.Max(_brushSize, 0.001f) * scrollDelta * 0.1f);
-        }
-
-        public void ChangeBrushStrength(float scrollDelta)
-        {
-            SetBrushStrength(_brushStrength + scrollDelta * 0.05f);
-        }
-
-        public void ChangeEnableMaskMode()
-        {
-            _enableMaskMode = !_enableMaskMode;
-        }
-
-        public void ChangeEnableMaterialView()
-        {
-            _enableMaterialView = !_enableMaterialView;
-        }
-
-        public void DisableMaterialView()
-        {
-            _enableMaterialView = false;
-        }
-
-
-
-        public void ParameterReset()
-        {
-            _cameraRotateSpeed = 2f;
-            _moveSpeed = 0.05f;
-            _inertia = 6;
-            _undoMaxCount = 15;
-
-            EditorUtility.SetDirty(this);
-
-            _enableMaskMode = false;
-            _enableMaterialView = false;
-            _brushSize = 0.1f;
-            _brushStrength = 1.0f;
-            _brushType = FPT_BrushTypeEnum.Smooth;
-            _brushMoveSensitivity = 0.01f;
-
-            _fixedHeight = false;
-            _fixedHeightMin = 0.5f;
-            _fixedHeightMax = 1f;
-            _fixedDirection = false;
-            _fixedDirectionVector = Vector3.down;
-            _displayNormalLength = 0.02f;
-            _displayNormalAmount = 64f;
-
-            _paintColor = Color.white;
-            _editR = true;
-            _editG = true;
-            _editB = true;
-            _editA = true;
         }
 
 
@@ -346,9 +416,11 @@ namespace FlowPaintTool
                 if (GUILayout.Button("Reset"))
                 {
                     FPT_EditorData _instance = target as FPT_EditorData;
-                    _instance.ParameterReset();
+                    _instance.ResetParameter();
                 }
             }
         }
     }
 }
+
+#endif
