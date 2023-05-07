@@ -1,43 +1,14 @@
-﻿#if UNITY_EDITOR
-
-using System;
+﻿using System;
 using UnityEditor;
 using UnityEngine;
 
 namespace FlowPaintTool
 {
-    using TextData = FPT_Language.FPT_EditorWindowText;
-
     public class FPT_EditorWindow : EditorWindow
     {
-        public const string MenuPathJapanese = "FlowPaintTool/Japanese";
-        public const string MenuPathEnglish = "FlowPaintTool/English";
+        public static FPT_EditorData EditorDataInstance { get; private set; }
 
-        [MenuItem("FlowPaintTool/Open", false, 0)]
-        private static void Open()
-        {
-            GetWindow<FPT_EditorWindow>("FlowPaintTool");
-        }
-
-        [MenuItem(MenuPathJapanese, false, 20)]
-        private static void Japanese()
-        {
-            FPT_EditorData.GetStaticInstance().ChangeLanguageType(FPT_LanguageTypeEnum.Japanese);
-        }
-
-        [MenuItem(MenuPathEnglish, false, 21)]
-        private static void English()
-        {
-            FPT_EditorData.GetStaticInstance().ChangeLanguageType(FPT_LanguageTypeEnum.English);
-        }
-
-        [MenuItem("FlowPaintTool/Reset Parameter", false, 40)]
-        private static void ResetParameter()
-        {
-            FPT_EditorData.GetStaticInstance().ResetParameter();
-        }
-
-
+        public static FPT_Assets RequestAssetsInstance { get; private set; }
 
         public static EditorWindow GetInspectorWindow(bool utility = false, string title = null, bool focus = true)
         {
@@ -45,17 +16,35 @@ namespace FlowPaintTool
             return GetWindow(type, utility, title, focus);
         }
 
-        public static void RepaintInspectorWindow()
+        [MenuItem("FlowPaintTool/Open")]
+        private static void Open()
         {
-            EditorWindow inspectorWindow = GetInspectorWindow(false, null, false);
-            inspectorWindow.Repaint();
+            GetWindow<FPT_EditorWindow>("FlowPaintTool");
         }
 
 
 
+        [SerializeField]
+        private FPT_EditorData _editorData = null;
+
+        [SerializeField]
+        private FPT_Assets _requestAssets = null;
+
+        private FPT_MainData _fptData = FPT_MainData.Constructor();
+
         private void OnGUI()
         {
-            FPT_EditorData.GetStaticInstance().UpdateLanguageType();
+            if (EditorDataInstance == null)
+            {
+                EditorDataInstance = _editorData;
+            }
+
+            if (RequestAssetsInstance == null)
+            {
+                RequestAssetsInstance = _requestAssets;
+            }
+
+
 
             bool started = EditorApplication.isPlaying;
 
@@ -64,18 +53,18 @@ namespace FlowPaintTool
             if (!started)
             {
                 GUILayout.Label("3D Flow Paint Tool", FPT_GUIStyle.GetBigCenterLabel());
-                GUILayout.Label("Version 31", FPT_GUIStyle.GetBigCenterLabel());
+                GUILayout.Label("Version 24", FPT_GUIStyle.GetBigCenterLabel());
 
                 GUILayout.Space(40);
 
-                if (GUILayout.Button(TextData.CheckGitHub))
+                if (GUILayout.Button("Check GitHub"))
                 {
                     Application.OpenURL("https://github.com/huwahuwa2017/3D_FlowPaintTool/releases");
                 }
 
                 GUILayout.Space(40);
 
-                if (GUILayout.Button(TextData.StartPlayMode))
+                if (GUILayout.Button("Play mode start"))
                 {
                     EditorApplication.isPlaying = true;
                 }
@@ -87,7 +76,7 @@ namespace FlowPaintTool
 
             if (selectTransform == null)
             {
-                EditorGUILayout.HelpBox(TextData.PleaseSelectOnlyOneGameObject, MessageType.Info);
+                EditorGUILayout.HelpBox("Please select only one GameObject", MessageType.Info);
                 return;
             }
 
@@ -95,11 +84,13 @@ namespace FlowPaintTool
 
             if (fpt0 != null)
             {
-                EditorGUILayout.HelpBox(TextData.ThePaintToolIsReady, MessageType.Info);
+                EditorGUILayout.HelpBox("The paint tool is ready", MessageType.Info);
                 return;
             }
 
-            FPT_EditorData.GetStaticInstance().EditorWindowGUI(selectTransform);
+
+
+            _fptData.EditorWindowGUI(selectTransform);
         }
 
         private void OnInspectorUpdate()
@@ -108,5 +99,3 @@ namespace FlowPaintTool
         }
     }
 }
-
-#endif

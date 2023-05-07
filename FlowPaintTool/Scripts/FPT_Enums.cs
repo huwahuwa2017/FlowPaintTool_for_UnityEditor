@@ -1,6 +1,4 @@
-﻿#if UNITY_EDITOR
-
-namespace FlowPaintTool
+﻿namespace FlowPaintTool
 {
     public enum FPT_StartTextureLoadModeEnum
     {
@@ -14,7 +12,7 @@ namespace FlowPaintTool
         ColorPaintMode
     }
 
-    public enum FPT_BrushShapeEnum
+    public enum FPT_BrushTypeEnum
     {
         Constant,
         Linear,
@@ -22,13 +20,4 @@ namespace FlowPaintTool
         Squared,
         InverseSquared
     }
-
-    public enum FPT_LanguageTypeEnum
-    {
-        None,
-        Japanese,
-        English
-    }
 }
-
-#endif

@@ -12,23 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: eeca00a5d6f9fb84aa14398cb7da45d9, type: 3}
   m_Name: FPT_EditorData
   m_EditorClassIdentifier: 
-  _mainData:
-    _paintMode: 0
-    _startMesh: {fileID: 0}
-    _sorceRenderer: {fileID: 0}
-    _width: 1024
-    _height: 1024
-    _startTextureType: 0
-    _startTexture: {fileID: 0}
-    _startTextureFilePath: 
-    _startTextureSRGB: 0
-    _targetUVChannel: 0
-    _bleedRange: 4
-    _uv_Epsilon: 0.0001
-    _maxUndoCount: 15
-    _textureExist: 0
-    _actualSRGB: 0
   _cameraRotateSpeed: 2
-  _cameraMoveSpeed: 0.05
-  _cameraInertia: 6
-  _languageType: 1
+  _moveSpeed: 0.05
+  _inertia: 6
+  _undoMaxCount: 15

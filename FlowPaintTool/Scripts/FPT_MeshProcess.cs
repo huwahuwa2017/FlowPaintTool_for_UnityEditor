@@ -1,6 +1,4 @@
-﻿#if UNITY_EDITOR
-
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -10,8 +8,6 @@ using UnityEngine;
 
 namespace FlowPaintTool
 {
-    using TextData = FPT_Language.FPT_MeshProcessText;
-
     public class FPT_MeshProcess
     {
         private Mesh _paintModeMesh = null;
@@ -21,7 +17,6 @@ namespace FlowPaintTool
         private int _subMeshCount = 1;
         private Vector3[] _vertices;
 
-        private IEnumerable<int> _pd_IndexArray = null;
         private int[] _pd_SubMeshIndexArray = null;
         private Vector3Int[] _pd_VertexIndexArray = null;
         private Vector3Int[] _pd_AdjacentIndexArray = null;
@@ -31,13 +26,23 @@ namespace FlowPaintTool
         private bool[] _pd_MaskArray = null;
         private bool[] _pd_MaskResultArray = null;
 
+        private FPT_EditorData _editorData = null;
         private Matrix4x4 _preMatrix = Matrix4x4.zero;
 
-        public int GetSubMeshCount() => _subMeshCount;
+        public int GetSubMeshCount()
+        {
+            return _subMeshCount;
+        }
 
-        public Mesh GetPaintModeMesh() => _paintModeMesh;
+        public Mesh GetPaintModeMesh()
+        {
+            return _paintModeMesh;
+        }
 
-        public Mesh GetMaskModeMesh() => _maskModeMesh;
+        public Mesh GetMaskModeMesh()
+        {
+            return _maskModeMesh;
+        }
 
 
 
@@ -46,11 +51,11 @@ namespace FlowPaintTool
             List<int> triangleList0 = new List<int>(_polygonCount);
             List<int> triangleList1 = new List<int>(_polygonCount);
 
-            foreach (int pdIndex in _pd_IndexArray)
+            for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
             {
-                Vector3Int vIndex = _pd_VertexIndexArray[pdIndex];
+                Vector3Int vIndex = _pd_VertexIndexArray[pIndex];
 
-                if (_pd_MaskArray[pdIndex])
+                if (_pd_MaskArray[pIndex])
                 {
                     triangleList1.Add(vIndex.x);
                     triangleList1.Add(vIndex.y);
@@ -70,6 +75,8 @@ namespace FlowPaintTool
 
         public FPT_MeshProcess(FPT_MainData fptData)
         {
+            _editorData = FPT_EditorWindow.EditorDataInstance;
+            FPT_Assets assets = FPT_EditorWindow.RequestAssetsInstance;
             Mesh startMesh = fptData._startMesh;
             int targetUVChannel = fptData._targetUVChannel;
             float uv_Epsilon = fptData._uv_Epsilon;
@@ -93,7 +100,6 @@ namespace FlowPaintTool
             _polygonCount = triangles.Length / 3;
             _subMeshCount = startMesh.subMeshCount;
 
-            _pd_IndexArray = Enumerable.Range(0, _polygonCount);
             _pd_SubMeshIndexArray = new int[_polygonCount];
             _pd_VertexIndexArray = new Vector3Int[_polygonCount];
             _pd_DuplicateUVArray = new bool[_polygonCount];
@@ -120,7 +126,7 @@ namespace FlowPaintTool
             // Generate polygon list End
 
             // Compute shader Start
-            ComputeShader cs_adjacentPolygon = FPT_Assets.GetStaticInstance().GetAdjacentPolygonComputeShader();
+            ComputeShader cs_adjacentPolygon = assets._adjacentPolygonComputeShader;
 
             ComputeBuffer cb_Vertices = new ComputeBuffer(_vertices.Count(), Marshal.SizeOf(typeof(Vector3)));
             ComputeBuffer cb_UVs = new ComputeBuffer(uvs.Count(), Marshal.SizeOf(typeof(Vector2)));
@@ -168,7 +174,7 @@ namespace FlowPaintTool
             bool[] checkIndex = new bool[_polygonCount];
             List<int[]> duplicatePolygonIndexArray = new List<int[]>();
 
-            foreach (int startIndex in _pd_IndexArray)
+            for (int startIndex = 0; startIndex < _polygonCount; ++startIndex)
             {
                 int duplicateIndex = duplicateResult[startIndex];
 
@@ -207,18 +213,18 @@ namespace FlowPaintTool
             _preMatrix = matrix;
 
             Vector3[] vpArray = _vertices.Clone() as Vector3[];
-            int vpArrayLength = vpArray.Length;
+            int maxIndex = vpArray.Length;
 
-            for (int index = 0; index < vpArrayLength; ++index)
+            for (int index = 0; index < maxIndex; ++index)
             {
                 vpArray[index] = matrix.MultiplyPoint3x4(vpArray[index]);
             }
 
-            foreach (int pdIndex in _pd_IndexArray)
+            for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
             {
-                Vector3Int vIndex = _pd_VertexIndexArray[pdIndex];
+                Vector3Int vIndex = _pd_VertexIndexArray[pIndex];
 
-                _pd_CenterArray[pdIndex] = (vpArray[vIndex.x] + vpArray[vIndex.y] + vpArray[vIndex.z]) / 3f;
+                _pd_CenterArray[pIndex] = (vpArray[vIndex.x] + vpArray[vIndex.y] + vpArray[vIndex.z]) / 3f;
             }
         }
 
@@ -226,9 +232,9 @@ namespace FlowPaintTool
 
         public void PaintModeMeshTriangleUpdate(Vector3 hitPosition)
         {
-            foreach (int pdIndex in _pd_IndexArray)
+            for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
             {
-                _pd_MaskResultArray[pdIndex] = _pd_DuplicateUVArray[pdIndex] || _pd_MaskArray[pdIndex];
+                _pd_MaskResultArray[pIndex] = _pd_DuplicateUVArray[pIndex] || _pd_MaskArray[pIndex];
             }
 
             foreach (int[] duplicatePolygonList in _pd_duplicatePolygonIndexArrayArray)
@@ -238,16 +244,16 @@ namespace FlowPaintTool
 
                 for (int index = 0; index < duplicatePolygonList.Length; index++)
                 {
-                    int pdIndex = duplicatePolygonList[index];
+                    int pIndex = duplicatePolygonList[index];
 
-                    if (_pd_MaskArray[pdIndex]) continue;
+                    if (_pd_MaskArray[pIndex]) continue;
 
-                    float sqrDistance = (hitPosition - _pd_CenterArray[pdIndex]).sqrMagnitude;
+                    float sqrDistance = (hitPosition - _pd_CenterArray[pIndex]).sqrMagnitude;
 
                     if (sqrDistance < minSqrDistance)
                     {
                         minSqrDistance = sqrDistance;
-                        targetPolygonIndex = pdIndex;
+                        targetPolygonIndex = pIndex;
                     }
                 }
 
@@ -259,11 +265,11 @@ namespace FlowPaintTool
 
             List<int> triangleList0 = new List<int>(_polygonCount);
 
-            foreach (int pdIndex in _pd_IndexArray)
+            for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
             {
-                if (_pd_MaskResultArray[pdIndex]) continue;
+                if (_pd_MaskResultArray[pIndex]) continue;
 
-                Vector3Int vIndex = _pd_VertexIndexArray[pdIndex];
+                Vector3Int vIndex = _pd_VertexIndexArray[pIndex];
                 triangleList0.Add(vIndex.x);
                 triangleList0.Add(vIndex.y);
                 triangleList0.Add(vIndex.z);
@@ -287,14 +293,14 @@ namespace FlowPaintTool
             if (click)
             {
                 Vector3 hitPosition = raycastHit.point;
-                float brushSize = FPT_EditorData.GetStaticInstance().GetBrushSize();
+                float brushSize = _editorData.GetBrushSize();
                 float sqrRange = brushSize * brushSize;
 
-                foreach (int pdIndex in _pd_IndexArray)
+                for (int index = 0; index < _polygonCount; index++)
                 {
-                    if ((hitPosition - _pd_CenterArray[pdIndex]).sqrMagnitude < sqrRange)
+                    if ((hitPosition - _pd_CenterArray[index]).sqrMagnitude < sqrRange)
                     {
-                        _pd_MaskArray[pdIndex] = rightClick;
+                        _pd_MaskArray[index] = rightClick;
                     }
                 }
 
@@ -332,9 +338,9 @@ namespace FlowPaintTool
             return adjacentTriangles;
         }
 
-        public void LinkedUnmask()
+        public void SelectLinkedPlus()
         {
-            IEnumerable<int> temp0 = _pd_IndexArray.Where(I => !_pd_MaskArray[I]);
+            IEnumerable<int> temp0 = Enumerable.Range(0, _polygonCount).Where(I => !_pd_MaskArray[I]);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
             foreach (int temp2 in temp1)
@@ -345,9 +351,9 @@ namespace FlowPaintTool
             MaskModeMeshTriangleUpdate();
         }
 
-        public void LinkedMask()
+        public void SelectLinkedMinus()
         {
-            IEnumerable<int> temp0 = _pd_IndexArray.Where(I => _pd_MaskArray[I]);
+            IEnumerable<int> temp0 = Enumerable.Range(0, _polygonCount).Where(I => _pd_MaskArray[I]);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
             foreach (int temp2 in temp1)
@@ -364,14 +370,14 @@ namespace FlowPaintTool
         {
             EditorGUILayout.BeginHorizontal();
             {
-                if (GUILayout.Button(TextData.LinkedMask))
+                if (GUILayout.Button("Select linked (Mask)"))
                 {
-                    LinkedMask();
+                    SelectLinkedMinus();
                 }
 
-                if (GUILayout.Button(TextData.LinkedUnmask))
+                if (GUILayout.Button("Select linked (Unmask)"))
                 {
-                    LinkedUnmask();
+                    SelectLinkedPlus();
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -380,31 +386,31 @@ namespace FlowPaintTool
 
             EditorGUILayout.BeginHorizontal();
             {
-                if (GUILayout.Button(TextData.MaskAll))
+                if (GUILayout.Button("All Mask"))
                 {
-                    foreach (int pdIndex in _pd_IndexArray)
+                    for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
                     {
-                        _pd_MaskArray[pdIndex] = true;
+                        _pd_MaskArray[pIndex] = true;
                     }
 
                     MaskModeMeshTriangleUpdate();
                 }
 
-                if (GUILayout.Button(TextData.UnmaskAll))
+                if (GUILayout.Button("All Unmask"))
                 {
-                    foreach (int pdIndex in _pd_IndexArray)
+                    for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
                     {
-                        _pd_MaskArray[pdIndex] = false;
+                        _pd_MaskArray[pIndex] = false;
                     }
 
                     MaskModeMeshTriangleUpdate();
                 }
 
-                if (GUILayout.Button(TextData.InvertAll))
+                if (GUILayout.Button("All Inversion"))
                 {
-                    foreach (int pdIndex in _pd_IndexArray)
+                    for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
                     {
-                        _pd_MaskArray[pdIndex] = !_pd_MaskArray[pdIndex];
+                        _pd_MaskArray[pIndex] = !_pd_MaskArray[pIndex];
                     }
 
                     MaskModeMeshTriangleUpdate();
@@ -416,41 +422,41 @@ namespace FlowPaintTool
 
             for (int index = 0; index < _subMeshCount; ++index)
             {
-                EditorGUILayout.LabelField(TextData.SubMeshIndex + index);
+                EditorGUILayout.LabelField("SubMeshIndex : " + index);
 
                 EditorGUILayout.BeginHorizontal();
                 {
-                    if (GUILayout.Button(TextData.Mask))
+                    if (GUILayout.Button("Mask"))
                     {
-                        foreach (int pdIndex in _pd_IndexArray)
+                        for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
                         {
-                            if (_pd_SubMeshIndexArray[pdIndex] != index) continue;
+                            if (_pd_SubMeshIndexArray[pIndex] != index) continue;
 
-                            _pd_MaskArray[pdIndex] = true;
+                            _pd_MaskArray[pIndex] = true;
                         }
 
                         MaskModeMeshTriangleUpdate();
                     }
 
-                    if (GUILayout.Button(TextData.Unmask))
+                    if (GUILayout.Button("Unmask"))
                     {
-                        foreach (int pdIndex in _pd_IndexArray)
+                        for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
                         {
-                            if (_pd_SubMeshIndexArray[pdIndex] != index) continue;
+                            if (_pd_SubMeshIndexArray[pIndex] != index) continue;
 
-                            _pd_MaskArray[pdIndex] = false;
+                            _pd_MaskArray[pIndex] = false;
                         }
 
                         MaskModeMeshTriangleUpdate();
                     }
 
-                    if (GUILayout.Button(TextData.Invert))
+                    if (GUILayout.Button("Inversion"))
                     {
-                        foreach (int pdIndex in _pd_IndexArray)
+                        for (int pIndex = 0; pIndex < _polygonCount; pIndex++)
                         {
-                            if (_pd_SubMeshIndexArray[pdIndex] != index) continue;
+                            if (_pd_SubMeshIndexArray[pIndex] != index) continue;
 
-                            _pd_MaskArray[pdIndex] = !_pd_MaskArray[pdIndex];
+                            _pd_MaskArray[pIndex] = !_pd_MaskArray[pIndex];
                         }
 
                         MaskModeMeshTriangleUpdate();
@@ -461,5 +467,3 @@ namespace FlowPaintTool
         }
     }
 }
-
-#endif

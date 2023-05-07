@@ -1,6 +1,4 @@
-﻿#if UNITY_EDITOR
-
-using UnityEditor;
+﻿using UnityEditor;
 using UnityEngine;
 
 namespace FlowPaintTool
@@ -21,6 +19,8 @@ namespace FlowPaintTool
 
 
 
+        private FPT_EditorData _editorData = FPT_EditorWindow.EditorDataInstance;
+
         private FPT_MainData _fptData = default;
         private FPT_MeshProcess _meshProcess = null;
         private FPT_ShaderProcess _shaderProcess = null;
@@ -30,6 +30,25 @@ namespace FlowPaintTool
         private GameObject _meshColider = null;
 
         private bool _selected = false;
+
+        public FPT_MeshProcess GetMeshProcess()
+        {
+            return _meshProcess;
+        }
+
+        public FPT_ShaderProcess GetShaderProcess()
+        {
+            return _shaderProcess;
+        }
+
+
+
+        public void SetData(FPT_MainData fptData)
+        {
+            _fptData = fptData;
+        }
+
+
 
         private void Start()
         {
@@ -53,11 +72,7 @@ namespace FlowPaintTool
             _maskRender = new GameObject("MaskRender");
             _maskRender.transform.SetParent(transform, false);
             _maskRender.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
-            _maskRender.AddComponent<MeshRenderer>().sharedMaterials = new Material[]
-            {
-                FPT_Assets.GetStaticInstance().GetMaterial_MaskOff(),
-                FPT_Assets.GetStaticInstance().GetMaterial_MaskOn()
-            };
+            _shaderProcess.MaskRenderMaterialArray(_maskRender.AddComponent<MeshRenderer>());
 
             _meshColider = new GameObject("MeshColider");
             _meshColider.transform.SetParent(transform, false);
@@ -66,7 +81,7 @@ namespace FlowPaintTool
             sw.Stop();
             Debug.Log("Start calculation time : " + sw.Elapsed);
 
-            FPT_EditorData.GetStaticInstance().DisableMaterialView();
+            FPT_EditorWindow.EditorDataInstance.DisableMaterialView();
             FPT_EditorWindow.GetInspectorWindow();
             Selection.instanceIDs = new int[] { gameObject.GetInstanceID() };
             Undo.ClearAll();
@@ -88,8 +103,6 @@ namespace FlowPaintTool
 
         private void FixedUpdate()
         {
-            FPT_EditorData editorData = FPT_EditorData.GetStaticInstance();
-
             _meshProcess.CenterRecalculation(transform.localToWorldMatrix);
             _shaderProcess.MaterialUpdate();
 
@@ -103,7 +116,7 @@ namespace FlowPaintTool
                     _fptData._sorceRenderer.enabled = true;
                 }
             }
-            else if (editorData.GetEnableMaskMode())
+            else if (_editorData.GetEnableMaskMode())
             {
                 _paintRender.SetActive(false);
                 _maskRender.SetActive(true);
@@ -113,9 +126,9 @@ namespace FlowPaintTool
             }
             else
             {
-                _paintRender.SetActive(!editorData.GetEnablePreviewMode());
+                _paintRender.SetActive(!_editorData.GetEnableMaterialView());
                 _maskRender.SetActive(false);
-                _fptData._sorceRenderer.enabled = editorData.GetEnablePreviewMode();
+                _fptData._sorceRenderer.enabled = _editorData.GetEnableMaterialView();
 
                 _shaderProcess.PaintProcess(transform.localToWorldMatrix);
             }
@@ -123,29 +136,10 @@ namespace FlowPaintTool
 
 
 
-        public void SetData(FPT_MainData fptData)
+        [ContextMenu("ParameterReset")]
+        private void ParameterReset()
         {
-            _fptData = fptData;
-        }
-
-        public void LinkedUnmask()
-        {
-            _meshProcess.LinkedUnmask();
-        }
-
-        public void LinkedMask()
-        {
-            _meshProcess.LinkedMask();
-        }
-
-        public void RenderTextureUndo()
-        {
-            _shaderProcess.RenderTextureUndo();
-        }
-
-        public void RenderTextureRedo()
-        {
-            _shaderProcess.RenderTextureRedo();
+            FPT_EditorWindow.EditorDataInstance.ParameterReset();
         }
 
 
@@ -162,10 +156,8 @@ namespace FlowPaintTool
 
             public override void OnInspectorGUI()
             {
-                FPT_EditorData.GetStaticInstance().InspectorGUI(_instance._meshProcess, _instance._shaderProcess, _instance._fptData._paintMode);
+                _instance._editorData.InspectorGUI(_instance._meshProcess, _instance._shaderProcess, _instance._fptData._paintMode);
             }
         }
     }
 }
-
-#endif
