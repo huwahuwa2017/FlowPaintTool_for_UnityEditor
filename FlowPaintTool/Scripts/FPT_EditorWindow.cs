@@ -64,20 +64,13 @@ namespace FlowPaintTool
             if (!started)
             {
                 GUILayout.Label("3D Flow Paint Tool", FPT_GUIStyle.GetBigCenterLabel());
-                GUILayout.Label("Version 31", FPT_GUIStyle.GetBigCenterLabel());
+                GUILayout.Label("Version 32", FPT_GUIStyle.GetBigCenterLabel());
 
                 GUILayout.Space(40);
 
                 if (GUILayout.Button(TextData.CheckGitHub))
                 {
-                    Application.OpenURL("https://github.com/huwahuwa2017/3D_FlowPaintTool/releases");
-                }
-
-                GUILayout.Space(40);
-
-                if (GUILayout.Button(TextData.StartPlayMode))
-                {
-                    EditorApplication.isPlaying = true;
+                    Application.OpenURL("https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/releases");
                 }
 
                 return;

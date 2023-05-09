@@ -11,7 +11,6 @@ namespace FlowPaintTool
         public static class FPT_EditorWindowText
         {
             public static string CheckGitHub;
-            public static string StartPlayMode;
             public static string PleaseSelectOnlyOneGameObject;
             public static string ThePaintToolIsReady;
 
@@ -20,14 +19,12 @@ namespace FlowPaintTool
                 if (languageType == FPT_LanguageTypeEnum.Japanese)
                 {
                     CheckGitHub = "GitHubを確認する";
-                    StartPlayMode = "Play modeを開始する";
                     PleaseSelectOnlyOneGameObject = "ゲームオブジェクトを一つ選択してください";
                     ThePaintToolIsReady = "ペイントツールの準備完了";
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
                     CheckGitHub = "Check GitHub";
-                    StartPlayMode = "Start play mode";
                     PleaseSelectOnlyOneGameObject = "Please select only one GameObject";
                     ThePaintToolIsReady = "The paint tool is ready";
                 }
