@@ -46,9 +46,15 @@ UV座標上のポリゴンの重複検出アルゴリズムの許容誤差
 Blenderのミラーモディファイアなどによって、UV座標上で重複しているポリゴンが含まれている3Dモデルで、「接続 アンマスク」「接続 マスク」機能を使用するときに影響します  
 * 最大Undo回数  
 増やしすぎに注意  
+#### Flow Paint ModeとColor Paint Modeで共通な部分の説明
 
 
 
+#### Flow Paint Modeの説明  
+ノーマルマップと似た仕組みで「流れ」を表現するためのテクスチャ(Flow map)を生成するモードです  
+![image](/Images/FPJP0.png)  
 
-
+#### Color Paint Modeの説明  
+色を塗るモードです  
+![image](/Images/CPJP0.png)  
 
