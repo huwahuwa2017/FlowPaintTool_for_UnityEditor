@@ -23,6 +23,15 @@ HierarcyでPaintToolゲームオブジェクトを選択している間、ペイ
 ![image](/Images/JP/2.png)  
 
 ### 詳細説明
+#### メインメニューの説明  
+![image](/Images/JP/0.png)  
+* Open  
+FlowPaintTool Windowを開きます  
+* Japanese English  
+FlowPaintTool内のGUIの言語を変更します  
+* Reset Parameter  
+FlowPaintTool内部の設定値をリセットします  
+なにか問題が発生した時に使えるかもしれません  
 #### FlowPaintTool Windowの説明  
 ![image](/Images/JP/S0.png)  
 * ペイントモード  
