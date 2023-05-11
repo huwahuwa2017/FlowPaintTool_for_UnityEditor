@@ -19,8 +19,8 @@ namespace FlowPaintTool
                 if (languageType == FPT_LanguageTypeEnum.Japanese)
                 {
                     CheckGitHub = "GitHubを確認する";
-                    PleaseSelectOnlyOneGameObject = "ゲームオブジェクトを一つ選択してください";
-                    ThePaintToolIsReady = "ペイントツールの準備完了";
+                    PleaseSelectOnlyOneGameObject = "ゲーム オブジェクトを一つ選択してください";
+                    ThePaintToolIsReady = "ペイント ツールの準備完了";
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
@@ -43,7 +43,7 @@ namespace FlowPaintTool
             {
                 if (languageType == FPT_LanguageTypeEnum.Japanese)
                 {
-                    RenderTextureForPreview = "プレビュー用レンダーテクスチャ";
+                    RenderTextureForPreview = "プレビュー用レンダー テクスチャ";
                     Undo = "Undo";
                     Redo = "Redo";
                     OutputPNGFile = "PNGファイルを出力";
@@ -111,6 +111,7 @@ namespace FlowPaintTool
             public static string MeshNotFound;
             public static string PleaseAllowReadWriteForTheMesh;
             public static string UVCoordinateDoesNotExistInUVchannel;
+            public static string UnityDoesNotSupportImportingImagesIn;
             // ErrorCheckGUI End
 
             // EditorWindowGUI Start
@@ -134,26 +135,27 @@ namespace FlowPaintTool
             {
                 if (languageType == FPT_LanguageTypeEnum.Japanese)
                 {
-                    UsingSRGBTexturesInFlowPaintModeWillNot = "sRGBテクスチャをフローペイントモードで使用できません\nsRGBをオフにしてください";
-                    SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer = "MeshRendererかSkinnedMeshRendererを使用しているゲームオブジェクトを選択してください";
+                    UsingSRGBTexturesInFlowPaintModeWillNot = "sRGBテクスチャをフロー ペイント モードで使用できません\nsRGBをオフにしてください";
+                    SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer = "MeshRendererかSkinnedMeshRendererを使用しているゲーム オブジェクトを選択してください";
                     MeshNotFound = "Meshが見つかりません\nMeshを正しく割り当てているか確認してください";
                     PleaseAllowReadWriteForTheMesh = "MeshのRead/Writeを有効にしてください";
-                    UVCoordinateDoesNotExistInUVchannel = "このUVchannelは空です : ";
+                    UVCoordinateDoesNotExistInUVchannel = "このUVチャンネルは空です : ";
+                    UnityDoesNotSupportImportingImagesIn = "Unityは幅あるいは高さが8192を超えるPNG形式の画像のインポートをサポートしていません";
 
-                    PaintMode = "ペイントモード";
+                    PaintMode = "ペイント モード";
                     WidthOfTextureCreated = "作成するテクスチャの幅";
                     HeightOfTextureCreated = "作成するテクスチャの高さ";
                     TypeOfStartingTexture = "開始時のテクスチャの種類";
                     StartingTexture = "開始時のテクスチャ";
                     OpenFilePanel = "ファイル選択画面を開く";
-                    FilePath = "ファイルパス";
-                    SRGBColorTexture = "sRGB (カラーテクスチャ)";
+                    FilePath = "ファイル パス";
+                    SRGBColorTexture = "sRGB (カラー テクスチャ)";
                     AdvancedSettings = "高度な設定";
-                    TargetUVChannel = "使用する UVチャンネル";
+                    TargetUVChannel = "使用するUVチャンネル";
                     BleedRange = "にじみの範囲";
                     UVEpsilon = "UV epsilon";
                     MaxUndoCount = "最大Undo回数";
-                    StartThePaintTool = "ペイントツールを開始";
+                    StartThePaintTool = "ペイント ツールを開始";
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
@@ -162,6 +164,7 @@ namespace FlowPaintTool
                     MeshNotFound = "Mesh not found\nMake sure you are assigning Mesh correctly";
                     PleaseAllowReadWriteForTheMesh = "Please allow Read/Write for the mesh";
                     UVCoordinateDoesNotExistInUVchannel = "UV coordinate does not exist in UVchannel ";
+                    UnityDoesNotSupportImportingImagesIn = "Unity does not support importing images in PNG format with a width or height greater than 8192";
 
                     PaintMode = "Paint mode";
                     WidthOfTextureCreated = "Width of texture created";
@@ -232,7 +235,7 @@ namespace FlowPaintTool
                     Strength = "強さ";
                     Shape = "形状";
 
-                    FlowPaintSettings = "フローペイント設定";
+                    FlowPaintSettings = "フロー ペイント設定";
                     HeightLimit = "高さの制限";
                     MinimumHeight = "高さの下限";
                     MaximumHeight = "高さの上限";
@@ -241,7 +244,7 @@ namespace FlowPaintTool
                     DisplayNormalLength = "表示する法線の長さ";
                     DisplayNormalAmount = "表示する法線の量";
 
-                    ColorPaintSettings = "カラーペイント設定";
+                    ColorPaintSettings = "カラー ペイント設定";
                     Color = "色";
                     SelectColorToEdit = "編集する色の選択";
                     R = "R";

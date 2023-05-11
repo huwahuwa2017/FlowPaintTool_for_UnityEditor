@@ -47,8 +47,8 @@ namespace FlowPaintTool
             _paintMode = FPT_PaintModeEnum.FlowPaintMode;
             _startMesh = null;
             _sorceRenderer = null;
-            _width = 1024;
-            _height = 1024;
+            _width = 2048;
+            _height = 2048;
 
             _startTextureType = FPT_StartTextureLoadModeEnum.Assets;
             _startTexture = null;
@@ -113,37 +113,48 @@ namespace FlowPaintTool
         {
             bool isError = false;
 
+            if (!(flagSMR || flagMFMR))
+            {
+                EditorGUILayout.HelpBox(TextData.SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer, MessageType.Error);
+                isError = true;
+            }
+            else
+            {
+                if (_startMesh == null)
+                {
+                    EditorGUILayout.HelpBox(TextData.MeshNotFound, MessageType.Error);
+                    isError = true;
+                }
+                else
+                {
+                    if (!_startMesh.isReadable)
+                    {
+                        EditorGUILayout.HelpBox(TextData.PleaseAllowReadWriteForTheMesh, MessageType.Error);
+                        isError = true;
+                    }
+                    else
+                    {
+                        List<Vector2> temp0 = new List<Vector2>();
+                        _startMesh.GetUVs(_targetUVChannel, temp0);
+
+                        if (temp0.Count == 0)
+                        {
+                            EditorGUILayout.HelpBox(TextData.UVCoordinateDoesNotExistInUVchannel + _targetUVChannel, MessageType.Error);
+                            isError = true;
+                        }
+                    }
+                }
+            }
+
             if (SRGBCheck() && (_paintMode == FPT_PaintModeEnum.FlowPaintMode))
             {
                 EditorGUILayout.HelpBox(TextData.UsingSRGBTexturesInFlowPaintModeWillNot, MessageType.Error);
                 isError = true;
             }
 
-            if (!(flagSMR || flagMFMR))
+            if ((_width > 8192) || (_height > 8192))
             {
-                EditorGUILayout.HelpBox(TextData.SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer, MessageType.Error);
-                return true;
-            }
-
-            if (_startMesh == null)
-            {
-                EditorGUILayout.HelpBox(TextData.MeshNotFound, MessageType.Error);
-                return true;
-            }
-
-            if (!_startMesh.isReadable)
-            {
-                EditorGUILayout.HelpBox(TextData.PleaseAllowReadWriteForTheMesh, MessageType.Error);
-                return true;
-            }
-
-            List<Vector2> temp0 = new List<Vector2>();
-            _startMesh.GetUVs(_targetUVChannel, temp0);
-
-            if (temp0.Count == 0)
-            {
-                EditorGUILayout.HelpBox(TextData.UVCoordinateDoesNotExistInUVchannel + _targetUVChannel, MessageType.Error);
-                return true;
+                EditorGUILayout.HelpBox(TextData.UnityDoesNotSupportImportingImagesIn, MessageType.Warning);
             }
 
             return isError;
@@ -152,11 +163,6 @@ namespace FlowPaintTool
         public void EditorWindowGUI(Transform selectTransform)
         {
             _paintMode = (FPT_PaintModeEnum)EditorGUILayout.EnumPopup(TextData.PaintMode, _paintMode);
-
-            GUILayout.Space(20);
-
-            _width = EditorGUILayout.IntField(TextData.WidthOfTextureCreated, _width);
-            _height = EditorGUILayout.IntField(TextData.HeightOfTextureCreated, _height);
 
             GUILayout.Space(20);
 
@@ -181,6 +187,11 @@ namespace FlowPaintTool
                 _startTextureFilePath = EditorGUILayout.TextField(TextData.FilePath, _startTextureFilePath);
                 _startTextureSRGB = EditorGUILayout.Toggle(TextData.SRGBColorTexture, _startTextureSRGB);
             }
+
+            GUILayout.Space(20);
+
+            _width = EditorGUILayout.IntField(TextData.WidthOfTextureCreated, _width);
+            _height = EditorGUILayout.IntField(TextData.HeightOfTextureCreated, _height);
 
             GUILayout.Space(20);
 

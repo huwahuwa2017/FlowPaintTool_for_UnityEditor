@@ -16,8 +16,8 @@ MonoBehaviour:
     _paintMode: 0
     _startMesh: {fileID: 0}
     _sorceRenderer: {fileID: 0}
-    _width: 1024
-    _height: 1024
+    _width: 2048
+    _height: 2048
     _startTextureType: 0
     _startTexture: {fileID: 0}
     _startTextureFilePath: 
