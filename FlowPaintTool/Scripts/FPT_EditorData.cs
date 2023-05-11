@@ -375,13 +375,6 @@ namespace FlowPaintTool
             GUILayout.Space(20);
         }
 
-        private void MaskGUI(FPT_MeshProcess meshProcess)
-        {
-            EditorGUILayout.Space(20);
-
-            meshProcess.MeshProcessGUI();
-        }
-
         public void InspectorGUI(FPT_MeshProcess meshProcess, FPT_ShaderProcess shaderProcess, FPT_PaintModeEnum paintMode)
         {
             UpdateLanguageType();
@@ -390,7 +383,7 @@ namespace FlowPaintTool
 
             if (_enableMaskMode)
             {
-                MaskGUI(meshProcess);
+                meshProcess.MeshProcessGUI();
             }
             else if (paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {

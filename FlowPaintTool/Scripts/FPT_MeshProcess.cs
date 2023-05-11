@@ -362,6 +362,8 @@ namespace FlowPaintTool
 
         public void MeshProcessGUI()
         {
+            EditorGUILayout.Space(20);
+
             EditorGUILayout.BeginHorizontal();
             {
                 if (GUILayout.Button(TextData.LinkedMask))
@@ -458,6 +460,8 @@ namespace FlowPaintTool
                 }
                 EditorGUILayout.EndHorizontal();
             }
+
+            EditorGUILayout.Space(20);
         }
     }
 }
