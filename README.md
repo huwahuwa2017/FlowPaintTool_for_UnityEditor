@@ -55,7 +55,7 @@ Blenderのミラーモディファイアなどによって、UV座標上で重�
 (かなり説明不足　例を追加したい)  
 * マスクモード  
 マスクモードの有効・無効を切り替えます  
-詳しくは[Mask Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/blob/main/README.md#mask-mode%E3%81%AE%E8%AA%AC%E6%98%8E)を確認してください  
+詳しくは[Mask Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/tree/main#mask-mode%E3%81%AE%E8%AA%AC%E6%98%8E)を確認してください  
 * プレビューモード
 プレビューモードの有効・無効を切り替えます  
 目的のマテリアルの現在の状態を確認するときに使います  
