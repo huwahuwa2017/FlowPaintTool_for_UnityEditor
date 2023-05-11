@@ -21,3 +21,12 @@ VCC 2.1.1 (Avatar Project)
 HierarcyでPaintToolゲームオブジェクトを選択している間、ペイントができるようになります  
 1. PaintToolゲームオブジェクトのInspector画面下部にある「PNGファイルを出力」ボタンを押すことにより、PNGファイルとして保存できます。  
 ![image](/Images/JP2.png) 
+
+### 詳細説明
+* FlowPaintTool Windowの説明  
+![image](/Images/JP3.png)  
+ペイントモード : 「Flow Paint Mode」と「Color Paint Mode」を選択できます  
+作成するテクスチャの幅・高さ : PNGファイルを出力するときの解像度を設定してください  
+開始時のテクスチャの解像度より大きくても小さくても問題ありません  
+開始時のテクスチャの種類 : 「Assets」と「FilePath」を選択できます  
+「Assets」を選択した場合、UnityProject内にインポートした画像を開始時に読み込みます
