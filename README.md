@@ -27,8 +27,8 @@ HierarcyでPaintToolゲームオブジェクトを選択している間、ペイ
 ![image](/Images/JP/S0.png)  
 * ペイントモード  
 「Flow Paint Mode」と「Color Paint Mode」を選択できます  
-詳しくは[Flow Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/edit/main/README.md#flow-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)と
-[Color Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/edit/main/README.md#color-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)を確認してください
+詳しくは[Flow Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/tree/main#flow-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)と
+[Color Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/tree/main#color-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)を確認してください
 * 開始時のテクスチャの種類  
 ペイント開始時にテクスチャを読み込みたい時に使用します  
 「Assets」と「FilePath」を選択できます  
