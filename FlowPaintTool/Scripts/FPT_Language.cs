@@ -78,8 +78,8 @@ namespace FlowPaintTool
             {
                 if (languageType == FPT_LanguageTypeEnum.Japanese)
                 {
-                    LinkedMask = "接続 マスク";
-                    LinkedUnmask = "接続 アンマスク";
+                    LinkedMask = "接続マスク";
+                    LinkedUnmask = "接続アンマスク";
                     MaskAll = "すべてマスク";
                     UnmaskAll = "すべてアンマスク";
                     InvertAll = "すべて反転";
@@ -330,8 +330,8 @@ namespace FlowPaintTool
                     PreviewMode = "プレビュー モード";
                     Undo = "Undo";
                     Redo = "Redo";
-                    LinkedUnmask = "接続 アンマスク";
-                    LinkedMask = "接続 マスク";
+                    LinkedUnmask = "接続アンマスク";
+                    LinkedMask = "接続マスク";
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
