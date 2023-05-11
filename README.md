@@ -12,22 +12,23 @@ VCC 2.1.1 (Avatar Project)
 
 ### 使い方
 1. UnityEditorの画面上部にある「FlowPaintTool」をクリックして「Open」をクリック  
-![image](/Images/JP0.png)  
+![image](/Images/JP/0.png)  
 1. UnityEditorのPlayModeを開始  
 1. Hierarcyへ配置した3Dモデルを表示している（MeshRendererかSkinnedMeshRendererを使用している）ゲームオブジェクトを選択  
 1. FlowPaintTool window下部にある「ペイントツールを開始」ボタンを押す  
-![image](/Images/JP1.png)  
+![image](/Images/JP/1.png)  
 これにより、3Dモデルを表示しているゲームオブジェクトの子オブジェクトとしてPaintToolゲームオブジェクトが生成されます  
 HierarcyでPaintToolゲームオブジェクトを選択している間、ペイントができるようになります  
 1. PaintToolゲームオブジェクトのInspector画面下部にある「PNGファイルを出力」ボタンを押すことにより、PNGファイルとして保存できます。  
-![image](/Images/JP2.png)  
+![image](/Images/JP/2.png)  
 
 ### 詳細説明
 #### FlowPaintTool Windowの説明  
-![image](/Images/SJP0.png)  
+![image](/Images/JP/S0.png)  
 * ペイントモード  
 「Flow Paint Mode」と「Color Paint Mode」を選択できます  
-詳細作成中
+詳しくは[Flow Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/edit/main/README.md#flow-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)と
+[Color Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/edit/main/README.md#color-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)を確認してください
 * 開始時のテクスチャの種類  
 ペイント開始時にテクスチャを読み込みたい時に使用します  
 「Assets」と「FilePath」を選択できます  
@@ -46,15 +47,26 @@ UV座標上のポリゴンの重複検出アルゴリズムの許容誤差
 Blenderのミラーモディファイアなどによって、UV座標上で重複しているポリゴンが含まれている3Dモデルで、「接続 アンマスク」「接続 マスク」機能を使用するときに影響します  
 * 最大Undo回数  
 増やしすぎに注意  
-#### Flow Paint ModeとColor Paint Modeで共通な部分の説明
-
-
+#### 「Flow Paint Mode」と「Color Paint Mode」で共通な設定の説明
+![image](/Images/JP/C0.png)  
+* プレビュー用レンダーテクスチャ  
+プレビュー用レンダーテクスチャの名前と場所を確認できます  
+このプレビュー用レンダーテクスチャを目的のマテリアルにセットすることにより、ペイントツールを実行しながら結果を確認できます  
+(説明不足　例を追加したい)  
+* マスクモード  
+マスクモードの有効・無効を切り替えます
+詳しくはマスクモードの説明を確認してください
+* プレビューモード
+プレビューモードの有効・無効を切り替えます
+目的のマテリアルの現在の状態を確認するときに使います
 
 #### Flow Paint Modeの説明  
+![image](/Images/JP/FP0.png)  
 ノーマルマップと似た仕組みで「流れ」を表現するためのテクスチャ(Flow map)を生成するモードです  
-![image](/Images/FPJP0.png)  
+以下の設定が追加されます
 
 #### Color Paint Modeの説明  
+![image](/Images/JP/CP0.png)  
 色を塗るモードです  
-![image](/Images/CPJP0.png)  
+以下の設定が追加されます
 
