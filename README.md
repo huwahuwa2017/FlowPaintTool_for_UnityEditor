@@ -36,8 +36,8 @@ FlowPaintTool内部の設定値をリセットします
 ![image](/Readme/JP/S0.png)  
 * ペイントモード  
 「Flow Paint Mode」と「Color Paint Mode」を選択できます  
-詳しくは[Flow Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/tree/main#flow-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)と
-[Color Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/tree/main#color-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)を確認してください
+詳しくは[Flow Paint Modeの説明](#flowpaintmodeの説明)と
+[Color Paint Modeの説明](#colorpaintmodeの説明)を確認してください
 * 開始時のテクスチャの種類  
 ペイント開始時にテクスチャを読み込みたい時に使用します  
 「Assets」と「FilePath」を選択できます  
@@ -65,7 +65,7 @@ Blenderのミラーモディファイアなどによって、UV座標上で重�
 * マスクモード  
 マスクモードの有効・無効を切り替えます  
 Tabキーで切り替えることができます  
-詳しくは[Mask Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/tree/main#mask-mode%E3%81%AE%E8%AA%AC%E6%98%8E)を確認してください  
+詳しくは[Mask Modeの説明](#Mask Modeの説明)を確認してください  
 * プレビューモード  
 プレビューモードの有効・無効を切り替えます  
 Zキーで切り替えることができます  
@@ -85,7 +85,7 @@ Zキーで切り替えることができます
 PNGファイルを出力します  
 ペイントツールを実行中のUnityプロジェクトのAssetsフォルダ内に出力した場合、PNGファイルを出力してからインポートします  
 もし使用中のテクスチャをこの方法で上書きした場合エラーが出るかもしれません  
-#### Flow Paint Modeの説明  
+#### FlowPaintModeの説明  
 ![image](/Readme/JP/FP0.png)  
 ノーマルマップと似た仕組みで「方向」や「流れ」を表現するためのテクスチャ(Flow map)を生成するモードです  
 以下の設定が追加されます  
@@ -100,7 +100,7 @@ Flow mapへ書き込む「方向」をワールド座標系で指定します
 表示する法線の長さです 単位はメートルです  
 * 表示する法線の量  
 表示する法線の量です  
-#### Color Paint Modeの説明  
+#### ColorPaintModeの説明  
 ![image](/Readme/JP/CP0.png)  
 色を塗るモードです  
 以下の設定が追加されます  
