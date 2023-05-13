@@ -36,8 +36,8 @@ FlowPaintTool内部の設定値をリセットします
 ![image](/Readme/JP/S0.png)  
 * ペイントモード  
 「Flow Paint Mode」と「Color Paint Mode」を選択できます  
-詳しくは[Flow Paint Modeの説明](#flowpaintmodeの説明)と
-[Color Paint Modeの説明](#colorpaintmodeの説明)を確認してください
+詳しくは[Flow Paint Modeの説明](#flow-paint-modeの説明)と
+[Color Paint Modeの説明](#color-paint-modeの説明)を確認してください
 * 開始時のテクスチャの種類  
 ペイント開始時にテクスチャを読み込みたい時に使用します  
 「Assets」と「FilePath」を選択できます  
@@ -65,7 +65,7 @@ Blenderのミラーモディファイアなどによって、UV座標上で重�
 * マスクモード  
 マスクモードの有効・無効を切り替えます  
 Tabキーで切り替えることができます  
-詳しくは[Mask Modeの説明](#maskmodeの説明)を確認してください  
+詳しくは[Mask Modeの説明](#mask-modeの説明)を確認してください  
 * プレビューモード  
 プレビューモードの有効・無効を切り替えます  
 Zキーで切り替えることができます  
