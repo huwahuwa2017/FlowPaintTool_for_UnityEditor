@@ -12,19 +12,19 @@ VCC 2.1.1 (Avatar Project)
 
 ### 使い方
 1. UnityEditorの画面上部にある「FlowPaintTool」をクリックして「Open」をクリック  
-![image](/Images/JP/0.png)  
+![image](/Readme/JP/0.png)  
 1. UnityEditorのPlayModeを開始  
 1. Hierarcyへ配置した3Dモデルを表示している（MeshRendererかSkinnedMeshRendererを使用している）ゲームオブジェクトを選択  
 1. FlowPaintTool window下部にある「ペイントツールを開始」ボタンを押す  
-![image](/Images/JP/1.png)  
+![image](/Readme/JP/1.png)  
 これにより、3Dモデルを表示しているゲームオブジェクトの子オブジェクトとしてPaintToolゲームオブジェクトが生成されます  
 HierarcyでPaintToolゲームオブジェクトを選択している間、ペイントができるようになります  
 1. PaintToolゲームオブジェクトのInspector画面下部にある「PNGファイルを出力」ボタンを押すことにより、PNGファイルとして保存できます。  
-![image](/Images/JP/2.png)  
+![image](/Readme/JP/2.png)  
 
 ### 詳細説明
 #### メインメニューの説明  
-![image](/Images/JP/0.png)  
+![image](/Readme/JP/0.png)  
 * Open  
 FlowPaintTool Windowを開きます  
 * Japanese English  
@@ -33,7 +33,7 @@ FlowPaintTool内のGUIの言語を変更します
 FlowPaintTool内部の設定値をリセットします  
 なにか問題が発生した時に使えるかもしれません  
 #### FlowPaintTool Windowの説明  
-![image](/Images/JP/S0.png)  
+![image](/Readme/JP/S0.png)  
 * ペイントモード  
 「Flow Paint Mode」と「Color Paint Mode」を選択できます  
 詳しくは[Flow Paint Modeの説明](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/tree/main#flow-paint-mode%E3%81%AE%E8%AA%AC%E6%98%8E)と
@@ -57,7 +57,7 @@ Blenderのミラーモディファイアなどによって、UV座標上で重�
 * 最大Undo回数  
 増やしすぎに注意  
 #### 「Flow Paint Mode」と「Color Paint Mode」で共通な設定の説明
-![image](/Images/JP/C0.png)  
+![image](/Readme/JP/C0.png)  
 * プレビュー用レンダーテクスチャ  
 プレビュー用レンダーテクスチャの名前と場所を確認できます  
 このプレビュー用レンダーテクスチャを目的のマテリアルにセットすることにより、ペイントツールを実行しながら結果を確認できます  
@@ -86,7 +86,7 @@ PNGファイルを出力します
 ペイントツールを実行中のUnityプロジェクトのAssetsフォルダ内に出力した場合、PNGファイルを出力してからインポートします  
 もし使用中のテクスチャをこの方法で上書きした場合エラーが出るかもしれません  
 #### Flow Paint Modeの説明  
-![image](/Images/JP/FP0.png)  
+![image](/Readme/JP/FP0.png)  
 ノーマルマップと似た仕組みで「方向」や「流れ」を表現するためのテクスチャ(Flow map)を生成するモードです  
 以下の設定が追加されます  
 * 高さの制限  
@@ -101,7 +101,7 @@ Flow mapへ書き込む「方向」をワールド座標系で指定します
 * 表示する法線の量  
 表示する法線の量です  
 #### Color Paint Modeの説明  
-![image](/Images/JP/CP0.png)  
+![image](/Readme/JP/CP0.png)  
 色を塗るモードです  
 以下の設定が追加されます  
 * 色  
@@ -110,7 +110,7 @@ Flow mapへ書き込む「方向」をワールド座標系で指定します
 赤・緑・青・透明度の値を編集するかしないかを設定できます  
 例えばR、G、BをオフにしてAをオンにした場合、透明度だけを編集することになります  
 #### Mask Modeの説明  
-![image](/Images/JP/M0.png)  
+![image](/Readme/JP/M0.png)  
 影響を与えるか与えないかをポリゴン単位で指定するモードです  
 以下の設定が追加されます  
 * 接続マスク 接続アンマスク  
