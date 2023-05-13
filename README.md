@@ -1,5 +1,8 @@
 # FlowPaintTool_for_UnityEditor
 
+### これは何？
+Unityのエディター拡張で、「方向」や「流れ」を表現するためのテクスチャ(Flow map)を生成したり色を塗ったりできます
+
 ### 準備
 Unity 2019.4.31f1 (3D Built-in Render Pipeline)  
 あるいは  
