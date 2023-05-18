@@ -25,9 +25,11 @@ namespace FlowPaintTool
         private FPT_MeshProcess _meshProcess = null;
         private FPT_ShaderProcess _shaderProcess = null;
 
-        private GameObject _paintRender = null;
-        private GameObject _maskRender = null;
-        private GameObject _meshColider = null;
+        private GameObject _paintRenderObject = null;
+        private GameObject _maskRenderObject = null;
+        private GameObject _meshColiderObject = null;
+
+        private MeshCollider _meshColider = null;
 
         private bool _selected = false;
 
@@ -42,26 +44,27 @@ namespace FlowPaintTool
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             sw.Start();
 
-            _meshProcess = new FPT_MeshProcess(_fptData);
-            _shaderProcess = new FPT_ShaderProcess(_fptData, _meshProcess, GetInstanceID());
+            _meshProcess = new FPT_MeshProcess(this, _fptData);
+            _shaderProcess = new FPT_ShaderProcess(this, _fptData, _meshProcess, GetInstanceID());
 
-            _paintRender = new GameObject("PaintRender");
-            _paintRender.transform.SetParent(transform, false);
-            _paintRender.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
-            _shaderProcess.PaintRenderMaterialArray(_paintRender.AddComponent<MeshRenderer>());
+            _paintRenderObject = new GameObject("PaintRender");
+            _paintRenderObject.transform.SetParent(transform, false);
+            _paintRenderObject.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
+            _shaderProcess.PaintRenderMaterialArray(_paintRenderObject.AddComponent<MeshRenderer>());
 
-            _maskRender = new GameObject("MaskRender");
-            _maskRender.transform.SetParent(transform, false);
-            _maskRender.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
-            _maskRender.AddComponent<MeshRenderer>().sharedMaterials = new Material[]
+            _maskRenderObject = new GameObject("MaskRender");
+            _maskRenderObject.transform.SetParent(transform, false);
+            _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
+            _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = new Material[]
             {
                 FPT_Assets.GetStaticInstance().GetMaterial_MaskOff(),
                 FPT_Assets.GetStaticInstance().GetMaterial_MaskOn()
             };
 
-            _meshColider = new GameObject("MeshColider");
-            _meshColider.transform.SetParent(transform, false);
-            _meshColider.AddComponent<MeshCollider>().sharedMesh = _fptData._startMesh;
+            _meshColiderObject = new GameObject("MeshColider");
+            _meshColiderObject.transform.SetParent(transform, false);
+            _meshColider = _meshColiderObject.AddComponent<MeshCollider>();
+            _meshColider.sharedMesh = _fptData._startMesh;
 
             sw.Stop();
             Debug.Log("Start calculation time : " + sw.Elapsed);
@@ -95,8 +98,8 @@ namespace FlowPaintTool
 
             if (!_selected)
             {
-                _paintRender.SetActive(false);
-                _maskRender.SetActive(false);
+                _paintRenderObject.SetActive(false);
+                _maskRenderObject.SetActive(false);
 
                 if (GetActiveInstance() == null)
                 {
@@ -105,16 +108,16 @@ namespace FlowPaintTool
             }
             else if (editorData.GetEnableMaskMode())
             {
-                _paintRender.SetActive(false);
-                _maskRender.SetActive(true);
+                _paintRenderObject.SetActive(false);
+                _maskRenderObject.SetActive(true);
                 _fptData._sorceRenderer.enabled = false;
 
-                _meshProcess.MaskPaint();
+                _meshProcess.MaskProcess();
             }
             else
             {
-                _paintRender.SetActive(!editorData.GetEnablePreviewMode());
-                _maskRender.SetActive(false);
+                _paintRenderObject.SetActive(!editorData.GetEnablePreviewMode());
+                _maskRenderObject.SetActive(false);
                 _fptData._sorceRenderer.enabled = editorData.GetEnablePreviewMode();
 
                 _shaderProcess.PaintProcess(transform.localToWorldMatrix);
@@ -126,6 +129,11 @@ namespace FlowPaintTool
         public void SetData(FPT_MainData fptData)
         {
             _fptData = fptData;
+        }
+
+        public bool PaintToolRaycast(out RaycastHit raycastHit)
+        {
+            return _meshColider.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out raycastHit, 1024f);
         }
 
         public void LinkedUnmask()

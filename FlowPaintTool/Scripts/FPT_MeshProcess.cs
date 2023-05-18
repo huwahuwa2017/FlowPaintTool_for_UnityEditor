@@ -31,6 +31,7 @@ namespace FlowPaintTool
         private bool[] _pd_MaskArray = null;
         private bool[] _pd_MaskResultArray = null;
 
+        private FPT_Main _fptMain = null;
         private Matrix4x4 _preMatrix = Matrix4x4.zero;
 
         public int GetSubMeshCount() => _subMeshCount;
@@ -68,8 +69,10 @@ namespace FlowPaintTool
             _maskModeMesh.SetTriangles(triangleList1, 1);
         }
 
-        public FPT_MeshProcess(FPT_MainData fptData)
+        public FPT_MeshProcess(FPT_Main fptMain, FPT_MainData fptData)
         {
+            _fptMain = fptMain;
+
             Mesh startMesh = fptData._startMesh;
             int targetUVChannel = fptData._targetUVChannel;
             float uv_Epsilon = fptData._uv_Epsilon;
@@ -274,9 +277,9 @@ namespace FlowPaintTool
 
 
 
-        public void MaskPaint()
+        public void MaskProcess()
         {
-            bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit raycastHit, 1000f);
+            bool hit = _fptMain.PaintToolRaycast(out RaycastHit raycastHit);
 
             if (!hit) return;
 

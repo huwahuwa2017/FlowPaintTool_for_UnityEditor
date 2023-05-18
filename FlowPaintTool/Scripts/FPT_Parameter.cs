@@ -111,15 +111,23 @@ namespace FlowPaintTool
 
         private void FixedUpdate()
         {
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-            bool hit = Physics.Raycast(ray, out RaycastHit raycastHit, 1000f);
+            FPT_Main fptMain = FPT_Main.GetActiveInstance();
 
-            float scale = FPT_EditorData.GetStaticInstance().GetBrushSize() * 2f;
-            _rangeVisualization.SetActive(hit);
-            Transform temp0 = _rangeVisualization.transform;
-            temp0.position = raycastHit.point;
-            temp0.rotation = Camera.main.transform.rotation;
-            temp0.localScale = new Vector3(scale, scale, scale);
+            if (fptMain != null)
+            {
+                bool hit = fptMain.PaintToolRaycast(out RaycastHit raycastHit);
+                _rangeVisualization.SetActive(hit);
+
+                float scale = FPT_EditorData.GetStaticInstance().GetBrushSize() * 2f;
+                Transform temp0 = _rangeVisualization.transform;
+                temp0.position = raycastHit.point;
+                temp0.rotation = Camera.main.transform.rotation;
+                temp0.localScale = new Vector3(scale, scale, scale);
+            }
+            else
+            {
+                _rangeVisualization.SetActive(false);
+            }
         }
 
 

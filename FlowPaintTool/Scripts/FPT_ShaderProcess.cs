@@ -71,6 +71,8 @@ namespace FlowPaintTool
         private int _redoMemoryIndex = 0;
         private IEnumerable<int> _bleedIndexArray = null;
 
+        private FPT_Main _fptMain = null;
+
         private void RemoveOutputRenderTexture(PlayModeStateChange state)
         {
             if (state == PlayModeStateChange.EnteredEditMode)
@@ -95,8 +97,10 @@ namespace FlowPaintTool
             mat.EnableKeyword("UV_CHANNEL_" + fptData._targetUVChannel);
         }
 
-        public FPT_ShaderProcess(FPT_MainData fptData, FPT_MeshProcess meshProcess, int InstanceID)
+        public FPT_ShaderProcess(FPT_Main fptMain, FPT_MainData fptData, FPT_MeshProcess meshProcess, int InstanceID)
         {
+            _fptMain = fptMain;
+
             FPT_Assets assets = FPT_Assets.GetStaticInstance();
             Material fillMaterial = assets.GetFillMaterial();
 
@@ -323,7 +327,7 @@ namespace FlowPaintTool
 
         public void PaintProcess(Matrix4x4 matrix)
         {
-            bool hit = Physics.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out RaycastHit raycastHit, 1000f);
+            bool hit = _fptMain.PaintToolRaycast(out RaycastHit raycastHit);
             Vector3 hitPosition = raycastHit.point;
 
             bool leftClick = Input.GetMouseButton(0);
