@@ -21,14 +21,15 @@ namespace FlowPaintTool
         private static readonly int _densityTexSPID = Shader.PropertyToID("_DensityTex");
 
         private static readonly int _modelMatrixSPID = Shader.PropertyToID("_ModelMatrix");
-        private static readonly int _inverseModelMatrixSPID = Shader.PropertyToID("_InverseModelMatrix");
+        private static readonly int _preHitPositionSPID = Shader.PropertyToID("_PreHitPosition");
         private static readonly int _hitPositionSPID = Shader.PropertyToID("_HitPosition");
-        private static readonly int _paintDirectionSPID = Shader.PropertyToID("_PaintDirection");
 
-        private static readonly int _brushTypeSPID = Shader.PropertyToID("_BrushType");
         private static readonly int _brushSizeSPID = Shader.PropertyToID("_BrushSize");
         private static readonly int _brushStrengthSPID = Shader.PropertyToID("_BrushStrength");
+        private static readonly int _brushTypeSPID = Shader.PropertyToID("_BrushType");
 
+        private static readonly int _inverseModelMatrixSPID = Shader.PropertyToID("_InverseModelMatrix");
+        private static readonly int _paintDirectionSPID = Shader.PropertyToID("_PaintDirection");
         private static readonly int _fixedHeightSPID = Shader.PropertyToID("_FixedHeight");
         private static readonly int _fixedHeightMinSPID = Shader.PropertyToID("_FixedHeightMin");
         private static readonly int _fixedHeightMaxSPID = Shader.PropertyToID("_FixedHeightMax");
@@ -44,11 +45,9 @@ namespace FlowPaintTool
         private RenderTexture _densityRenderTexture = null;
         private RenderTexture[] _undoMemoryRenderTextureArray = null;
 
-        private Material _copyFlowPaintMaterial = null;
-        private Material _copyColorPaintMaterial = null;
+        private Material _copyTargetPaintMaterial = null;
         private Material _copyDensityMaterial = null;
-        private Material _copyFlowMergeMaterial = null;
-        private Material _copyColorMergeMaterial = null;
+        private Material _copyTargetMergeMaterial = null;
         private Material _copyCutoutMaterial = null;
         private Material[] _copyBleedMaterialArray = null;
         private Material _copyFlowResultMaterial = null;
@@ -205,17 +204,23 @@ namespace FlowPaintTool
             // GenerateMaterial Start
             _copyBleedMaterialArray = _bleedIndexArray.Select(I => UnityEngine.Object.Instantiate(assets.GetBleedMaterial())).ToArray();
 
-            _copyFlowPaintMaterial = UnityEngine.Object.Instantiate(assets.GetFlowPaintMaterial());
-            _copyColorPaintMaterial = UnityEngine.Object.Instantiate(assets.GetColorPaintMaterial());
+            if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
+            {
+                _copyTargetPaintMaterial = UnityEngine.Object.Instantiate(assets.GetFlowPaintMaterial());
+                _copyTargetMergeMaterial = UnityEngine.Object.Instantiate(assets.GetFlowMergeMaterial());
+            }
+            else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
+            {
+                _copyTargetPaintMaterial = UnityEngine.Object.Instantiate(assets.GetColorPaintMaterial());
+                _copyTargetMergeMaterial = UnityEngine.Object.Instantiate(assets.GetColorMergeMaterial());
+            }
+
             _copyDensityMaterial = UnityEngine.Object.Instantiate(assets.GetDensityMaterial());
-            _copyFlowMergeMaterial = UnityEngine.Object.Instantiate(assets.GetFlowMergeMaterial());
-            _copyColorMergeMaterial = UnityEngine.Object.Instantiate(assets.GetColorMergeMaterial());
             _copyCutoutMaterial = UnityEngine.Object.Instantiate(assets.GetCutoutMaterial());
             _copyFlowResultMaterial = UnityEngine.Object.Instantiate(assets.GetFlowResultMaterial());
             _copyColorResultMaterial = UnityEngine.Object.Instantiate(assets.GetColorResultMaterial());
 
-            TargetUVChannel(fptData, _copyFlowPaintMaterial);
-            TargetUVChannel(fptData, _copyColorPaintMaterial);
+            TargetUVChannel(fptData, _copyTargetPaintMaterial);
             TargetUVChannel(fptData, _copyDensityMaterial);
             TargetUVChannel(fptData, _copyFlowResultMaterial);
             TargetUVChannel(fptData, _copyColorResultMaterial);
@@ -233,30 +238,14 @@ namespace FlowPaintTool
             // GenerateMaterial End
 
             // GenerateCommandBuffer Start
-            Mesh paintModeMesh = _meshProcess.GetPaintModeMesh();
-
             int[] tempTexSPIDs = new int[] { Shader.PropertyToID("_TempTex0"), Shader.PropertyToID("_TempTex1") };
-            Material targetPaintMaterial = null;
-            Material targetMergeMaterial = null;
-
-            if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
-            {
-                targetPaintMaterial = _copyFlowPaintMaterial;
-                targetMergeMaterial = _copyFlowMergeMaterial;
-            }
-            else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
-            {
-                targetPaintMaterial = _copyColorPaintMaterial;
-                targetMergeMaterial = _copyColorMergeMaterial;
-            }
-
-
+            Mesh paintModeMesh = _meshProcess.GetPaintModeMesh();
 
             _paintCommandBuffer = new CommandBuffer();
             _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
             _paintCommandBuffer.Blit(_paintRenderTexture, tempTexSPIDs[0]);
             _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[0]);
-            _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, targetPaintMaterial, 0);
+            _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyTargetPaintMaterial, 0);
             _paintCommandBuffer.Blit(tempTexSPIDs[0], _paintRenderTexture);
             _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
 
@@ -271,7 +260,7 @@ namespace FlowPaintTool
 
             _mergeCommandBuffer = new CommandBuffer();
             _mergeCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
-            _mergeCommandBuffer.Blit(_preOutputRenderTexture, tempTexSPIDs[0], targetMergeMaterial);
+            _mergeCommandBuffer.Blit(_preOutputRenderTexture, tempTexSPIDs[0], _copyTargetMergeMaterial);
             _mergeCommandBuffer.Blit(tempTexSPIDs[0], _outputRenderTexture, _copyCutoutMaterial);
             _mergeCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
 
@@ -311,13 +300,10 @@ namespace FlowPaintTool
                 _copyBleedMaterialArray[index].SetTexture(_fillTexSPID, _fillRenderTextureArray[index]);
             }
 
-            _copyFlowPaintMaterial.SetTexture(_mainTexSPID, _paintRenderTexture);
-            _copyColorPaintMaterial.SetTexture(_mainTexSPID, _paintRenderTexture);
+            _copyTargetPaintMaterial.SetTexture(_mainTexSPID, _paintRenderTexture);
             _copyDensityMaterial.SetTexture(_mainTexSPID, _densityRenderTexture);
-            _copyFlowMergeMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
-            _copyFlowMergeMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
-            _copyColorMergeMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
-            _copyColorMergeMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
+            _copyTargetMergeMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
+            _copyTargetMergeMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
             _copyCutoutMaterial.SetTexture(_fillTexSPID, _fillRenderTextureArray[0]);
             _copyFlowResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
             _copyColorResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
@@ -350,39 +336,39 @@ namespace FlowPaintTool
 
                 if (!_prePaint)
                 {
-                    Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
+                    //Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
                     Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
                 }
+
+                _copyTargetPaintMaterial.SetMatrix(_modelMatrixSPID, matrix);
+                _copyTargetPaintMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
+                _copyTargetPaintMaterial.SetVector(_hitPositionSPID, hitPosition);
+                _copyTargetPaintMaterial.SetFloat(_brushSizeSPID, editorData.GetBrushSize());
 
                 if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
                 {
                     paintDirection = editorData.GetFixedDirection() ? editorData.GetFixedDirectionVector() : paintDirection;
 
-                    _copyFlowPaintMaterial.SetMatrix(_modelMatrixSPID, matrix);
-                    _copyFlowPaintMaterial.SetVector(_hitPositionSPID, _preHitPosition);
-                    _copyFlowPaintMaterial.SetFloat(_brushSizeSPID, editorData.GetBrushSize());
-                    _copyFlowPaintMaterial.SetMatrix(_inverseModelMatrixSPID, Matrix4x4.Inverse(matrix));
-                    _copyFlowPaintMaterial.SetVector(_paintDirectionSPID, paintDirection);
-                    _copyFlowPaintMaterial.SetInt(_fixedHeightSPID, Convert.ToInt32(editorData.GetHeightLimit()));
-                    _copyFlowPaintMaterial.SetFloat(_fixedHeightMinSPID, editorData.GetMinHeight());
-                    _copyFlowPaintMaterial.SetFloat(_fixedHeightMaxSPID, editorData.GetMaxHeight());
+                    _copyTargetPaintMaterial.SetMatrix(_inverseModelMatrixSPID, Matrix4x4.Inverse(matrix));
+                    _copyTargetPaintMaterial.SetVector(_paintDirectionSPID, paintDirection);
+                    _copyTargetPaintMaterial.SetInt(_fixedHeightSPID, Convert.ToInt32(editorData.GetHeightLimit()));
+                    _copyTargetPaintMaterial.SetFloat(_fixedHeightMinSPID, editorData.GetMinHeight());
+                    _copyTargetPaintMaterial.SetFloat(_fixedHeightMaxSPID, editorData.GetMaxHeight());
                 }
                 else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
                 {
                     int editRGBA = (editorData.GetEditR() ? 1 : 0) + (editorData.GetEditG() ? 2 : 0) + (editorData.GetEditB() ? 4 : 0) + (editorData.GetEditA() ? 8 : 0);
 
-                    _copyColorPaintMaterial.SetMatrix(_modelMatrixSPID, matrix);
-                    _copyColorPaintMaterial.SetVector(_hitPositionSPID, _preHitPosition);
-                    _copyColorPaintMaterial.SetFloat(_brushSizeSPID, editorData.GetBrushSize());
-                    _copyColorPaintMaterial.SetColor(_paintColorSPID, editorData.GetPaintColor());
-                    _copyColorPaintMaterial.SetInt(_editRGBASPID, editRGBA);
+                    _copyTargetPaintMaterial.SetColor(_paintColorSPID, editorData.GetPaintColor());
+                    _copyTargetPaintMaterial.SetInt(_editRGBASPID, editRGBA);
                 }
 
                 _copyDensityMaterial.SetMatrix(_modelMatrixSPID, matrix);
-                _copyDensityMaterial.SetVector(_hitPositionSPID, _preHitPosition);
-                _copyDensityMaterial.SetInt(_brushTypeSPID, (int)editorData.GetBrushShape());
+                _copyDensityMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
+                _copyDensityMaterial.SetVector(_hitPositionSPID, hitPosition);
                 _copyDensityMaterial.SetFloat(_brushSizeSPID, editorData.GetBrushSize());
                 _copyDensityMaterial.SetFloat(_brushStrengthSPID, editorData.GetBrushStrength());
+                _copyDensityMaterial.SetInt(_brushTypeSPID, (int)editorData.GetBrushShape());
 
                 Graphics.ExecuteCommandBuffer(_paintCommandBuffer);
                 Graphics.ExecuteCommandBuffer(_mergeCommandBuffer);
@@ -506,6 +492,8 @@ namespace FlowPaintTool
                 AssetDatabase.ImportAsset(filePath);
                 TextureImporter texImporter = AssetImporter.GetAtPath(filePath) as TextureImporter;
                 texImporter.sRGBTexture = _actualSRGB;
+                int max = Math.Max(_outputRenderTexture.width, _outputRenderTexture.height);
+                texImporter.maxTextureSize = (int)Math.Pow(2, Math.Ceiling(Math.Log(max, 2)));
             }
         }
 
