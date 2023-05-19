@@ -32,6 +32,7 @@ namespace FlowPaintTool
         private MeshCollider _meshColider = null;
 
         private bool _selected = false;
+        private bool _preSelected = false;
 
         private void Start()
         {
@@ -77,7 +78,7 @@ namespace FlowPaintTool
 
 
 
-        private void Update()
+        private void FixedUpdate()
         {
             _selected = Selection.activeTransform == transform;
 
@@ -85,13 +86,6 @@ namespace FlowPaintTool
             {
                 _activeInstance = this;
             }
-        }
-
-
-
-        private void FixedUpdate()
-        {
-            FPT_EditorData editorData = FPT_EditorData.GetStaticInstance();
 
             _meshProcess.CenterRecalculation(transform.localToWorldMatrix);
             _shaderProcess.MaterialUpdate();
@@ -101,27 +95,36 @@ namespace FlowPaintTool
                 _paintRenderObject.SetActive(false);
                 _maskRenderObject.SetActive(false);
 
-                if (GetActiveInstance() == null)
+                if (_preSelected)
                 {
                     _fptData._sorceRenderer.enabled = true;
                 }
             }
-            else if (editorData.GetEnableMaskMode())
-            {
-                _paintRenderObject.SetActive(false);
-                _maskRenderObject.SetActive(true);
-                _fptData._sorceRenderer.enabled = false;
-
-                _meshProcess.MaskProcess();
-            }
             else
             {
-                _paintRenderObject.SetActive(!editorData.GetEnablePreviewMode());
-                _maskRenderObject.SetActive(false);
-                _fptData._sorceRenderer.enabled = editorData.GetEnablePreviewMode();
+                FPT_EditorData editorData = FPT_EditorData.GetStaticInstance();
 
-                _shaderProcess.PaintProcess(transform.localToWorldMatrix);
+                if (editorData.GetEnableMaskMode())
+                {
+                    _paintRenderObject.SetActive(false);
+                    _maskRenderObject.SetActive(true);
+                    _fptData._sorceRenderer.enabled = false;
+
+                    _meshProcess.MaskProcess();
+                }
+                else
+                {
+                    bool enablePreviewMode = editorData.GetEnablePreviewMode();
+
+                    _paintRenderObject.SetActive(!enablePreviewMode);
+                    _maskRenderObject.SetActive(false);
+                    _fptData._sorceRenderer.enabled = enablePreviewMode;
+
+                    _shaderProcess.PaintProcess(transform.localToWorldMatrix);
+                }
             }
+
+            _preSelected = _selected;
         }
 
 
