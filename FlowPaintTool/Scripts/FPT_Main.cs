@@ -9,6 +9,8 @@ namespace FlowPaintTool
     {
         private static FPT_Main _activeInstance = null;
 
+        private static Camera _camera = null;
+
         public static FPT_Main GetActiveInstance()
         {
             if (_activeInstance != null && _activeInstance._selected)
@@ -17,6 +19,22 @@ namespace FlowPaintTool
             }
 
             return null;
+        }
+
+        public static Camera GetCamera()
+        {
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            if (_camera == null)
+            {
+                GameObject cameraObject = new GameObject("Camera");
+                _camera = cameraObject.AddComponent<Camera>();
+            }
+
+            return _camera;
         }
 
 
@@ -136,7 +154,7 @@ namespace FlowPaintTool
 
         public bool PaintToolRaycast(out RaycastHit raycastHit)
         {
-            return _meshColider.Raycast(Camera.main.ScreenPointToRay(Input.mousePosition), out raycastHit, 1024f);
+            return _meshColider.Raycast(GetCamera().ScreenPointToRay(Input.mousePosition), out raycastHit, 1024f);
         }
 
         public void LinkedUnmask()

@@ -27,7 +27,7 @@ namespace FlowPaintTool
             _rangeVisualization = Instantiate(FPT_Assets.GetStaticInstance().GetRangeVisualizationPrefab());
             _rangeVisualization.transform.SetParent(transform, false);
 
-            Camera camera = Camera.main;
+            Camera camera = FPT_Main.GetCamera();
             camera.nearClipPlane = Math.Min(camera.nearClipPlane, 0.01f);
             camera.gameObject.AddComponent<FPT_Camera>();
         }
@@ -121,7 +121,7 @@ namespace FlowPaintTool
                 float scale = FPT_EditorData.GetStaticInstance().GetBrushSize() * 2f;
                 Transform temp0 = _rangeVisualization.transform;
                 temp0.position = raycastHit.point;
-                temp0.rotation = Camera.main.transform.rotation;
+                temp0.rotation = FPT_Main.GetCamera().transform.rotation;
                 temp0.localScale = new Vector3(scale, scale, scale);
             }
             else

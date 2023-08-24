@@ -328,7 +328,7 @@ namespace FlowPaintTool
             FPT_EditorData editorData = FPT_EditorData.GetStaticInstance();
 
             Vector3 paintDirection = hitPosition - _preHitPosition;
-            float distance = (hitPosition - Camera.main.transform.position).magnitude;
+            float distance = (hitPosition - FPT_Main.GetCamera().transform.position).magnitude;
 
             if (paintDirection.magnitude > distance * editorData.GetBrushMoveSensitivity())
             {
