@@ -14,8 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _mainData:
     _paintMode: 0
-    _startMesh: {fileID: -5495902117074765545, guid: d57777acec12cf34cb7b707698bcee53,
-      type: 3}
+    _startMesh: {fileID: 0}
     _sorceRenderer: {fileID: 0}
     _width: 2048
     _height: 2048

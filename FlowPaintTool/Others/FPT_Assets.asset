@@ -16,6 +16,8 @@ MonoBehaviour:
     type: 3}
   _adjacentPolygonComputeShader: {fileID: 7200000, guid: 64b9ef2a511dc1440b231129636551ac,
     type: 3}
+  _unpackNormalMaterial: {fileID: 2100000, guid: 34926120e08478247bda0119ab9f28dd,
+    type: 2}
   _fillMaterial: {fileID: 2100000, guid: 6bfc4fb899ef4184b9363ecf20685859, type: 2}
   _fillBleedMaterial: {fileID: 2100000, guid: 2af4c2c6cd8f36e4d9fe7a077eede320, type: 2}
   _flowPaintMaterial: {fileID: 2100000, guid: 5bb9e0ac0dcd4964995d80095110fc3b, type: 2}

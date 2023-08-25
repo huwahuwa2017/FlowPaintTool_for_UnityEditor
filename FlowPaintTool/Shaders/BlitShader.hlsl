@@ -39,6 +39,15 @@ V2F VertexShaderStage(I2V input)
 
 
 
+float4 FragmentShaderStage_UnpackNormal(V2F input) : SV_Target
+{
+    uint2 index = uint2(input.cPos.xy);
+    
+    float3 normal = UnpackNormal(_MainTex[index]);
+    
+    return float4(normal * 0.5 + 0.5, 1.0);
+}
+
 float4 FragmentShaderStage_FillBleed(V2F input) : SV_Target
 {
     uint2 index0 = uint2(input.cPos.xy);

@@ -30,6 +30,8 @@ namespace FlowPaintTool
         private ComputeShader _adjacentPolygonComputeShader = null;
 
         [SerializeField]
+        private Material _unpackNormalMaterial = null;
+        [SerializeField]
         private Material _fillMaterial = null;
         [SerializeField]
         private Material _fillBleedMaterial = null;
@@ -62,6 +64,7 @@ namespace FlowPaintTool
 
         public ComputeShader GetAdjacentPolygonComputeShader() => _adjacentPolygonComputeShader;
 
+        public Material GetUnpackNormalMaterial() => _unpackNormalMaterial;
         public Material GetFillMaterial() => _fillMaterial;
         public Material GetFillBleedMaterial() => _fillBleedMaterial;
 

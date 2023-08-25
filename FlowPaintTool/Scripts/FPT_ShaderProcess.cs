@@ -61,6 +61,7 @@ namespace FlowPaintTool
         private FPT_PaintModeEnum _paintMode = FPT_PaintModeEnum.FlowPaintMode;
         private int _bleedRange = 4;
         private bool _actualSRGB = false;
+        private TextureImporter _sourceTextureImporter = null;
 
         private Vector3 _preHitPosition = Vector3.zero;
         private bool _prePaint = false;
@@ -131,7 +132,16 @@ namespace FlowPaintTool
             {
                 if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.Assets)
                 {
-                    Graphics.Blit(fptData._startTexture, _outputRenderTexture);
+                    _sourceTextureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(fptData._startTexture)) as TextureImporter;
+
+                    if (_sourceTextureImporter.textureType == TextureImporterType.NormalMap)
+                    {
+                        Graphics.Blit(fptData._startTexture, _outputRenderTexture, assets.GetUnpackNormalMaterial());
+                    }
+                    else
+                    {
+                        Graphics.Blit(fptData._startTexture, _outputRenderTexture);
+                    }
                 }
                 else if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
                 {
@@ -248,7 +258,6 @@ namespace FlowPaintTool
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyTargetPaintMaterial, 0);
             _paintCommandBuffer.Blit(tempTexSPIDs[0], _paintRenderTexture);
             _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
-
             _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_R16);
             _paintCommandBuffer.Blit(_densityRenderTexture, tempTexSPIDs[1]);
             _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[1]);
@@ -256,15 +265,11 @@ namespace FlowPaintTool
             _paintCommandBuffer.Blit(tempTexSPIDs[1], _densityRenderTexture);
             _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[1]);
 
-
-
             _mergeCommandBuffer = new CommandBuffer();
             _mergeCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
             _mergeCommandBuffer.Blit(_preOutputRenderTexture, tempTexSPIDs[0], _copyTargetMergeMaterial);
             _mergeCommandBuffer.Blit(tempTexSPIDs[0], _outputRenderTexture, _copyCutoutMaterial);
             _mergeCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
-
-
 
             _bleedCommandBuffer = new CommandBuffer();
             _bleedCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
@@ -490,10 +495,15 @@ namespace FlowPaintTool
             {
                 filePath = filePath.Remove(0, appDataPath.Length - 6);
                 AssetDatabase.ImportAsset(filePath);
-                TextureImporter texImporter = AssetImporter.GetAtPath(filePath) as TextureImporter;
-                texImporter.sRGBTexture = _actualSRGB;
+                TextureImporter importer = AssetImporter.GetAtPath(filePath) as TextureImporter;
+                importer.sRGBTexture = _actualSRGB;
                 int max = Math.Max(_outputRenderTexture.width, _outputRenderTexture.height);
-                texImporter.maxTextureSize = (int)Math.Pow(2, Math.Ceiling(Math.Log(max, 2)));
+                importer.maxTextureSize = (int)Math.Pow(2, Math.Ceiling(Math.Log(max, 2)));
+
+                if (_sourceTextureImporter != null)
+                {
+                    importer.textureType = _sourceTextureImporter.textureType;
+                }
             }
         }
 
