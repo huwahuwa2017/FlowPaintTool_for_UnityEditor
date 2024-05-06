@@ -166,7 +166,7 @@ namespace FlowPaintTool
                     SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer = "Select GameObject that uses MeshRenderer or SkinnedMeshRenderer";
                     MeshNotFound = "Mesh not found\nMake sure you are assigning Mesh correctly";
                     PleaseAllowReadWriteForTheMesh = "Please allow Read/Write for the mesh";
-                    UVCoordinateDoesNotExistInUVchannel = "UV coordinate does not exist in UVchannel ";
+                    UVCoordinateDoesNotExistInUVchannel = "UV coordinate does not exist in UVchannel : ";
                     UnityDoesNotSupportImportingImagesIn = "Unity does not support importing images in PNG format with a width or height greater than 8192";
 
                     PaintMode = "Paint mode";

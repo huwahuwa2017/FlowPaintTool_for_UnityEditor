@@ -3,12 +3,16 @@
 struct I2V
 {
     float4 lPos : POSITION;
+    float2 uv : TEXCOORD0;
 };
 
 struct V2F
 {
     float4 cPos : SV_POSITION;
+    float2 uv : TEXCOORD0;
 };
+
+SamplerState _linear_clamp_sampler;
 
 Texture2D _MainTex;
 Texture2D _FillTex;
@@ -34,6 +38,7 @@ V2F VertexShaderStage(I2V input)
 {
     V2F output = (V2F) 0;
     output.cPos = UnityObjectToClipPos(input.lPos);
+    output.uv = input.uv;
     return output;
 }
 
@@ -41,9 +46,8 @@ V2F VertexShaderStage(I2V input)
 
 float4 FragmentShaderStage_UnpackNormal(V2F input) : SV_Target
 {
-    uint2 index = uint2(input.cPos.xy);
-    
-    float3 normal = UnpackNormal(_MainTex[index]);
+    float4 data = _MainTex.SampleLevel(_linear_clamp_sampler, input.uv, 0.0);
+    float3 normal = UnpackNormal(data);
     
     return float4(normal * 0.5 + 0.5, 1.0);
 }
