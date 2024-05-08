@@ -52,25 +52,25 @@ float4 FragmentShaderStage_UnpackNormal(V2F input) : SV_Target
     return float4(normal * 0.5 + 0.5, 1.0);
 }
 
-float4 FragmentShaderStage_FillBleed(V2F input) : SV_Target
+float FragmentShaderStage_FillBleed(V2F input) : SV_Target
 {
     uint2 index0 = uint2(input.cPos.xy);
     
-    if (_MainTex[index0].r != 0.0)
+    if (_MainTex[index0].r > 0.25)
     {
         return 1.0;
     }
     
-    float result = 0.0;
+    float temp0 = 0.0;
     
     for (int count = 0; count < 4; ++count)
     {
         bool isOutOfRange = false;
         uint2 index1 = IsOutOfRange(_MainTex_TexelSize.zw, int2(index0) + _OffsetArray[count], isOutOfRange);
-        result += _MainTex[index1].r * (!isOutOfRange);
+        temp0 = max(temp0, _MainTex[index1].r * (!isOutOfRange));
     }
     
-    return result != 0.0;
+    return (temp0 > 0.25) ? 0.5 : 0.0;
 }
 
 float4 FragmentShaderStage_Cutout(V2F input) : SV_Target
@@ -86,8 +86,9 @@ float4 FragmentShaderStage_Cutout(V2F input) : SV_Target
 float4 FragmentShaderStage_Bleed(V2F input) : SV_Target
 {
     uint2 index0 = uint2(input.cPos.xy);
+    float temp0 = _FillTex[index0].r;
     
-    if (_FillTex[index0].r != 0.0)
+    if ((temp0 < 0.25) || (temp0 > 0.75))
     {
         return _MainTex[index0];
     }
@@ -100,7 +101,7 @@ float4 FragmentShaderStage_Bleed(V2F input) : SV_Target
         bool isOutOfRange = false;
         uint2 index1 = IsOutOfRange(_MainTex_TexelSize.zw, int2(index0) + _OffsetArray[count], isOutOfRange);
         
-        bool flag = (_FillTex[index1].r != 0.0) && (!isOutOfRange);
+        bool flag = (_FillTex[index1].r * (!isOutOfRange)) > 0.75;
         result += _MainTex[index1] * flag;
         margeCount += flag;
     }

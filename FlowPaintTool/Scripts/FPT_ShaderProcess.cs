@@ -1,7 +1,6 @@
 ﻿#if UNITY_EDITOR
 
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using UnityEditor;
@@ -68,7 +67,6 @@ namespace FlowPaintTool
         private int _memoryCount = 0;
         private int _undoMemoryIndex = 0;
         private int _redoMemoryIndex = 0;
-        private IEnumerable<int> _bleedIndexArray = null;
 
         private FPT_Main _fptMain = null;
 
@@ -103,115 +101,118 @@ namespace FlowPaintTool
             FPT_Assets assets = FPT_Assets.GetStaticInstance();
             Material fillMaterial = assets.GetFillMaterial();
 
-            _memoryCount = fptData._maxUndoCount + 1;
-
             _meshProcess = meshProcess;
             _paintMode = fptData._paintMode;
             _bleedRange = fptData._bleedRange;
             _actualSRGB = fptData._actualSRGB;
+            _memoryCount = fptData._maxUndoCount + 1;
 
-            _bleedIndexArray = Enumerable.Range(0, _bleedRange);
+            // GenerateRenderTexture Start
+            int[] tempTexSPIDs = new int[] { Shader.PropertyToID("_TempTex0"), Shader.PropertyToID("_TempTex1") };
 
-
-
-            // GenerateOutputRenderTexture Start
             GraphicsFormat graphicsFormat = _actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
-            RenderTextureDescriptor rtd = new RenderTextureDescriptor(fptData._width, fptData._height, graphicsFormat, 0);
-            _outputRenderTexture = new RenderTexture(rtd);
-            _outputRenderTexture.filterMode = FilterMode.Point;
-
-            string path = Path.GetDirectoryName(Path.GetDirectoryName(AssetDatabase.GetAssetPath(fillMaterial)));
-            path = Path.Combine(path, $"RT{InstanceID}.renderTexture");
-            AssetDatabase.CreateAsset(_outputRenderTexture, path);
-            _outputRenderTexturePath = path;
-
-            EditorApplication.playModeStateChanged += RemoveOutputRenderTexture;
-
-            if (fptData._textureExist)
-            {
-                if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.Assets)
-                {
-                    _sourceTextureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(fptData._startTexture)) as TextureImporter;
-
-                    if (_sourceTextureImporter.textureType == TextureImporterType.NormalMap)
-                    {
-                        Graphics.Blit(fptData._startTexture, _outputRenderTexture, assets.GetUnpackNormalMaterial());
-                    }
-                    else
-                    {
-                        Graphics.Blit(fptData._startTexture, _outputRenderTexture);
-                    }
-                }
-                else if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
-                {
-                    GraphicsFormat temp0 = _actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
-                    Texture2D texture = new Texture2D(0, 0, temp0, TextureCreationFlags.None);
-                    texture.LoadImage(File.ReadAllBytes(fptData._startTextureFilePath));
-                    Graphics.Blit(texture, _outputRenderTexture);
-                    UnityEngine.Object.Destroy(texture);
-                }
-            }
-            else
-            {
-                Debug.Log("Texture not found");
-
-                Color defaultColor = default;
-
-                if (fptData._paintMode == FPT_PaintModeEnum.FlowPaintMode)
-                {
-                    defaultColor = new Color(0.5f, 0.5f, 1f, 1f);
-                }
-                else if (fptData._paintMode == FPT_PaintModeEnum.ColorPaintMode)
-                {
-                    defaultColor = Color.black;
-                }
-
-                Texture2D defaultColorTexture = new Texture2D(1, 1, GraphicsFormat.R8G8B8A8_UNorm, TextureCreationFlags.None);
-                defaultColorTexture.SetPixel(0, 0, defaultColor);
-                defaultColorTexture.Apply();
-                Graphics.Blit(defaultColorTexture, _outputRenderTexture);
-                UnityEngine.Object.Destroy(defaultColorTexture);
-            }
-            // GenerateOutputRenderTexture End
-
-            // GenerateTexture Start
-            RenderTextureDescriptor rtd_main = _outputRenderTexture.descriptor;
+            RenderTextureDescriptor rtd_main = new RenderTextureDescriptor(fptData._width, fptData._height, graphicsFormat, 0);
             RenderTextureDescriptor rtd_R8 = rtd_main;
             rtd_R8.graphicsFormat = GraphicsFormat.R8_UNorm;
             RenderTextureDescriptor rtd_R16 = rtd_main;
             rtd_R16.graphicsFormat = GraphicsFormat.R16_UNorm;
 
-            TargetUVChannel(fptData, fillMaterial);
+            _outputRenderTexture = new RenderTexture(rtd_main);
+            {
+                _outputRenderTexture.filterMode = FilterMode.Point;
 
-            _preOutputRenderTexture = new RenderTexture(rtd_main);
+                string path = Path.GetDirectoryName(Path.GetDirectoryName(AssetDatabase.GetAssetPath(fillMaterial)));
+                path = Path.Combine(path, $"RT{InstanceID}.renderTexture");
+                AssetDatabase.CreateAsset(_outputRenderTexture, path);
+                _outputRenderTexturePath = path;
+
+                EditorApplication.playModeStateChanged += RemoveOutputRenderTexture;
+
+                if (fptData._textureExist)
+                {
+                    if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.Assets)
+                    {
+                        _sourceTextureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(fptData._startTexture)) as TextureImporter;
+
+                        if (_sourceTextureImporter.textureType == TextureImporterType.NormalMap)
+                        {
+                            Graphics.Blit(fptData._startTexture, _outputRenderTexture, assets.GetUnpackNormalMaterial());
+                        }
+                        else
+                        {
+                            Graphics.Blit(fptData._startTexture, _outputRenderTexture);
+                        }
+                    }
+                    else if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
+                    {
+                        GraphicsFormat temp0 = _actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
+                        Texture2D texture = new Texture2D(0, 0, temp0, TextureCreationFlags.None);
+                        texture.LoadImage(File.ReadAllBytes(fptData._startTextureFilePath));
+                        Graphics.Blit(texture, _outputRenderTexture);
+                        UnityEngine.Object.Destroy(texture);
+                    }
+                }
+                else
+                {
+                    Debug.Log("Texture not found");
+
+                    Color defaultColor = default;
+
+                    if (fptData._paintMode == FPT_PaintModeEnum.FlowPaintMode)
+                    {
+                        defaultColor = new Color(0.5f, 0.5f, 1f, 1f);
+                    }
+                    else if (fptData._paintMode == FPT_PaintModeEnum.ColorPaintMode)
+                    {
+                        defaultColor = Color.black;
+                    }
+
+                    Texture2D defaultColorTexture = new Texture2D(1, 1, GraphicsFormat.R8G8B8A8_UNorm, TextureCreationFlags.None);
+                    defaultColorTexture.SetPixel(0, 0, defaultColor);
+                    defaultColorTexture.Apply();
+                    Graphics.Blit(defaultColorTexture, _outputRenderTexture);
+                    UnityEngine.Object.Destroy(defaultColorTexture);
+                }
+            }
+
+            _fillRenderTextureArray = Enumerable.Range(0, Math.Max(_bleedRange, 1)).Select(I => new RenderTexture(rtd_R8)).ToArray();
+            {
+                TargetUVChannel(fptData, fillMaterial);
+                int subMeshCount = fptData._startMesh.subMeshCount;
+
+                CommandBuffer fillCommandBuffer = new CommandBuffer();
+                fillCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_R8);
+                fillCommandBuffer.SetRenderTarget(tempTexSPIDs[0]);
+
+                for (int subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex)
+                {
+                    fillCommandBuffer.DrawMesh(fptData._startMesh, Matrix4x4.identity, fillMaterial, subMeshIndex);
+                }
+
+                fillCommandBuffer.Blit(tempTexSPIDs[0], _fillRenderTextureArray[0], assets.GetFillBleedMaterial());
+                fillCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
+
+                Graphics.ExecuteCommandBuffer(fillCommandBuffer);
+                fillCommandBuffer.Dispose();
+
+                for (int index = 0; index < (_bleedRange - 1); ++index)
+                {
+                    Graphics.Blit(_fillRenderTextureArray[index], _fillRenderTextureArray[index + 1], assets.GetFillBleedMaterial());
+                }
+            }
+
             _paintRenderTexture = new RenderTexture(rtd_main);
             _densityRenderTexture = new RenderTexture(rtd_R16);
 
-            _fillRenderTextureArray = Enumerable.Range(0, Math.Max(_bleedRange, 1)).Select(I => new RenderTexture(rtd_R8)).ToArray();
-
-            CommandBuffer fillCommandBuffer = new CommandBuffer();
-            fillCommandBuffer.SetRenderTarget(_fillRenderTextureArray[0]);
-
-            int subMeshCount = fptData._startMesh.subMeshCount;
-
-            for (int subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex)
-            {
-                fillCommandBuffer.DrawMesh(fptData._startMesh, Matrix4x4.identity, fillMaterial, subMeshIndex);
-            }
-
-            Graphics.ExecuteCommandBuffer(fillCommandBuffer);
-
-            for (int index = 1; index < _bleedRange; ++index)
-            {
-                Graphics.Blit(_fillRenderTextureArray[index - 1], _fillRenderTextureArray[index], assets.GetFillBleedMaterial());
-            }
+            _preOutputRenderTexture = new RenderTexture(rtd_main);
+            Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
 
             _undoMemoryRenderTextureArray = Enumerable.Range(0, _memoryCount).Select(I => new RenderTexture(rtd_main)).ToArray();
             Graphics.Blit(_outputRenderTexture, _undoMemoryRenderTextureArray[0]);
-            // GenerateTexture End
+            // GenerateRenderTexture End
 
             // GenerateMaterial Start
-            _copyBleedMaterialArray = _bleedIndexArray.Select(I => UnityEngine.Object.Instantiate(assets.GetBleedMaterial())).ToArray();
+            _copyBleedMaterialArray = Enumerable.Range(0, _bleedRange).Select(I => UnityEngine.Object.Instantiate(assets.GetBleedMaterial())).ToArray();
 
             if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {
@@ -247,43 +248,34 @@ namespace FlowPaintTool
             // GenerateMaterial End
 
             // GenerateCommandBuffer Start
-            int[] tempTexSPIDs = new int[] { Shader.PropertyToID("_TempTex0"), Shader.PropertyToID("_TempTex1") };
             Mesh paintModeMesh = _meshProcess.GetPaintModeMesh();
 
             _paintCommandBuffer = new CommandBuffer();
             _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
             _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_R16);
-
             _paintCommandBuffer.Blit(_paintRenderTexture, tempTexSPIDs[0]);
             _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[0]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyTargetPaintMaterial, 0);
             _paintCommandBuffer.Blit(tempTexSPIDs[0], _paintRenderTexture);
-
             _paintCommandBuffer.Blit(_densityRenderTexture, tempTexSPIDs[1]);
             _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[1]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyDensityMaterial, 0);
             _paintCommandBuffer.Blit(tempTexSPIDs[1], _densityRenderTexture);
-
-            _paintCommandBuffer.Blit(_preOutputRenderTexture, tempTexSPIDs[0], _copyTargetMergeMaterial);
-            _paintCommandBuffer.Blit(tempTexSPIDs[0], _outputRenderTexture, _copyCutoutMaterial);
-
+            _paintCommandBuffer.Blit(_preOutputRenderTexture, _outputRenderTexture, _copyTargetMergeMaterial);
             _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
             _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[1]);
-
-
 
             _bleedCommandBuffer = new CommandBuffer();
             _bleedCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
             _bleedCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_main);
-
             _bleedCommandBuffer.Blit(_outputRenderTexture, tempTexSPIDs[0]);
 
             int temp1 = 0;
 
-            foreach (int index in _bleedIndexArray)
+            for (int index = 0; index < _bleedRange; ++index)
             {
+                _bleedCommandBuffer.Blit(tempTexSPIDs[temp1], tempTexSPIDs[1 - temp1], _copyBleedMaterialArray[index]);
                 temp1 = 1 - temp1;
-                _bleedCommandBuffer.Blit(tempTexSPIDs[1 - temp1], tempTexSPIDs[temp1], _copyBleedMaterialArray[index]);
             }
 
             _bleedCommandBuffer.Blit(tempTexSPIDs[temp1], _outputRenderTexture);
@@ -303,7 +295,7 @@ namespace FlowPaintTool
                 _copyFlowResultMaterial.SetFloat("_DisplayNormalLength", FPT_EditorData.GetStaticInstance().GetDisplayNormalLength());
             }
 
-            foreach (int index in _bleedIndexArray)
+            for (int index = 0; index < _bleedRange; ++index)
             {
                 _copyBleedMaterialArray[index].SetTexture(_fillTexSPID, _fillRenderTextureArray[index]);
             }
@@ -344,7 +336,6 @@ namespace FlowPaintTool
 
                 if (!_prePaint)
                 {
-                    //Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
                     Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
                 }
 
@@ -390,22 +381,25 @@ namespace FlowPaintTool
                 _paintRenderTexture.Release();
                 _densityRenderTexture.Release();
 
-                if (_undoMemoryIndex < _memoryCount - 1)
+                int maxIndex = _memoryCount - 1;
+
+                if (_undoMemoryIndex < maxIndex)
                 {
                     ++_undoMemoryIndex;
                     Graphics.Blit(_outputRenderTexture, _undoMemoryRenderTextureArray[_undoMemoryIndex]);
                 }
                 else
                 {
-                    RenderTexture firstMemory = _undoMemoryRenderTextureArray[0];
-                    Graphics.Blit(_outputRenderTexture, firstMemory);
+                    RenderTexture tempRT = _undoMemoryRenderTextureArray[0];
 
-                    for (int index = 1; index < _memoryCount; ++index)
+                    for (int index = 0; index < maxIndex; ++index)
                     {
-                        _undoMemoryRenderTextureArray[index - 1] = _undoMemoryRenderTextureArray[index];
+                        _undoMemoryRenderTextureArray[index] = _undoMemoryRenderTextureArray[index + 1];
                     }
 
-                    _undoMemoryRenderTextureArray[_undoMemoryIndex] = firstMemory;
+                    _undoMemoryRenderTextureArray[maxIndex] = tempRT;
+
+                    Graphics.Blit(_outputRenderTexture, tempRT);
                 }
 
                 _redoMemoryIndex = _undoMemoryIndex;
