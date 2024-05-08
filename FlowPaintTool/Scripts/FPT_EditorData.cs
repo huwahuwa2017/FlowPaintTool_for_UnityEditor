@@ -29,7 +29,7 @@ namespace FlowPaintTool
         [SerializeField]
         private FPT_MainData _mainData = FPT_MainData.Constructor();
         [SerializeField]
-        private float _cameraRotateSpeed = 2f;
+        private float _cameraRotateSpeed = 3f;
         [SerializeField]
         private float _cameraMoveSpeed = 0.05f;
         [SerializeField]
@@ -215,7 +215,7 @@ namespace FlowPaintTool
         public void ResetParameter()
         {
             _mainData = FPT_MainData.Constructor();
-            _cameraRotateSpeed = 2f;
+            _cameraRotateSpeed = 3f;
             _cameraMoveSpeed = 0.05f;
             _cameraInertia = 6;
             _languageType = FPT_LanguageTypeEnum.Japanese;

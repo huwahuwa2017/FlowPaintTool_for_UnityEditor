@@ -18,11 +18,9 @@ namespace FlowPaintTool
         private Mesh _maskModeMesh = null;
 
         private int _polygonCount = 0;
-        private int _subMeshCount = 1;
         private Vector3[] _vertices;
 
         private IEnumerable<int> _pd_IndexArray = null;
-        private int[] _pd_SubMeshIndexArray = null;
         private Vector3Int[] _pd_VertexIndexArray = null;
         private Vector3Int[] _pd_AdjacentIndexArray = null;
         private bool[] _pd_DuplicateUVArray = null;
@@ -33,8 +31,6 @@ namespace FlowPaintTool
 
         private FPT_Main _fptMain = null;
         private Matrix4x4 _preMatrix = Matrix4x4.zero;
-
-        public int GetSubMeshCount() => _subMeshCount;
 
         public Mesh GetPaintModeMesh() => _paintModeMesh;
 
@@ -76,8 +72,8 @@ namespace FlowPaintTool
             Mesh startMesh = fptData._startMesh;
             int targetUVChannel = fptData._targetUVChannel;
             float uv_Epsilon = fptData._uv_Epsilon;
-
-
+            int targetSubMesh = fptData._targetSubMesh;
+            int subMeshCount = startMesh.subMeshCount;
 
             _maskModeMesh = Object.Instantiate(startMesh);
             _maskModeMesh.MarkDynamic();
@@ -92,82 +88,66 @@ namespace FlowPaintTool
             _vertices = startMesh.vertices;
             List<Vector2> uvs = new List<Vector2>();
             startMesh.GetUVs(targetUVChannel, uvs);
-            int[] triangles = startMesh.triangles;
+            int[] triangles = startMesh.GetTriangles(targetSubMesh);
             _polygonCount = triangles.Length / 3;
-            _subMeshCount = startMesh.subMeshCount;
 
             _pd_IndexArray = Enumerable.Range(0, _polygonCount);
-            _pd_SubMeshIndexArray = new int[_polygonCount];
-            _pd_VertexIndexArray = new Vector3Int[_polygonCount];
-            _pd_DuplicateUVArray = new bool[_polygonCount];
+
+            _pd_VertexIndexArray = _pd_IndexArray.
+                Select(I => new Vector3Int(triangles[I * 3], triangles[I * 3 + 1], triangles[I * 3 + 2])).
+                ToArray();
+
             _pd_CenterArray = new Vector3[_polygonCount];
             _pd_MaskArray = new bool[_polygonCount];
             _pd_MaskResultArray = new bool[_polygonCount];
 
-            // Generate _polygonList Start
-            int triangleIndex = 0;
-
-            for (int subMeshIndex = 0; subMeshIndex < _subMeshCount; ++subMeshIndex)
-            {
-                int[] subMeshTriangles = startMesh.GetTriangles(subMeshIndex);
-                int subMeshTriangleArrayLength = subMeshTriangles.Length;
-
-                for (int index = 0; index < subMeshTriangleArrayLength; index += 3)
-                {
-                    Vector3Int vertexIndex = new Vector3Int(subMeshTriangles[index], subMeshTriangles[index + 1], subMeshTriangles[index + 2]);
-                    _pd_VertexIndexArray[triangleIndex] = vertexIndex;
-                    _pd_SubMeshIndexArray[triangleIndex] = subMeshIndex;
-                    ++triangleIndex;
-                }
-            }
-            // Generate polygon list End
-
             // Compute shader Start
-            ComputeShader cs_adjacentPolygon = FPT_Assets.GetStaticInstance().GetAdjacentPolygonComputeShader();
-
-            ComputeBuffer cb_Vertices = new ComputeBuffer(_vertices.Count(), Marshal.SizeOf(typeof(Vector3)));
-            ComputeBuffer cb_UVs = new ComputeBuffer(uvs.Count(), Marshal.SizeOf(typeof(Vector2)));
-            ComputeBuffer cb_Triangles = new ComputeBuffer(triangles.Count(), Marshal.SizeOf(typeof(int)));
-            ComputeBuffer cb_AdjacentResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector3Int)));
-            ComputeBuffer cb_CenterUVResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector2)));
-            ComputeBuffer cb_DuplicateResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(int)));
-
-            cb_Vertices.SetData(_vertices);
-            cb_UVs.SetData(uvs);
-            cb_Triangles.SetData(triangles);
-
-            int adjacent_Main_KI = cs_adjacentPolygon.FindKernel("Adjacent_Main");
-            int duplicate_Main_KI = cs_adjacentPolygon.FindKernel("Duplicate_Main");
-
-            cs_adjacentPolygon.SetInt("_TriangleCount", _polygonCount);
-            cs_adjacentPolygon.SetFloat("_Epsilon", uv_Epsilon);
-
-            cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Vertices", cb_Vertices);
-            cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_UVs", cb_UVs);
-            cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Triangles", cb_Triangles);
-            cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_AdjacentResult", cb_AdjacentResult);
-            cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_CenterUVResult", cb_CenterUVResult);
-            cs_adjacentPolygon.Dispatch(adjacent_Main_KI, _polygonCount, 1, 1);
-
             _pd_AdjacentIndexArray = new Vector3Int[_polygonCount];
-            cb_AdjacentResult.GetData(_pd_AdjacentIndexArray);
-
-            cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_CenterUVResult", cb_CenterUVResult);
-            cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_DuplicateResult", cb_DuplicateResult);
-            cs_adjacentPolygon.Dispatch(duplicate_Main_KI, _polygonCount, 1, 1);
-
             int[] duplicateResult = new int[_polygonCount];
-            cb_DuplicateResult.GetData(duplicateResult);
+            {
+                ComputeShader cs_adjacentPolygon = FPT_Assets.GetStaticInstance().GetAdjacentPolygonComputeShader();
 
-            cb_Vertices.Release();
-            cb_UVs.Release();
-            cb_Triangles.Release();
-            cb_AdjacentResult.Release();
-            cb_CenterUVResult.Release();
-            cb_DuplicateResult.Release();
+                int adjacent_Main_KI = cs_adjacentPolygon.FindKernel("Adjacent_Main");
+                int duplicate_Main_KI = cs_adjacentPolygon.FindKernel("Duplicate_Main");
+
+                ComputeBuffer cb_Vertices = new ComputeBuffer(_vertices.Count(), Marshal.SizeOf(typeof(Vector3)));
+                ComputeBuffer cb_UVs = new ComputeBuffer(uvs.Count(), Marshal.SizeOf(typeof(Vector2)));
+                ComputeBuffer cb_Triangles = new ComputeBuffer(triangles.Count(), Marshal.SizeOf(typeof(int)));
+                ComputeBuffer cb_AdjacentResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector3Int)));
+                ComputeBuffer cb_CenterUVResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector2)));
+                ComputeBuffer cb_DuplicateResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(int)));
+
+                cb_Vertices.SetData(_vertices);
+                cb_UVs.SetData(uvs);
+                cb_Triangles.SetData(triangles);
+
+                cs_adjacentPolygon.SetInt("_TriangleCount", _polygonCount);
+                cs_adjacentPolygon.SetFloat("_Epsilon", uv_Epsilon);
+                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Vertices", cb_Vertices);
+                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_UVs", cb_UVs);
+                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Triangles", cb_Triangles);
+                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_AdjacentResult", cb_AdjacentResult);
+                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_CenterUVResult", cb_CenterUVResult);
+                cs_adjacentPolygon.Dispatch(adjacent_Main_KI, _polygonCount, 1, 1);
+                cb_AdjacentResult.GetData(_pd_AdjacentIndexArray);
+
+                cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_CenterUVResult", cb_CenterUVResult);
+                cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_DuplicateResult", cb_DuplicateResult);
+                cs_adjacentPolygon.Dispatch(duplicate_Main_KI, _polygonCount, 1, 1);
+                cb_DuplicateResult.GetData(duplicateResult);
+
+                cb_Vertices.Release();
+                cb_UVs.Release();
+                cb_Triangles.Release();
+                cb_AdjacentResult.Release();
+                cb_CenterUVResult.Release();
+                cb_DuplicateResult.Release();
+            }
             // Compute shader End
 
             // Generate _duplicatePolygonListList Start
+            _pd_DuplicateUVArray = new bool[_polygonCount];
+
             bool[] checkIndex = new bool[_polygonCount];
             List<int[]> duplicatePolygonIndexArray = new List<int[]>();
 
@@ -196,8 +176,6 @@ namespace FlowPaintTool
             _pd_duplicatePolygonIndexArrayArray = duplicatePolygonIndexArray.ToArray();
             // Generate _duplicatePolygonListList End
 
-
-
             MaskModeMeshTriangleUpdate();
         }
 
@@ -209,18 +187,11 @@ namespace FlowPaintTool
 
             _preMatrix = matrix;
 
-            Vector3[] vpArray = _vertices.Clone() as Vector3[];
-            int vpArrayLength = vpArray.Length;
-
-            for (int index = 0; index < vpArrayLength; ++index)
-            {
-                vpArray[index] = matrix.MultiplyPoint3x4(vpArray[index]);
-            }
+            Vector3[] vpArray = _vertices.Select(I => matrix.MultiplyPoint3x4(I)).ToArray();
 
             foreach (int pdIndex in _pd_IndexArray)
             {
                 Vector3Int vIndex = _pd_VertexIndexArray[pdIndex];
-
                 _pd_CenterArray[pdIndex] = (vpArray[vIndex.x] + vpArray[vIndex.y] + vpArray[vIndex.z]) / 3f;
             }
         }
@@ -416,53 +387,6 @@ namespace FlowPaintTool
                 }
             }
             EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(10);
-
-            for (int index = 0; index < _subMeshCount; ++index)
-            {
-                EditorGUILayout.LabelField(TextData.SubMeshIndex + index);
-
-                EditorGUILayout.BeginHorizontal();
-                {
-                    if (GUILayout.Button(TextData.Mask))
-                    {
-                        foreach (int pdIndex in _pd_IndexArray)
-                        {
-                            if (_pd_SubMeshIndexArray[pdIndex] != index) continue;
-
-                            _pd_MaskArray[pdIndex] = true;
-                        }
-
-                        MaskModeMeshTriangleUpdate();
-                    }
-
-                    if (GUILayout.Button(TextData.Unmask))
-                    {
-                        foreach (int pdIndex in _pd_IndexArray)
-                        {
-                            if (_pd_SubMeshIndexArray[pdIndex] != index) continue;
-
-                            _pd_MaskArray[pdIndex] = false;
-                        }
-
-                        MaskModeMeshTriangleUpdate();
-                    }
-
-                    if (GUILayout.Button(TextData.Invert))
-                    {
-                        foreach (int pdIndex in _pd_IndexArray)
-                        {
-                            if (_pd_SubMeshIndexArray[pdIndex] != index) continue;
-
-                            _pd_MaskArray[pdIndex] = !_pd_MaskArray[pdIndex];
-                        }
-
-                        MaskModeMeshTriangleUpdate();
-                    }
-                }
-                EditorGUILayout.EndHorizontal();
-            }
 
             EditorGUILayout.Space(20);
         }

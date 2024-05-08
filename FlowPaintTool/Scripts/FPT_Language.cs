@@ -113,6 +113,7 @@ namespace FlowPaintTool
             public static string SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer;
             public static string MeshNotFound;
             public static string PleaseAllowReadWriteForTheMesh;
+            public static string ThisSubmeshDoesNotExist;
             public static string UVCoordinateDoesNotExistInUVchannel;
             public static string UnityDoesNotSupportImportingImagesIn;
             // ErrorCheckGUI End
@@ -127,6 +128,7 @@ namespace FlowPaintTool
             public static string FilePath;
             public static string SRGBColorTexture;
             public static string AdvancedSettings;
+            public static string TargetSubmeshIndex;
             public static string TargetUVChannel;
             public static string BleedRange;
             public static string UVEpsilon;
@@ -142,6 +144,7 @@ namespace FlowPaintTool
                     SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer = "MeshRendererかSkinnedMeshRendererを使用しているゲーム オブジェクトを選択してください";
                     MeshNotFound = "Meshが見つかりません\nMeshを正しく割り当てているか確認してください";
                     PleaseAllowReadWriteForTheMesh = "MeshのRead/Writeを有効にしてください";
+                    ThisSubmeshDoesNotExist = "このsubmeshは存在しません : ";
                     UVCoordinateDoesNotExistInUVchannel = "このUVチャンネルは空です : ";
                     UnityDoesNotSupportImportingImagesIn = "Unityは幅あるいは高さが8192を超えるPNG形式の画像のインポートをサポートしていません";
 
@@ -154,6 +157,7 @@ namespace FlowPaintTool
                     FilePath = "ファイル パス";
                     SRGBColorTexture = "sRGB (カラー テクスチャ)";
                     AdvancedSettings = "高度な設定";
+                    TargetSubmeshIndex = "使用するsubmesh";
                     TargetUVChannel = "使用するUVチャンネル";
                     BleedRange = "にじみの範囲";
                     UVEpsilon = "UV epsilon";
@@ -166,6 +170,7 @@ namespace FlowPaintTool
                     SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer = "Select GameObject that uses MeshRenderer or SkinnedMeshRenderer";
                     MeshNotFound = "Mesh not found\nMake sure you are assigning Mesh correctly";
                     PleaseAllowReadWriteForTheMesh = "Please allow Read/Write for the mesh";
+                    ThisSubmeshDoesNotExist = "This submesh does not exist : ";
                     UVCoordinateDoesNotExistInUVchannel = "UV coordinate does not exist in UVchannel : ";
                     UnityDoesNotSupportImportingImagesIn = "Unity does not support importing images in PNG format with a width or height greater than 8192";
 
@@ -178,6 +183,7 @@ namespace FlowPaintTool
                     FilePath = "File path";
                     SRGBColorTexture = "sRGB (Color Texture)";
                     AdvancedSettings = "Advanced settings";
+                    TargetSubmeshIndex = "Target submesh index";
                     TargetUVChannel = "Target UV channel";
                     BleedRange = "Bleed range";
                     UVEpsilon = "UV epsilon";

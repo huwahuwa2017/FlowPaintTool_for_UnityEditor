@@ -1,5 +1,6 @@
 ﻿#if UNITY_EDITOR
 
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 
@@ -66,19 +67,24 @@ namespace FlowPaintTool
             _meshProcess = new FPT_MeshProcess(this, _fptData);
             _shaderProcess = new FPT_ShaderProcess(this, _fptData, _meshProcess, GetInstanceID());
 
-            _paintRenderObject = new GameObject("PaintRender");
-            _paintRenderObject.transform.SetParent(transform, false);
-            _paintRenderObject.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
-            _shaderProcess.PaintRenderMaterialArray(_paintRenderObject.AddComponent<MeshRenderer>());
-
-            _maskRenderObject = new GameObject("MaskRender");
-            _maskRenderObject.transform.SetParent(transform, false);
-            _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
-            _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = new Material[]
+            Material[] maskRenderMaterials = new Material[]
             {
                 FPT_Assets.GetStaticInstance().GetMaterial_MaskOff(),
                 FPT_Assets.GetStaticInstance().GetMaterial_MaskOn()
             };
+
+            Material[] paintRenderMaterials = Enumerable.Repeat(maskRenderMaterials[1], _fptData._startMesh.subMeshCount).ToArray();
+            paintRenderMaterials[_fptData._targetSubMesh] = _shaderProcess.GetPaintRenderMaterial();
+
+            _paintRenderObject = new GameObject("PaintRender");
+            _paintRenderObject.transform.SetParent(transform, false);
+            _paintRenderObject.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
+            _paintRenderObject.AddComponent<MeshRenderer>().sharedMaterials = paintRenderMaterials;
+
+            _maskRenderObject = new GameObject("MaskRender");
+            _maskRenderObject.transform.SetParent(transform, false);
+            _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
+            _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = maskRenderMaterials;
 
             _meshColiderObject = new GameObject("MeshColider");
             _meshColiderObject.transform.SetParent(transform, false);

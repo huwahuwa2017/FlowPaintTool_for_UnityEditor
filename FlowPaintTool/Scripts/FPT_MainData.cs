@@ -34,6 +34,7 @@ namespace FlowPaintTool
         public string _startTextureFilePath;
         public bool _startTextureSRGB;
 
+        public int _targetSubMesh;
         public int _targetUVChannel;
         public int _bleedRange;
         public float _uv_Epsilon;
@@ -55,6 +56,7 @@ namespace FlowPaintTool
             _startTextureFilePath = string.Empty;
             _startTextureSRGB = false;
 
+            _targetSubMesh = 0;
             _targetUVChannel = 0;
             _bleedRange = 4;
             _uv_Epsilon = 0.0001f;
@@ -68,6 +70,7 @@ namespace FlowPaintTool
         {
             _width = Math.Max(_width, 0);
             _height = Math.Max(_height, 0);
+            _targetSubMesh = Math.Max(_targetSubMesh, 0);
             _targetUVChannel = Math.Max(Math.Min(_targetUVChannel, 7), 0);
             _bleedRange = Math.Max(_bleedRange, 0);
             _uv_Epsilon = Math.Max(_uv_Epsilon, 0f);
@@ -142,6 +145,12 @@ namespace FlowPaintTool
                             EditorGUILayout.HelpBox(TextData.UVCoordinateDoesNotExistInUVchannel + _targetUVChannel, MessageType.Error);
                             isError = true;
                         }
+
+                        if (_targetSubMesh >= _startMesh.subMeshCount)
+                        {
+                            EditorGUILayout.HelpBox(TextData.ThisSubmeshDoesNotExist + _targetSubMesh, MessageType.Error);
+                            isError = true;
+                        }
                     }
                 }
             }
@@ -197,6 +206,7 @@ namespace FlowPaintTool
 
             GUILayout.Label(TextData.AdvancedSettings, FPT_GUIStyle.GetCenterLabel());
 
+            _targetSubMesh = EditorGUILayout.IntField(TextData.TargetSubmeshIndex, _targetSubMesh);
             _targetUVChannel = EditorGUILayout.IntField(TextData.TargetUVChannel, _targetUVChannel);
             _bleedRange = EditorGUILayout.IntField(TextData.BleedRange, _bleedRange);
             _uv_Epsilon = EditorGUILayout.FloatField(TextData.UVEpsilon, _uv_Epsilon);

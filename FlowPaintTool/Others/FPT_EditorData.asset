@@ -22,13 +22,14 @@ MonoBehaviour:
     _startTexture: {fileID: 0}
     _startTextureFilePath: 
     _startTextureSRGB: 0
+    _targetSubMesh: 0
     _targetUVChannel: 0
     _bleedRange: 4
     _uv_Epsilon: 0.0001
     _maxUndoCount: 15
     _textureExist: 0
     _actualSRGB: 0
-  _cameraRotateSpeed: 2
+  _cameraRotateSpeed: 3
   _cameraMoveSpeed: 0.05
   _cameraInertia: 6
   _languageType: 1

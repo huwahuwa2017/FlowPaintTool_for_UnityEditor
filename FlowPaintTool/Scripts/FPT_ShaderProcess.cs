@@ -54,20 +54,21 @@ namespace FlowPaintTool
         private CommandBuffer _paintCommandBuffer = null;
         private CommandBuffer _bleedCommandBuffer = null;
 
-        private FPT_MeshProcess _meshProcess = null;
         private FPT_PaintModeEnum _paintMode = FPT_PaintModeEnum.FlowPaintMode;
         private int _bleedRange = 4;
         private bool _actualSRGB = false;
-        private TextureImporter _sourceTextureImporter = null;
+        private int _memoryCount = 0;
 
         private Vector3 _preHitPosition = Vector3.zero;
         private bool _prePaint = false;
         private bool _preHit = false;
-        private int _memoryCount = 0;
+
         private int _undoMemoryIndex = 0;
         private int _redoMemoryIndex = 0;
 
         private FPT_Main _fptMain = null;
+        private FPT_MeshProcess _meshProcess = null;
+        private TextureImporter _sourceTextureImporter = null;
 
         private void RemoveOutputRenderTexture(PlayModeStateChange state)
         {
@@ -95,16 +96,15 @@ namespace FlowPaintTool
 
         public FPT_ShaderProcess(FPT_Main fptMain, FPT_MainData fptData, FPT_MeshProcess meshProcess, int InstanceID)
         {
-            _fptMain = fptMain;
-
-            FPT_Assets assets = FPT_Assets.GetStaticInstance();
-            Material fillMaterial = assets.GetFillMaterial();
-
-            _meshProcess = meshProcess;
             _paintMode = fptData._paintMode;
             _bleedRange = fptData._bleedRange;
             _actualSRGB = fptData._actualSRGB;
             _memoryCount = fptData._maxUndoCount + 1;
+            _fptMain = fptMain;
+            _meshProcess = meshProcess;
+
+            FPT_Assets assets = FPT_Assets.GetStaticInstance();
+            Material fillMaterial = assets.GetFillMaterial();
 
             // GenerateRenderTexture Start
             int[] tempTexSPIDs = new int[] { Shader.PropertyToID("_TempTex0"), Shader.PropertyToID("_TempTex1") };
@@ -177,17 +177,11 @@ namespace FlowPaintTool
             _fillRenderTextureArray = Enumerable.Range(0, Math.Max(_bleedRange, 1)).Select(I => new RenderTexture(rtd_R8)).ToArray();
             {
                 TargetUVChannel(fptData, fillMaterial);
-                int subMeshCount = fptData._startMesh.subMeshCount;
 
                 CommandBuffer fillCommandBuffer = new CommandBuffer();
                 fillCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_R8);
                 fillCommandBuffer.SetRenderTarget(tempTexSPIDs[0]);
-
-                for (int subMeshIndex = 0; subMeshIndex < subMeshCount; ++subMeshIndex)
-                {
-                    fillCommandBuffer.DrawMesh(fptData._startMesh, Matrix4x4.identity, fillMaterial, subMeshIndex);
-                }
-
+                fillCommandBuffer.DrawMesh(fptData._startMesh, Matrix4x4.identity, fillMaterial, fptData._targetSubMesh);
                 fillCommandBuffer.Blit(tempTexSPIDs[0], _fillRenderTextureArray[0], assets.GetFillBleedMaterial());
                 fillCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
 
@@ -411,20 +405,20 @@ namespace FlowPaintTool
 
 
 
-        public void PaintRenderMaterialArray(MeshRenderer meshRenderer)
+        public Material GetPaintRenderMaterial()
         {
-            Material targetMaterial = null;
+            Material material = null;
 
             if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {
-                targetMaterial = _copyFlowResultMaterial;
+                material = _copyFlowResultMaterial;
             }
             else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
             {
-                targetMaterial = _copyColorResultMaterial;
+                material = _copyColorResultMaterial;
             }
 
-            meshRenderer.sharedMaterials = Enumerable.Repeat(targetMaterial, _meshProcess.GetSubMeshCount()).ToArray();
+            return material;
         }
 
 
