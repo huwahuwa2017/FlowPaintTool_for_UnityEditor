@@ -47,8 +47,6 @@ namespace FlowPaintTool
         [SerializeField]
         private Material _colorMergeMaterial = null;
         [SerializeField]
-        private Material _cutoutMaterial = null;
-        [SerializeField]
         private Material _bleedMaterial = null;
         [SerializeField]
         private Material _flowResultMaterial = null;
@@ -73,7 +71,6 @@ namespace FlowPaintTool
         public Material GetDensityMaterial() => _densityMaterial;
         public Material GetFlowMergeMaterial() => _flowMergeMaterial;
         public Material GetColorMergeMaterial() => _colorMergeMaterial;
-        public Material GetCutoutMaterial() => _cutoutMaterial;
         public Material GetBleedMaterial() => _bleedMaterial;
         public Material GetFlowResultMaterial() => _flowResultMaterial;
         public Material GetColorResultMaterial() => _colorResultMaterial;

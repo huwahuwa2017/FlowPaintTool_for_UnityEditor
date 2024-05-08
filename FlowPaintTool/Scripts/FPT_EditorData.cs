@@ -43,7 +43,7 @@ namespace FlowPaintTool
         private float _brushSize = 0.1f;
         private float _brushStrength = 1.0f;
         private FPT_BrushShapeEnum _brushShape = FPT_BrushShapeEnum.Smooth;
-        private float _brushMoveSensitivity = 0.02f; // UI未実装　0.01固定
+        private float _brushMoveSensitivity = 0.01f; // UI未実装
 
         private bool _heightLimit = false;
         private float _minHeight = 0.5f;
@@ -220,8 +220,6 @@ namespace FlowPaintTool
             _cameraInertia = 6;
             _languageType = FPT_LanguageTypeEnum.Japanese;
 
-            EditorUtility.SetDirty(this);
-
             _enableMaskMode = false;
             _enablePreviewMode = false;
 
@@ -245,6 +243,9 @@ namespace FlowPaintTool
             _editA = true;
 
             _operationInstructions = true;
+
+            EditorUtility.SetDirty(this);
+            AssetDatabase.SaveAssets();
         }
 
 

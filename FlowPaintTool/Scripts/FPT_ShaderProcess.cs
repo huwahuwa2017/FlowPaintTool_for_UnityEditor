@@ -47,7 +47,6 @@ namespace FlowPaintTool
         private Material _copyTargetPaintMaterial = null;
         private Material _copyDensityMaterial = null;
         private Material _copyTargetMergeMaterial = null;
-        private Material _copyCutoutMaterial = null;
         private Material[] _copyBleedMaterialArray = null;
         private Material _copyFlowResultMaterial = null;
         private Material _copyColorResultMaterial = null;
@@ -226,7 +225,6 @@ namespace FlowPaintTool
             }
 
             _copyDensityMaterial = UnityEngine.Object.Instantiate(assets.GetDensityMaterial());
-            _copyCutoutMaterial = UnityEngine.Object.Instantiate(assets.GetCutoutMaterial());
             _copyFlowResultMaterial = UnityEngine.Object.Instantiate(assets.GetFlowResultMaterial());
             _copyColorResultMaterial = UnityEngine.Object.Instantiate(assets.GetColorResultMaterial());
 
@@ -304,7 +302,6 @@ namespace FlowPaintTool
             _copyDensityMaterial.SetTexture(_mainTexSPID, _densityRenderTexture);
             _copyTargetMergeMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
             _copyTargetMergeMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
-            _copyCutoutMaterial.SetTexture(_fillTexSPID, _fillRenderTextureArray[0]);
             _copyFlowResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
             _copyColorResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
         }

@@ -73,14 +73,30 @@ float FragmentShaderStage_FillBleed(V2F input) : SV_Target
     return (temp0 > 0.25) ? 0.5 : 0.0;
 }
 
-float4 FragmentShaderStage_Cutout(V2F input) : SV_Target
+float4 FragmentShaderStage_FlowMerge(V2F input) : SV_Target
 {
     uint2 index = uint2(input.cPos.xy);
     
-    float4 color = _MainTex[index];
-    bool flag = _FillTex[index].r > 0.5;
+    float4 mColor = _MainTex[index];
+    float4 pColor = _PaintTex[index];
+    float density = _DensityTex[index].r;
     
-    return lerp(0.0, color, flag);
+    float3 mVector = mColor.rgb * 2.0 - 1.0;
+    float3 pVector = pColor.rgb * 2.0 - 1.0;
+    
+    float3 temp0 = normalize(lerp(mVector, pVector, density));
+    return float4(temp0 * 0.5 + 0.5, 1.0);
+}
+
+float4 FragmentShaderStage_ColorMerge(V2F input) : SV_Target
+{
+    uint2 index = uint2(input.cPos.xy);
+    
+    float4 mColor = _MainTex[index];
+    float4 pColor = _PaintTex[index];
+    float density = _DensityTex[index].r;
+    
+    return lerp(mColor, pColor, density);
 }
 
 float4 FragmentShaderStage_Bleed(V2F input) : SV_Target
@@ -107,30 +123,4 @@ float4 FragmentShaderStage_Bleed(V2F input) : SV_Target
     }
     
     return result / max(margeCount, 1);
-}
-
-float4 FragmentShaderStage_FlowMerge(V2F input) : SV_Target
-{
-    uint2 index = uint2(input.cPos.xy);
-    
-    float4 mColor = _MainTex[index];
-    float4 pColor = _PaintTex[index];
-    float density = _DensityTex[index].r;
-    
-    float3 mVector = mColor.rgb * 2.0 - 1.0;
-    float3 pVector = pColor.rgb * 2.0 - 1.0;
-    
-    float3 temp0 = normalize(lerp(mVector, pVector, density));
-    return float4(temp0 * 0.5 + 0.5, 1.0);
-}
-
-float4 FragmentShaderStage_ColorMerge(V2F input) : SV_Target
-{
-    uint2 index = uint2(input.cPos.xy);
-    
-    float4 mColor = _MainTex[index];
-    float4 pColor = _PaintTex[index];
-    float density = _DensityTex[index].r;
-    
-    return lerp(mColor, pColor, density);
 }
