@@ -53,9 +53,8 @@ namespace FlowPaintTool
         private Material _copyFlowResultMaterial = null;
         private Material _copyColorResultMaterial = null;
 
-        private CommandBuffer _bleedCommandBuffer = null;
         private CommandBuffer _paintCommandBuffer = null;
-        private CommandBuffer _mergeCommandBuffer = null;
+        private CommandBuffer _bleedCommandBuffer = null;
 
         private FPT_MeshProcess _meshProcess = null;
         private FPT_PaintModeEnum _paintMode = FPT_PaintModeEnum.FlowPaintMode;
@@ -253,27 +252,30 @@ namespace FlowPaintTool
 
             _paintCommandBuffer = new CommandBuffer();
             _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
+            _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_R16);
+
             _paintCommandBuffer.Blit(_paintRenderTexture, tempTexSPIDs[0]);
             _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[0]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyTargetPaintMaterial, 0);
             _paintCommandBuffer.Blit(tempTexSPIDs[0], _paintRenderTexture);
-            _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
-            _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_R16);
+
             _paintCommandBuffer.Blit(_densityRenderTexture, tempTexSPIDs[1]);
             _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[1]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyDensityMaterial, 0);
             _paintCommandBuffer.Blit(tempTexSPIDs[1], _densityRenderTexture);
+
+            _paintCommandBuffer.Blit(_preOutputRenderTexture, tempTexSPIDs[0], _copyTargetMergeMaterial);
+            _paintCommandBuffer.Blit(tempTexSPIDs[0], _outputRenderTexture, _copyCutoutMaterial);
+
+            _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
             _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[1]);
 
-            _mergeCommandBuffer = new CommandBuffer();
-            _mergeCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
-            _mergeCommandBuffer.Blit(_preOutputRenderTexture, tempTexSPIDs[0], _copyTargetMergeMaterial);
-            _mergeCommandBuffer.Blit(tempTexSPIDs[0], _outputRenderTexture, _copyCutoutMaterial);
-            _mergeCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
+
 
             _bleedCommandBuffer = new CommandBuffer();
             _bleedCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
             _bleedCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_main);
+
             _bleedCommandBuffer.Blit(_outputRenderTexture, tempTexSPIDs[0]);
 
             int temp1 = 0;
@@ -285,6 +287,7 @@ namespace FlowPaintTool
             }
 
             _bleedCommandBuffer.Blit(tempTexSPIDs[temp1], _outputRenderTexture);
+
             _bleedCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
             _bleedCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[1]);
             // GenerateCommandBuffer End
@@ -376,7 +379,6 @@ namespace FlowPaintTool
                 _copyDensityMaterial.SetInt(_brushTypeSPID, (int)editorData.GetBrushShape());
 
                 Graphics.ExecuteCommandBuffer(_paintCommandBuffer);
-                Graphics.ExecuteCommandBuffer(_mergeCommandBuffer);
                 Graphics.ExecuteCommandBuffer(_bleedCommandBuffer);
 
                 _preHitPosition = hitPosition;

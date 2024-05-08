@@ -4,8 +4,8 @@
 struct I2V
 {
     float4 lPos : POSITION;
-    float3 normal : NORMAL;
-    float4 tangent : TANGENT;
+    float3 lNormal : NORMAL;
+    float4 lTangent : TANGENT;
     float2 uv : TARGET_UV_CHANNEL;
 };
 
@@ -34,20 +34,6 @@ float _FixedHeightMax;
 
 float4 _PaintColor;
 int _EditRGBA;
-
-float3x3 Matrix_WorldSpaceToTangentSpace(float3 normal, float4 tangent)
-{
-    float3 wNormal = normalize(mul(normal, (float3x3) _InverseModelMatrix));
-    float3 wTangent = normalize(mul((float3x3) _ModelMatrix, tangent.xyz));
-    float3 wBinormal = cross(wNormal, wTangent) * (tangent.w * unity_WorldTransformParams.w);
-    
-    return float3x3
-    (
-        wTangent,
-        wBinormal,
-        wNormal
-    );
-}
 
 float DF_Capsule(float3 p, float3 a, float3 b)
 {
@@ -79,7 +65,10 @@ float4 FragmentShaderStage_Fill(V2F input) : SV_Target
 
 V2F VertexShaderStage_FlowPaint(I2V input)
 {
-    float3x3 w2t = Matrix_WorldSpaceToTangentSpace(input.normal, input.tangent);
+    float3 wNormal = UnityObjectToWorldNormal(input.lNormal);
+    float3 wTangent = UnityObjectToWorldDir(input.lTangent.xyz);
+    float3 wBinormal = cross(wNormal, wTangent) * (input.lTangent.w * unity_WorldTransformParams.w);
+    float3x3 w2t = float3x3(wTangent, wBinormal, wNormal);
     
     V2F output = (V2F) 0;
     output.cPos = float4(input.uv * 2.0 - 1.0, 0.0, 1.0);
