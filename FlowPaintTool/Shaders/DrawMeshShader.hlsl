@@ -119,12 +119,12 @@ V2F VertexShaderStage_ColorPaint(I2V input)
     return output;
 }
 
-half4 FragmentShaderStage_ColorPaint(V2F input) : SV_Target
+float4 FragmentShaderStage_ColorPaint(V2F input) : SV_Target
 {
     float attenuation = 1.0 - DF_Capsule(input.wPos, _PreHitPosition, _HitPosition) / _BrushSize;
     clip(attenuation);
     
-    half4 paintColor = _PaintTex[uint2(input.cPos.xy)];
+    float4 paintColor = _PaintTex[uint2(input.cPos.xy)];
     paintColor.r = lerp(paintColor.r, _PaintColor.r, _EditRGBA & 1);
     paintColor.g = lerp(paintColor.g, _PaintColor.g, (_EditRGBA >> 1) & 1);
     paintColor.b = lerp(paintColor.b, _PaintColor.b, (_EditRGBA >> 2) & 1);
@@ -148,7 +148,7 @@ V2F VertexShaderStage_Density(I2V input)
     return output;
 }
 
-half FragmentShaderStage_Density(V2F input) : SV_Target
+float FragmentShaderStage_Density(V2F input) : SV_Target
 {
     float invAattenuation = DF_Capsule(input.wPos, _PreHitPosition, _HitPosition) / _BrushSize;
     float attenuation = 1.0 - invAattenuation;
