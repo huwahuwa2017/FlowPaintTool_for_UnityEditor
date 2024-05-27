@@ -16,7 +16,8 @@ struct V2F
     float3 direction : TEXCOORD1;
 };
 
-Texture2D _MainTex;
+Texture2D _PaintTex;
+Texture2D _DensityTex;
 
 float4x4 _ModelMatrix;
 float3 _HitPosition;
@@ -47,7 +48,7 @@ float DF_Capsule(float3 p, float3 a, float3 b)
 V2F VertexShaderStage_Fill(I2V input)
 {
     V2F output = (V2F) 0;
-    output.cPos = float4(input.uv * 2.0 - 1.0, 0.0, 1.0);
+    output.cPos = float4(input.uv * 2.0 - 1.0, 0.5, 1.0);
     
 #if UNITY_UV_STARTS_AT_TOP
     output.cPos.y = -output.cPos.y;
@@ -71,7 +72,7 @@ V2F VertexShaderStage_FlowPaint(I2V input)
     float3x3 w2t = float3x3(wTangent, wBinormal, wNormal);
     
     V2F output = (V2F) 0;
-    output.cPos = float4(input.uv * 2.0 - 1.0, 0.0, 1.0);
+    output.cPos = float4(input.uv * 2.0 - 1.0, 0.5, 1.0);
     output.wPos = mul(_ModelMatrix, input.lPos);
     output.direction = mul(w2t, _PaintDirection);
     
@@ -87,7 +88,7 @@ float4 FragmentShaderStage_FlowPaint(V2F input) : SV_Target
     float attenuation = 1.0 - DF_Capsule(input.wPos, _PreHitPosition, _HitPosition) / _BrushSize;
     clip(attenuation);
     
-    float4 baseColor = _MainTex[uint2(input.cPos.xy)];
+    float4 baseColor = _PaintTex[uint2(input.cPos.xy)];
     float3 vector_10 = baseColor.rgb * 2.0 - 1.0;
     float3 localDirection = normalize(input.direction);
     vector_10 = lerp(vector_10, localDirection, saturate(attenuation + (baseColor.a == 0.0)));
@@ -108,7 +109,7 @@ float4 FragmentShaderStage_FlowPaint(V2F input) : SV_Target
 V2F VertexShaderStage_ColorPaint(I2V input)
 {
     V2F output = (V2F) 0;
-    output.cPos = float4(input.uv * 2.0 - 1.0, 0.0, 1.0);
+    output.cPos = float4(input.uv * 2.0 - 1.0, 0.5, 1.0);
     output.wPos = mul(_ModelMatrix, input.lPos);
     
 #if UNITY_UV_STARTS_AT_TOP
@@ -123,7 +124,7 @@ half4 FragmentShaderStage_ColorPaint(V2F input) : SV_Target
     float attenuation = 1.0 - DF_Capsule(input.wPos, _PreHitPosition, _HitPosition) / _BrushSize;
     clip(attenuation);
     
-    half4 paintColor = _MainTex[uint2(input.cPos.xy)];
+    half4 paintColor = _PaintTex[uint2(input.cPos.xy)];
     paintColor.r = lerp(paintColor.r, _PaintColor.r, _EditRGBA & 1);
     paintColor.g = lerp(paintColor.g, _PaintColor.g, (_EditRGBA >> 1) & 1);
     paintColor.b = lerp(paintColor.b, _PaintColor.b, (_EditRGBA >> 2) & 1);
@@ -137,7 +138,7 @@ half4 FragmentShaderStage_ColorPaint(V2F input) : SV_Target
 V2F VertexShaderStage_Density(I2V input)
 {
     V2F output = (V2F) 0;
-    output.cPos = float4(input.uv * 2.0 - 1.0, 0.0, 1.0);
+    output.cPos = float4(input.uv * 2.0 - 1.0, 0.5, 1.0);
     output.wPos = mul(_ModelMatrix, input.lPos);
     
 #if UNITY_UV_STARTS_AT_TOP
@@ -166,6 +167,6 @@ half FragmentShaderStage_Density(V2F input) : SV_Target
     type4 *= _BrushType == 4;
     
     float density = type0 + type1 + type2 + type3 + type4;
-    float preDensity = _MainTex[uint2(input.cPos.xy)].r;
+    float preDensity = _DensityTex[uint2(input.cPos.xy)].r;
     return max(preDensity, density * _BrushStrength);
 }

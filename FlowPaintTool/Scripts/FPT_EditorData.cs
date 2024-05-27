@@ -226,7 +226,7 @@ namespace FlowPaintTool
             _brushSize = 0.1f;
             _brushStrength = 1.0f;
             _brushShape = FPT_BrushShapeEnum.Smooth;
-            _brushMoveSensitivity = 0.02f;
+            _brushMoveSensitivity = 0.01f;
 
             _heightLimit = false;
             _minHeight = 0.5f;

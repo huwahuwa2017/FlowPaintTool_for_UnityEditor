@@ -36,6 +36,8 @@ namespace FlowPaintTool
         private static readonly int _paintColorSPID = Shader.PropertyToID("_PaintColor");
         private static readonly int _editRGBASPID = Shader.PropertyToID("_EditRGBA");
 
+        private static readonly int[] _tempRT_SPIDs = new int[] { Shader.PropertyToID("_TempTex0"), Shader.PropertyToID("_TempTex1") };
+
         private string _outputRenderTexturePath = string.Empty;
         private RenderTexture _outputRenderTexture = null;
         private RenderTexture _preOutputRenderTexture = null;
@@ -107,8 +109,6 @@ namespace FlowPaintTool
             Material fillMaterial = assets.GetFillMaterial();
 
             // GenerateRenderTexture Start
-            int[] tempTexSPIDs = new int[] { Shader.PropertyToID("_TempTex0"), Shader.PropertyToID("_TempTex1") };
-
             GraphicsFormat graphicsFormat = _actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
             RenderTextureDescriptor rtd_main = new RenderTextureDescriptor(fptData._width, fptData._height, graphicsFormat, 0);
             RenderTextureDescriptor rtd_R8 = rtd_main;
@@ -179,11 +179,11 @@ namespace FlowPaintTool
                 TargetUVChannel(fptData, fillMaterial);
 
                 CommandBuffer fillCommandBuffer = new CommandBuffer();
-                fillCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_R8);
-                fillCommandBuffer.SetRenderTarget(tempTexSPIDs[0]);
+                fillCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[0], rtd_R8);
+                fillCommandBuffer.SetRenderTarget(_tempRT_SPIDs[0]);
                 fillCommandBuffer.DrawMesh(fptData._startMesh, Matrix4x4.identity, fillMaterial, fptData._targetSubMesh);
-                fillCommandBuffer.Blit(tempTexSPIDs[0], _fillRenderTextureArray[0], assets.GetFillBleedMaterial());
-                fillCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
+                fillCommandBuffer.Blit(_tempRT_SPIDs[0], _fillRenderTextureArray[0], assets.GetFillBleedMaterial());
+                fillCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[0]);
 
                 Graphics.ExecuteCommandBuffer(fillCommandBuffer);
                 fillCommandBuffer.Dispose();
@@ -243,37 +243,37 @@ namespace FlowPaintTool
             Mesh paintModeMesh = _meshProcess.GetPaintModeMesh();
 
             _paintCommandBuffer = new CommandBuffer();
-            _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
-            _paintCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_R16);
-            _paintCommandBuffer.Blit(_paintRenderTexture, tempTexSPIDs[0]);
-            _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[0]);
+            _paintCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[0], rtd_main);
+            _paintCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[1], rtd_R16);
+            _paintCommandBuffer.Blit(_paintRenderTexture, _tempRT_SPIDs[0]);
+            _paintCommandBuffer.SetRenderTarget(_tempRT_SPIDs[0]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyTargetPaintMaterial, 0);
-            _paintCommandBuffer.Blit(tempTexSPIDs[0], _paintRenderTexture);
-            _paintCommandBuffer.Blit(_densityRenderTexture, tempTexSPIDs[1]);
-            _paintCommandBuffer.SetRenderTarget(tempTexSPIDs[1]);
+            _paintCommandBuffer.Blit(_tempRT_SPIDs[0], _paintRenderTexture);
+            _paintCommandBuffer.Blit(_densityRenderTexture, _tempRT_SPIDs[1]);
+            _paintCommandBuffer.SetRenderTarget(_tempRT_SPIDs[1]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyDensityMaterial, 0);
-            _paintCommandBuffer.Blit(tempTexSPIDs[1], _densityRenderTexture);
+            _paintCommandBuffer.Blit(_tempRT_SPIDs[1], _densityRenderTexture);
             _paintCommandBuffer.Blit(_preOutputRenderTexture, _outputRenderTexture, _copyTargetMergeMaterial);
-            _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
-            _paintCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[1]);
+            _paintCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[0]);
+            _paintCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[1]);
 
             _bleedCommandBuffer = new CommandBuffer();
-            _bleedCommandBuffer.GetTemporaryRT(tempTexSPIDs[0], rtd_main);
-            _bleedCommandBuffer.GetTemporaryRT(tempTexSPIDs[1], rtd_main);
-            _bleedCommandBuffer.Blit(_outputRenderTexture, tempTexSPIDs[0]);
+            _bleedCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[0], rtd_main);
+            _bleedCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[1], rtd_main);
+            _bleedCommandBuffer.Blit(_outputRenderTexture, _tempRT_SPIDs[0]);
 
             int temp1 = 0;
 
             for (int index = 0; index < _bleedRange; ++index)
             {
-                _bleedCommandBuffer.Blit(tempTexSPIDs[temp1], tempTexSPIDs[1 - temp1], _copyBleedMaterialArray[index]);
+                _bleedCommandBuffer.Blit(_tempRT_SPIDs[temp1], _tempRT_SPIDs[1 - temp1], _copyBleedMaterialArray[index]);
                 temp1 = 1 - temp1;
             }
 
-            _bleedCommandBuffer.Blit(tempTexSPIDs[temp1], _outputRenderTexture);
+            _bleedCommandBuffer.Blit(_tempRT_SPIDs[temp1], _outputRenderTexture);
 
-            _bleedCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[0]);
-            _bleedCommandBuffer.ReleaseTemporaryRT(tempTexSPIDs[1]);
+            _bleedCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[0]);
+            _bleedCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[1]);
             // GenerateCommandBuffer End
         }
 
@@ -292,8 +292,8 @@ namespace FlowPaintTool
                 _copyBleedMaterialArray[index].SetTexture(_fillTexSPID, _fillRenderTextureArray[index]);
             }
 
-            _copyTargetPaintMaterial.SetTexture(_mainTexSPID, _paintRenderTexture);
-            _copyDensityMaterial.SetTexture(_mainTexSPID, _densityRenderTexture);
+            _copyTargetPaintMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
+            _copyDensityMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
             _copyTargetMergeMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
             _copyTargetMergeMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
             _copyFlowResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
