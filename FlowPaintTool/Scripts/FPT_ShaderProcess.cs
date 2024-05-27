@@ -111,10 +111,8 @@ namespace FlowPaintTool
             // GenerateRenderTexture Start
             GraphicsFormat graphicsFormat = _actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
             RenderTextureDescriptor rtd_main = new RenderTextureDescriptor(fptData._width, fptData._height, graphicsFormat, 0);
-            RenderTextureDescriptor rtd_R8 = rtd_main;
-            rtd_R8.graphicsFormat = GraphicsFormat.R8_UNorm;
-            RenderTextureDescriptor rtd_R16 = rtd_main;
-            rtd_R16.graphicsFormat = GraphicsFormat.R16_UNorm;
+            RenderTextureDescriptor rtd_R8 = new RenderTextureDescriptor(fptData._width, fptData._height, GraphicsFormat.R8_UNorm, 0);
+            RenderTextureDescriptor rtd_R16 = new RenderTextureDescriptor(fptData._width, fptData._height, GraphicsFormat.R16_UNorm, 0);
 
             _outputRenderTexture = new RenderTexture(rtd_main);
             {
@@ -153,22 +151,18 @@ namespace FlowPaintTool
                 }
                 else
                 {
-                    Debug.Log("Texture not found");
+                    Texture2D defaultColorTexture = null;
 
-                    Color defaultColor = default;
-
-                    if (fptData._paintMode == FPT_PaintModeEnum.FlowPaintMode)
+                    switch (fptData._paintMode)
                     {
-                        defaultColor = new Color(0.5f, 0.5f, 1f, 1f);
-                    }
-                    else if (fptData._paintMode == FPT_PaintModeEnum.ColorPaintMode)
-                    {
-                        defaultColor = Color.black;
+                        case FPT_PaintModeEnum.FlowPaintMode:
+                            defaultColorTexture = Texture2D.normalTexture;
+                            break;
+                        case FPT_PaintModeEnum.ColorPaintMode:
+                            defaultColorTexture = Texture2D.grayTexture;
+                            break;
                     }
 
-                    Texture2D defaultColorTexture = new Texture2D(1, 1, GraphicsFormat.R8G8B8A8_UNorm, TextureCreationFlags.None);
-                    defaultColorTexture.SetPixel(0, 0, defaultColor);
-                    defaultColorTexture.Apply();
                     Graphics.Blit(defaultColorTexture, _outputRenderTexture);
                     UnityEngine.Object.Destroy(defaultColorTexture);
                 }
