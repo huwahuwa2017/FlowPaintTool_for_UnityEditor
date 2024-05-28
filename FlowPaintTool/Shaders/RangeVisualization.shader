@@ -1,16 +1,16 @@
 ﻿Shader "FlowPaintTool2/RangeVisualization"
 {
-	Properties
-	{
-		_MainColor("Color", Color) = (0.0, 0.0, 0.0, 1.0)
-	}
-
 	SubShader
 	{
 		Tags
 		{
 			"Queue" = "Overlay"
 		}
+
+		GrabPass
+        {
+            "_FPT_RangeVisualization"
+        }
 
 		Pass
 		{
@@ -37,7 +37,7 @@
 				float2 uv : TEXCOORD0;
 			};
 
-			half4 _MainColor;
+			Texture2D _FPT_RangeVisualization;
 
 			V2F VertexShaderStage(I2V input)
 			{
@@ -52,7 +52,10 @@
 				float temp0 = length(input.uv);
 				temp0 = pow(temp0, 16);
 				clip(1.0 - temp0);
-				return _MainColor * temp0;
+
+				float4 color = 1.0 - _FPT_RangeVisualization[uint2(input.cPos.xy)];
+				color.a = temp0;
+				return color;
 			}
 
 			ENDCG
