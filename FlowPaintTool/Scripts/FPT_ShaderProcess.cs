@@ -43,6 +43,12 @@ namespace FlowPaintTool
             Shader.PropertyToID("_TempTex2")
         };
 
+        private static readonly RenderTargetIdentifier[] _tempRT_RTIDs = new RenderTargetIdentifier[]
+        {
+            new RenderTargetIdentifier(_tempRT_SPIDs[0]),
+            new RenderTargetIdentifier(_tempRT_SPIDs[2])
+        };
+
         private string _outputRenderTexturePath = string.Empty;
         private RenderTexture _outputRenderTexture = null;
         private RenderTexture _preOutputRenderTexture = null;
@@ -168,7 +174,9 @@ namespace FlowPaintTool
                     }
 
                     Graphics.Blit(defaultColorTexture, _outputRenderTexture);
-                    UnityEngine.Object.Destroy(defaultColorTexture);
+
+                    // ここではObject.Destroyを実行しなくても良いらしい
+                    //UnityEngine.Object.Destroy(defaultColorTexture);
                 }
             }
 
@@ -246,13 +254,10 @@ namespace FlowPaintTool
             _paintCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[2], rtd_R16);
 
             _paintCommandBuffer.Blit(_paintRenderTexture, _tempRT_SPIDs[0]);
-            _paintCommandBuffer.SetRenderTarget(_tempRT_SPIDs[0]);
+            _paintCommandBuffer.Blit(_densityRenderTexture, _tempRT_SPIDs[2]);
+            _paintCommandBuffer.SetRenderTarget(_tempRT_RTIDs, _tempRT_RTIDs[0]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyTargetPaintMaterial, 0);
             _paintCommandBuffer.Blit(_tempRT_SPIDs[0], _paintRenderTexture);
-
-            _paintCommandBuffer.Blit(_densityRenderTexture, _tempRT_SPIDs[2]);
-            _paintCommandBuffer.SetRenderTarget(_tempRT_SPIDs[2]);
-            _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyDensityMaterial, 0);
             _paintCommandBuffer.Blit(_tempRT_SPIDs[2], _densityRenderTexture);
 
             _paintCommandBuffer.Blit(_preOutputRenderTexture, _tempRT_SPIDs[0], _copyTargetMergeMaterial);
@@ -289,7 +294,7 @@ namespace FlowPaintTool
             }
 
             _copyTargetPaintMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
-            _copyDensityMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
+            _copyTargetPaintMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
             _copyTargetMergeMaterial.SetTexture(_paintTexSPID, _paintRenderTexture);
             _copyTargetMergeMaterial.SetTexture(_densityTexSPID, _densityRenderTexture);
             _copyFlowResultMaterial.SetTexture(_mainTexSPID, _outputRenderTexture);
@@ -330,6 +335,9 @@ namespace FlowPaintTool
                 _copyTargetPaintMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
                 _copyTargetPaintMaterial.SetVector(_hitPositionSPID, hitPosition);
                 _copyTargetPaintMaterial.SetFloat(_brushSizeSPID, editorData.GetBrushSize());
+
+                _copyTargetPaintMaterial.SetFloat(_brushStrengthSPID, editorData.GetBrushStrength());
+                _copyTargetPaintMaterial.SetInt(_brushTypeSPID, (int)editorData.GetBrushShape());
 
                 if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
                 {
