@@ -105,6 +105,14 @@ namespace FlowPaintTool
             mat.EnableKeyword("UV_CHANNEL_" + fptData._targetUVChannel);
         }
 
+        private void ResetRenderTexture(RenderTexture rt, Color color)
+        {
+            RenderTexture temp = RenderTexture.active;
+            RenderTexture.active = rt;
+            GL.Clear(true, true, color);
+            RenderTexture.active = temp;
+        }
+
         public FPT_ShaderProcess(FPT_Main fptMain, FPT_MainData fptData, FPT_MeshProcess meshProcess, int InstanceID)
         {
             _paintMode = fptData._paintMode;
@@ -160,22 +168,14 @@ namespace FlowPaintTool
                 }
                 else
                 {
-                    Texture2D defaultColorTexture = null;
-
-                    switch (fptData._paintMode)
+                    if (fptData._paintMode == FPT_PaintModeEnum.FlowPaintMode)
                     {
-                        case FPT_PaintModeEnum.FlowPaintMode:
-                            defaultColorTexture = Texture2D.normalTexture;
-                            break;
-                        case FPT_PaintModeEnum.ColorPaintMode:
-                            defaultColorTexture = Texture2D.grayTexture;
-                            break;
+                        ResetRenderTexture(_outputRenderTexture, new Color(0.5f, 0.5f, 1.0f));
                     }
-
-                    Graphics.Blit(defaultColorTexture, _outputRenderTexture);
-
-                    // ここではObject.Destroyを実行しなくても良いらしい
-                    //UnityEngine.Object.Destroy(defaultColorTexture);
+                    else if (fptData._paintMode == FPT_PaintModeEnum.ColorPaintMode)
+                    {
+                        ResetRenderTexture(_outputRenderTexture, Color.black);
+                    }
                 }
             }
 
@@ -362,8 +362,8 @@ namespace FlowPaintTool
 
             if (_prePaint && !click)
             {
-                _paintRenderTexture.Release();
-                _densityRenderTexture.Release();
+                ResetRenderTexture(_paintRenderTexture, Color.clear);
+                ResetRenderTexture(_densityRenderTexture, Color.clear);
 
                 int maxIndex = _memoryCount - 1;
 
