@@ -167,27 +167,3 @@ F2O FragmentShaderStage_ColorPaint(V2F input)
     output.color1 = Density(input, invAattenuation);
     return output;
 }
-
-
-
-V2F VertexShaderStage_Density(I2V input)
-{
-    V2F output = (V2F) 0;
-    output.cPos = float4(input.uv * 2.0 - 1.0, 0.5, 1.0);
-    output.wPos = mul(_ModelMatrix, input.lPos);
-    
-#if UNITY_UV_STARTS_AT_TOP
-    output.cPos.y = -output.cPos.y;
-#endif
-    
-    return output;
-}
-
-float FragmentShaderStage_Density(V2F input) : SV_Target
-{
-    float invAattenuation = DF_Capsule(input.wPos, _PreHitPosition, _HitPosition) / _BrushSize;
-    float attenuation = 1.0 - invAattenuation;
-    clip(attenuation);
-    
-    return Density(input, invAattenuation);
-}

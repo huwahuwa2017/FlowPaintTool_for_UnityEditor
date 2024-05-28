@@ -25,7 +25,6 @@ MonoBehaviour:
   _densityMaterial: {fileID: 2100000, guid: 8da2c61444e43f74a8d913407d63cd06, type: 2}
   _flowMergeMaterial: {fileID: 2100000, guid: b8aa7dcbceab11842bfa00407aa1de1d, type: 2}
   _colorMergeMaterial: {fileID: 2100000, guid: ab79b5282467b2b4eb1b228f6d103fae, type: 2}
-  _cutoutMaterial: {fileID: 2100000, guid: f7cc8b09ae6f6f1489358dc15bb30a25, type: 2}
   _bleedMaterial: {fileID: 2100000, guid: d67c9b575014ae240ba65506a8e16752, type: 2}
   _flowResultMaterial: {fileID: 2100000, guid: dd0cae9ab1a0a5b4594e99e8d2703992, type: 2}
   _colorResultMaterial: {fileID: 2100000, guid: f035f5ff558b4db4baf7ebe59453dc84,

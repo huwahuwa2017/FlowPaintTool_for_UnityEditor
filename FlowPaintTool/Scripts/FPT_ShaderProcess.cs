@@ -58,7 +58,6 @@ namespace FlowPaintTool
         private RenderTexture[] _undoMemoryRenderTextureArray = null;
 
         private Material _copyTargetPaintMaterial = null;
-        private Material _copyDensityMaterial = null;
         private Material _copyTargetMergeMaterial = null;
         private Material[] _copyBleedMaterialArray = null;
         private Material _copyFlowResultMaterial = null;
@@ -224,12 +223,10 @@ namespace FlowPaintTool
                 _copyTargetMergeMaterial = UnityEngine.Object.Instantiate(assets.GetColorMergeMaterial());
             }
 
-            _copyDensityMaterial = UnityEngine.Object.Instantiate(assets.GetDensityMaterial());
             _copyFlowResultMaterial = UnityEngine.Object.Instantiate(assets.GetFlowResultMaterial());
             _copyColorResultMaterial = UnityEngine.Object.Instantiate(assets.GetColorResultMaterial());
 
             TargetUVChannel(fptData, _copyTargetPaintMaterial);
-            TargetUVChannel(fptData, _copyDensityMaterial);
             TargetUVChannel(fptData, _copyFlowResultMaterial);
             TargetUVChannel(fptData, _copyColorResultMaterial);
 
@@ -356,13 +353,6 @@ namespace FlowPaintTool
                     _copyTargetPaintMaterial.SetColor(_paintColorSPID, editorData.GetPaintColor());
                     _copyTargetPaintMaterial.SetInt(_editRGBASPID, editRGBA);
                 }
-
-                _copyDensityMaterial.SetMatrix(_modelMatrixSPID, matrix);
-                _copyDensityMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
-                _copyDensityMaterial.SetVector(_hitPositionSPID, hitPosition);
-                _copyDensityMaterial.SetFloat(_brushSizeSPID, editorData.GetBrushSize());
-                _copyDensityMaterial.SetFloat(_brushStrengthSPID, editorData.GetBrushStrength());
-                _copyDensityMaterial.SetInt(_brushTypeSPID, (int)editorData.GetBrushShape());
 
                 Graphics.ExecuteCommandBuffer(_paintCommandBuffer);
 

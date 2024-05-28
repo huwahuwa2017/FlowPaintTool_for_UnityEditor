@@ -68,7 +68,6 @@ namespace FlowPaintTool
 
         public Material GetFlowPaintMaterial() => _flowPaintMaterial;
         public Material GetColorPaintMaterial() => _colorPaintMaterial;
-        public Material GetDensityMaterial() => _densityMaterial;
         public Material GetFlowMergeMaterial() => _flowMergeMaterial;
         public Material GetColorMergeMaterial() => _colorMergeMaterial;
         public Material GetBleedMaterial() => _bleedMaterial;
