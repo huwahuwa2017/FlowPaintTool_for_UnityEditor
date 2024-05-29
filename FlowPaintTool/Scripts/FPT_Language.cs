@@ -40,7 +40,6 @@ namespace FlowPaintTool
             public static string Undo;
             public static string Redo;
             public static string OutputPNGFile;
-            public static string OutputPath;
 
             public static void ChangeLanguage(FPT_LanguageTypeEnum languageType)
             {
@@ -50,7 +49,6 @@ namespace FlowPaintTool
                     Undo = "Undo";
                     Redo = "Redo";
                     OutputPNGFile = "PNGファイルを出力";
-                    OutputPath = "出力先 : ";
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
@@ -58,7 +56,6 @@ namespace FlowPaintTool
                     Undo = "Undo";
                     Redo = "Redo";
                     OutputPNGFile = "Output PNG file";
-                    OutputPath = "Output path : ";
                 }
             }
         }

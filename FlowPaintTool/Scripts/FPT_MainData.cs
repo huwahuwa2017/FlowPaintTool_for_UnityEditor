@@ -66,52 +66,6 @@ namespace FlowPaintTool
             _actualSRGB = false;
         }
 
-        private void ConsistencyCheck()
-        {
-            _width = Math.Max(_width, 0);
-            _height = Math.Max(_height, 0);
-            _targetSubMesh = Math.Max(_targetSubMesh, 0);
-            _targetUVChannel = Math.Max(Math.Min(_targetUVChannel, 7), 0);
-            _bleedRange = Math.Max(_bleedRange, 0);
-            _uv_Epsilon = Math.Max(_uv_Epsilon, 0f);
-            _maxUndoCount = Math.Max(_maxUndoCount, 0);
-        }
-
-        private bool SRGBCheck()
-        {
-            bool result = false;
-
-            if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
-            {
-                result = _startTexture != null;
-            }
-            else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
-            {
-                result = File.Exists(_startTextureFilePath);
-            }
-
-            _textureExist = result;
-
-            result = false;
-
-            if (_textureExist && (PlayerSettings.colorSpace == ColorSpace.Linear))
-            {
-                if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
-                {
-                    result = GraphicsFormatUtility.IsSRGBFormat(_startTexture.graphicsFormat);
-                }
-                else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
-                {
-                    result = _startTextureSRGB;
-                }
-            }
-
-            _actualSRGB = result;
-            return result;
-        }
-
-
-
         private bool ErrorCheckGUI(bool flagSMR, bool flagMFMR)
         {
             bool isError = false;
@@ -155,7 +109,7 @@ namespace FlowPaintTool
                 }
             }
 
-            if (SRGBCheck() && (_paintMode == FPT_PaintModeEnum.FlowPaintMode))
+            if (_actualSRGB && (_paintMode == FPT_PaintModeEnum.FlowPaintMode))
             {
                 EditorGUILayout.HelpBox(TextData.UsingSRGBTexturesInFlowPaintModeWillNot, MessageType.Error);
                 isError = true;
@@ -214,7 +168,6 @@ namespace FlowPaintTool
 
             GUILayout.Space(40);
 
-            _startMesh = null;
             GameObject selectObject = selectTransform.gameObject;
 
             SkinnedMeshRenderer temp3 = selectObject.GetComponent<SkinnedMeshRenderer>();
@@ -224,16 +177,40 @@ namespace FlowPaintTool
             bool flagSMR = temp3 != null;
             bool flagMFMR = (temp4 != null) && (temp5 != null);
 
-            if (flagSMR)
             {
-                _startMesh = temp3.sharedMesh;
-            }
-            else if (flagMFMR)
-            {
-                _startMesh = temp4.sharedMesh;
+                _width = Math.Max(_width, 0);
+                _height = Math.Max(_height, 0);
+                _targetSubMesh = Math.Max(_targetSubMesh, 0);
+                _targetUVChannel = Math.Max(Math.Min(_targetUVChannel, 7), 0);
+                _bleedRange = Math.Max(_bleedRange, 0);
+                _uv_Epsilon = Math.Max(_uv_Epsilon, 0f);
+                _maxUndoCount = Math.Max(_maxUndoCount, 0);
+
+                _startMesh = null;
+
+                if (flagSMR)
+                {
+                    _startMesh = temp3.sharedMesh;
+                }
+                else if (flagMFMR)
+                {
+                    _startMesh = temp4.sharedMesh;
+                }
+
+                if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
+                {
+                    _textureExist = _startTexture != null;
+                    _actualSRGB = GraphicsFormatUtility.IsSRGBFormat(_startTexture.graphicsFormat);
+                }
+                else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
+                {
+                    _textureExist = File.Exists(_startTextureFilePath);
+                    _actualSRGB = _startTextureSRGB;
+                }
+
+                _actualSRGB = _actualSRGB && (PlayerSettings.colorSpace == ColorSpace.Linear);
             }
 
-            ConsistencyCheck();
             bool isError = ErrorCheckGUI(flagSMR, flagMFMR);
 
             if (GUILayout.Button(TextData.StartThePaintTool) && !isError)
@@ -259,8 +236,7 @@ namespace FlowPaintTool
 
                 GameObject go1 = new GameObject("PaintTool");
                 go1.transform.SetParent(selectTransform, false);
-                FPT_Main fpt1 = go1.AddComponent<FPT_Main>();
-                fpt1.SetData(this);
+                go1.AddComponent<FPT_Main>().SetData(this);
             }
         }
     }

@@ -79,7 +79,6 @@ namespace FlowPaintTool
 
         private FPT_Main _fptMain = null;
         private FPT_MeshProcess _meshProcess = null;
-        private TextureImporter _sourceTextureImporter = null;
 
         private void RemoveOutputRenderTexture(PlayModeStateChange state)
         {
@@ -146,9 +145,9 @@ namespace FlowPaintTool
                 {
                     if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.Assets)
                     {
-                        _sourceTextureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(fptData._startTexture)) as TextureImporter;
+                        TextureImporter sourceTextureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(fptData._startTexture)) as TextureImporter;
 
-                        if (_sourceTextureImporter.textureType == TextureImporterType.NormalMap)
+                        if (sourceTextureImporter.textureType == TextureImporterType.NormalMap)
                         {
                             Graphics.Blit(fptData._startTexture, _outputRenderTexture, assets.GetUnpackNormalMaterial());
                         }
@@ -442,51 +441,6 @@ namespace FlowPaintTool
             EditorGUILayout.ObjectField(_outputRenderTexture, typeof(RenderTexture), true);
         }
 
-        private Texture2D RenderTextureToTexture2D(RenderTexture renderTexture)
-        {
-            RenderTexture previous = RenderTexture.active;
-            RenderTexture.active = renderTexture;
-
-            int width = renderTexture.width;
-            int height = renderTexture.height;
-            Texture2D copyTexture2D = new Texture2D(width, height);
-            copyTexture2D.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-            copyTexture2D.Apply();
-
-            RenderTexture.active = previous;
-
-            return copyTexture2D;
-        }
-
-        private void OutputPNG()
-        {
-            string filePath = EditorUtility.SaveFilePanel(TextData.OutputPNGFile, "Assets", "texture", "png");
-            if (string.IsNullOrEmpty(filePath)) return;
-
-            Texture2D copyTexture2D = RenderTextureToTexture2D(_outputRenderTexture);
-            File.WriteAllBytes(filePath, copyTexture2D.EncodeToPNG());
-            UnityEngine.Object.Destroy(copyTexture2D);
-
-            Debug.Log(TextData.OutputPath + filePath);
-
-            string appDataPath = Application.dataPath;
-
-            if (filePath.StartsWith(appDataPath))
-            {
-                filePath = filePath.Remove(0, appDataPath.Length - 6);
-                AssetDatabase.ImportAsset(filePath);
-                TextureImporter importer = AssetImporter.GetAtPath(filePath) as TextureImporter;
-                importer.sRGBTexture = _actualSRGB;
-                int max = Math.Max(_outputRenderTexture.width, _outputRenderTexture.height);
-                importer.maxTextureSize = (int)Math.Pow(2, Math.Ceiling(Math.Log(max, 2)));
-
-                if (_sourceTextureImporter != null)
-                {
-                    importer.textureType = _sourceTextureImporter.textureType;
-                }
-            }
-        }
-
         public void UndoRedoOutputGUI()
         {
             EditorGUILayout.BeginHorizontal();
@@ -507,7 +461,7 @@ namespace FlowPaintTool
 
             if (GUILayout.Button(TextData.OutputPNGFile))
             {
-                OutputPNG();
+                FPT_OutputPNG.OutputDialog(_outputRenderTexture, _actualSRGB, TextData.OutputPNGFile);
             }
         }
     }
