@@ -91,7 +91,7 @@ namespace FlowPaintTool
             }
         }
 
-        private void TargetUVChannel(FPT_MainData fptData, Material mat)
+        private void TargetUVChannel(Material mat, int targetUVChannel)
         {
             mat.DisableKeyword("UV_CHANNEL_0");
             mat.DisableKeyword("UV_CHANNEL_1");
@@ -102,7 +102,7 @@ namespace FlowPaintTool
             mat.DisableKeyword("UV_CHANNEL_6");
             mat.DisableKeyword("UV_CHANNEL_7");
 
-            mat.EnableKeyword("UV_CHANNEL_" + fptData._targetUVChannel);
+            mat.EnableKeyword("UV_CHANNEL_" + targetUVChannel);
         }
 
         private void ResetRenderTexture(RenderTexture rt, Color color)
@@ -168,11 +168,11 @@ namespace FlowPaintTool
                 }
                 else
                 {
-                    if (fptData._paintMode == FPT_PaintModeEnum.FlowPaintMode)
+                    if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
                     {
                         ResetRenderTexture(_outputRenderTexture, new Color(0.5f, 0.5f, 1.0f));
                     }
-                    else if (fptData._paintMode == FPT_PaintModeEnum.ColorPaintMode)
+                    else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
                     {
                         ResetRenderTexture(_outputRenderTexture, Color.black);
                     }
@@ -181,7 +181,7 @@ namespace FlowPaintTool
 
             _fillRenderTextureArray = Enumerable.Range(0, Math.Max(_bleedRange, 1)).Select(I => new RenderTexture(rtd_R8)).ToArray();
             {
-                TargetUVChannel(fptData, fillMaterial);
+                TargetUVChannel(fillMaterial, fptData._targetUVChannel);
 
                 CommandBuffer fillCommandBuffer = new CommandBuffer();
                 fillCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[0], rtd_R8);
@@ -226,9 +226,9 @@ namespace FlowPaintTool
             _copyFlowResultMaterial = UnityEngine.Object.Instantiate(assets.GetFlowResultMaterial());
             _copyColorResultMaterial = UnityEngine.Object.Instantiate(assets.GetColorResultMaterial());
 
-            TargetUVChannel(fptData, _copyTargetPaintMaterial);
-            TargetUVChannel(fptData, _copyFlowResultMaterial);
-            TargetUVChannel(fptData, _copyColorResultMaterial);
+            TargetUVChannel(_copyTargetPaintMaterial, fptData._targetUVChannel);
+            TargetUVChannel(_copyFlowResultMaterial, fptData._targetUVChannel);
+            TargetUVChannel(_copyColorResultMaterial, fptData._targetUVChannel);
 
             if (_actualSRGB)
             {
