@@ -325,6 +325,7 @@ namespace FlowPaintTool
                 if (!_prePaint)
                 {
                     Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
+                    Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
                 }
 
                 _copyTargetPaintMaterial.SetMatrix(_modelMatrixSPID, matrix);
