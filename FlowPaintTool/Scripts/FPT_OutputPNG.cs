@@ -24,14 +24,14 @@ namespace FlowPaintTool
             return copyTexture2D;
         }
 
-        public static void OpenDialog(RenderTexture renderTexture, bool sRGB = true, string title = "")
+        public static void OpenDialog(RenderTexture renderTexture, string title = "")
         {
             Texture2D copyTexture2D = RenderTextureToTexture2D(renderTexture);
-            OpenDialog(copyTexture2D, sRGB, title);
+            OpenDialog(copyTexture2D, title);
             UnityEngine.Object.Destroy(copyTexture2D);
         }
 
-        public static void OpenDialog(Texture2D texture2D, bool sRGB = true, string title = "")
+        public static void OpenDialog(Texture2D texture2D, string title = "")
         {
             try
             {
@@ -67,7 +67,7 @@ namespace FlowPaintTool
                 tempMax = (int)Math.Pow(2, Math.Ceiling(Math.Log(tempMax, 2)));
 
                 TextureImporter importer = AssetImporter.GetAtPath(relativePath) as TextureImporter;
-                importer.sRGBTexture = sRGB;
+                importer.sRGBTexture = GraphicsFormatUtility.IsSRGBFormat(texture2D.graphicsFormat);
                 importer.maxTextureSize = tempMax;
             }
             catch (Exception e)

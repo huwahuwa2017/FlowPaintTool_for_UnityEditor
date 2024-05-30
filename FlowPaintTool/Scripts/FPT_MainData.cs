@@ -200,7 +200,19 @@ namespace FlowPaintTool
                 if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
                 {
                     _textureExist = _startTexture != null;
-                    _actualSRGB = GraphicsFormatUtility.IsSRGBFormat(_startTexture.graphicsFormat);
+
+                    if (_textureExist)
+                    {
+                        _actualSRGB = GraphicsFormatUtility.IsSRGBFormat(_startTexture.graphicsFormat);
+                    }
+                    else if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
+                    {
+                        _actualSRGB = false;
+                    }
+                    else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
+                    {
+                        _actualSRGB = true;
+                    }
                 }
                 else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
                 {
