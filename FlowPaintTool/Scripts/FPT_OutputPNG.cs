@@ -2,19 +2,20 @@
 using System.IO;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 
 namespace FlowPaintTool
 {
     public static class FPT_OutputPNG
     {
-        public static Texture2D RenderTextureToTexture2D(RenderTexture renderTexture)
+        public static Texture2D RenderTextureToTexture2D(RenderTexture renderTexture, TextureCreationFlags textureCreationFlags = TextureCreationFlags.None)
         {
             RenderTexture temp = RenderTexture.active;
             RenderTexture.active = renderTexture;
 
             int width = renderTexture.width;
             int height = renderTexture.height;
-            Texture2D copyTexture2D = new Texture2D(width, height);
+            Texture2D copyTexture2D = new Texture2D(width, height, renderTexture.graphicsFormat, textureCreationFlags);
             copyTexture2D.ReadPixels(new Rect(0, 0, width, height), 0, 0);
             copyTexture2D.Apply();
 
