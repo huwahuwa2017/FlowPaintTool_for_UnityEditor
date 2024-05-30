@@ -24,14 +24,14 @@ namespace FlowPaintTool
             return copyTexture2D;
         }
 
-        public static void OutputDialog(RenderTexture renderTexture, bool sRGB = true, string title = "")
+        public static void OpenDialog(RenderTexture renderTexture, bool sRGB = true, string title = "")
         {
             Texture2D copyTexture2D = RenderTextureToTexture2D(renderTexture);
-            OutputDialog(copyTexture2D, sRGB, title);
+            OpenDialog(copyTexture2D, sRGB, title);
             UnityEngine.Object.Destroy(copyTexture2D);
         }
 
-        public static void OutputDialog(Texture2D texture2D, bool sRGB = true, string title = "")
+        public static void OpenDialog(Texture2D texture2D, bool sRGB = true, string title = "")
         {
             try
             {
