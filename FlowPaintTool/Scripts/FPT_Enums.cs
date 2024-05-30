@@ -4,8 +4,8 @@ namespace FlowPaintTool
 {
     public enum FPT_StartTextureLoadModeEnum
     {
-        Assets,
-        FilePath
+        FilePath,
+        Assets
     }
 
     public enum FPT_PaintModeEnum

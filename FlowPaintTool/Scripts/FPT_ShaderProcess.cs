@@ -143,7 +143,7 @@ namespace FlowPaintTool
 
                 if (fptData._textureExist)
                 {
-                    if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.Assets)
+                    if (fptData._startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets)
                     {
                         TextureImporter sourceTextureImporter = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(fptData._startTexture)) as TextureImporter;
 
@@ -156,7 +156,7 @@ namespace FlowPaintTool
                             Graphics.Blit(fptData._startTexture, _outputRenderTexture);
                         }
                     }
-                    else if (fptData._startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
+                    else if (fptData._startTextureLoadMode == FPT_StartTextureLoadModeEnum.FilePath)
                     {
                         GraphicsFormat temp0 = _actualSRGB ? GraphicsFormat.R8G8B8A8_SRGB : GraphicsFormat.R8G8B8A8_UNorm;
                         Texture2D texture = new Texture2D(0, 0, temp0, TextureCreationFlags.None);

@@ -106,6 +106,7 @@ namespace FlowPaintTool
         public static class FPT_MainDataText
         {
             // ErrorCheckGUI Start
+            public static string IfYouWantToStartThePaintToolWithoutAStartingTexture;
             public static string UsingSRGBTexturesInFlowPaintModeWillNot;
             public static string SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer;
             public static string MeshNotFound;
@@ -137,6 +138,7 @@ namespace FlowPaintTool
             {
                 if (languageType == FPT_LanguageTypeEnum.Japanese)
                 {
+                    IfYouWantToStartThePaintToolWithoutAStartingTexture = "開始時のテクスチャを使用せずにペイントツールを開始したい場合は、 開始時のテクスチャの種類をFilePathに変更してください";
                     UsingSRGBTexturesInFlowPaintModeWillNot = "sRGBテクスチャをフロー ペイント モードで使用できません\nsRGBをオフにしてください";
                     SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer = "MeshRendererかSkinnedMeshRendererを使用しているゲーム オブジェクトを選択してください";
                     MeshNotFound = "Meshが見つかりません\nMeshを正しく割り当てているか確認してください";
@@ -163,6 +165,7 @@ namespace FlowPaintTool
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
+                    IfYouWantToStartThePaintToolWithoutAStartingTexture = "If you want to start the paint tool without a starting texture, change the starting texture type to FilePath";
                     UsingSRGBTexturesInFlowPaintModeWillNot = "Using sRGB textures in FlowPaintMode will not give accurate results\nPlease turn off sRGB";
                     SelectGameObjectThatUsesMeshRendererOrSkinnedMeshRenderer = "Select GameObject that uses MeshRenderer or SkinnedMeshRenderer";
                     MeshNotFound = "Mesh not found\nMake sure you are assigning Mesh correctly";

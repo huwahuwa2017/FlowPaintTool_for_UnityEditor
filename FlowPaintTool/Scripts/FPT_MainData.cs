@@ -29,7 +29,7 @@ namespace FlowPaintTool
         public int _width;
         public int _height;
 
-        public FPT_StartTextureLoadModeEnum _startTextureType;
+        public FPT_StartTextureLoadModeEnum _startTextureLoadMode;
         public Texture _startTexture;
         public string _startTextureFilePath;
         public bool _startTextureSRGB;
@@ -51,7 +51,7 @@ namespace FlowPaintTool
             _width = 2048;
             _height = 2048;
 
-            _startTextureType = FPT_StartTextureLoadModeEnum.Assets;
+            _startTextureLoadMode = FPT_StartTextureLoadModeEnum.FilePath;
             _startTexture = null;
             _startTextureFilePath = string.Empty;
             _startTextureSRGB = false;
@@ -109,7 +109,13 @@ namespace FlowPaintTool
                 }
             }
 
-            if (_actualSRGB && (_paintMode == FPT_PaintModeEnum.FlowPaintMode))
+            if((_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets) && (_startTexture == null))
+            {
+                EditorGUILayout.HelpBox(TextData.IfYouWantToStartThePaintToolWithoutAStartingTexture, MessageType.Error);
+                isError = true;
+            }
+
+            if ((_paintMode == FPT_PaintModeEnum.FlowPaintMode) && _actualSRGB)
             {
                 EditorGUILayout.HelpBox(TextData.UsingSRGBTexturesInFlowPaintModeWillNot, MessageType.Error);
                 isError = true;
@@ -129,13 +135,13 @@ namespace FlowPaintTool
 
             GUILayout.Space(20);
 
-            _startTextureType = (FPT_StartTextureLoadModeEnum)EditorGUILayout.EnumPopup(TextData.TypeOfStartingTexture, _startTextureType);
+            _startTextureLoadMode = (FPT_StartTextureLoadModeEnum)EditorGUILayout.EnumPopup(TextData.TypeOfStartingTexture, _startTextureLoadMode);
 
-            if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
+            if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets)
             {
                 _startTexture = (Texture)EditorGUILayout.ObjectField(TextData.StartingTexture, _startTexture, typeof(Texture), true);
             }
-            else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
+            else if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.FilePath)
             {
                 if (GUILayout.Button(TextData.OpenFilePanel))
                 {
@@ -197,7 +203,7 @@ namespace FlowPaintTool
                     _startMesh = temp4.sharedMesh;
                 }
 
-                if (_startTextureType == FPT_StartTextureLoadModeEnum.Assets)
+                if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets)
                 {
                     _textureExist = _startTexture != null;
 
@@ -214,7 +220,7 @@ namespace FlowPaintTool
                         _actualSRGB = true;
                     }
                 }
-                else if (_startTextureType == FPT_StartTextureLoadModeEnum.FilePath)
+                else if (_startTextureLoadMode == FPT_StartTextureLoadModeEnum.FilePath)
                 {
                     _textureExist = File.Exists(_startTextureFilePath);
                     _actualSRGB = _startTextureSRGB;
