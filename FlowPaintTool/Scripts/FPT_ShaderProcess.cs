@@ -39,14 +39,13 @@ namespace FlowPaintTool
         private static readonly int[] _tempRT_SPIDs = new int[]
         {
             Shader.PropertyToID("_TempTex0"),
-            Shader.PropertyToID("_TempTex1"),
-            Shader.PropertyToID("_TempTex2")
+            Shader.PropertyToID("_TempTex1")
         };
 
         private static readonly RenderTargetIdentifier[] _tempRT_RTIDs = new RenderTargetIdentifier[]
         {
             new RenderTargetIdentifier(_tempRT_SPIDs[0]),
-            new RenderTargetIdentifier(_tempRT_SPIDs[2])
+            new RenderTargetIdentifier(_tempRT_SPIDs[1])
         };
 
         private string _outputRenderTexturePath = string.Empty;
@@ -64,6 +63,7 @@ namespace FlowPaintTool
         private Material _copyColorResultMaterial = null;
 
         private CommandBuffer _paintCommandBuffer = null;
+        private CommandBuffer _bleedCommandBuffer = null;
 
         private FPT_PaintModeEnum _paintMode = FPT_PaintModeEnum.FlowPaintMode;
         private int _bleedRange = 4;
@@ -71,7 +71,7 @@ namespace FlowPaintTool
         private int _memoryCount = 0;
 
         private Vector3 _preHitPosition = Vector3.zero;
-        private bool _prePaint = false;
+        private bool _drawing = false;
         private bool _preHit = false;
 
         private int _undoMemoryIndex = 0;
@@ -198,11 +198,13 @@ namespace FlowPaintTool
                 }
             }
 
+            _preOutputRenderTexture = new RenderTexture(rtd_main);
             _paintRenderTexture = new RenderTexture(rtd_main);
             _densityRenderTexture = new RenderTexture(rtd_R16);
 
-            _preOutputRenderTexture = new RenderTexture(rtd_main);
             Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
+            Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
+            ResetRenderTexture(_densityRenderTexture, Color.clear);
 
             _undoMemoryRenderTextureArray = Enumerable.Range(0, _memoryCount).Select(I => new RenderTexture(rtd_main)).ToArray();
             Graphics.Blit(_outputRenderTexture, _undoMemoryRenderTextureArray[0]);
@@ -246,31 +248,33 @@ namespace FlowPaintTool
 
             _paintCommandBuffer = new CommandBuffer();
             _paintCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[0], rtd_main);
-            _paintCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[1], rtd_main);
-            _paintCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[2], rtd_R16);
-
+            _paintCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[1], rtd_R16);
             _paintCommandBuffer.Blit(_paintRenderTexture, _tempRT_SPIDs[0]);
-            _paintCommandBuffer.Blit(_densityRenderTexture, _tempRT_SPIDs[2]);
+            _paintCommandBuffer.Blit(_densityRenderTexture, _tempRT_SPIDs[1]);
             _paintCommandBuffer.SetRenderTarget(_tempRT_RTIDs, _tempRT_RTIDs[0]);
             _paintCommandBuffer.DrawMesh(paintModeMesh, Matrix4x4.identity, _copyTargetPaintMaterial, 0);
             _paintCommandBuffer.Blit(_tempRT_SPIDs[0], _paintRenderTexture);
-            _paintCommandBuffer.Blit(_tempRT_SPIDs[2], _densityRenderTexture);
+            _paintCommandBuffer.Blit(_tempRT_SPIDs[1], _densityRenderTexture);
+            _paintCommandBuffer.Blit(_preOutputRenderTexture, _outputRenderTexture, _copyTargetMergeMaterial);
+            _paintCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[0]);
+            _paintCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[1]);
 
-            _paintCommandBuffer.Blit(_preOutputRenderTexture, _tempRT_SPIDs[0], _copyTargetMergeMaterial);
+            _bleedCommandBuffer = new CommandBuffer();
+            _bleedCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[0], rtd_main);
+            _bleedCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[1], rtd_main);
+            _bleedCommandBuffer.Blit(_outputRenderTexture, _tempRT_SPIDs[0]);
 
             int temp1 = 0;
 
             for (int index = 0; index < _bleedRange; ++index)
             {
-                _paintCommandBuffer.Blit(_tempRT_SPIDs[temp1], _tempRT_SPIDs[1 - temp1], _copyBleedMaterialArray[index]);
+                _bleedCommandBuffer.Blit(_tempRT_SPIDs[temp1], _tempRT_SPIDs[1 - temp1], _copyBleedMaterialArray[index]);
                 temp1 = 1 - temp1;
             }
 
-            _paintCommandBuffer.Blit(_tempRT_SPIDs[temp1], _outputRenderTexture);
-
-            _paintCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[0]);
-            _paintCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[1]);
-            _paintCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[2]);
+            _bleedCommandBuffer.Blit(_tempRT_SPIDs[temp1], _outputRenderTexture);
+            _bleedCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[0]);
+            _bleedCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[1]);
             // GenerateCommandBuffer End
         }
 
@@ -317,16 +321,15 @@ namespace FlowPaintTool
 
             Vector3 paintDirection = hitPosition - _preHitPosition;
             float distance = (hitPosition - FPT_Main.GetCamera().transform.position).magnitude;
+            bool flowPaintDraw = paintDirection.magnitude > distance * editorData.GetBrushMoveSensitivity();
+            flowPaintDraw &= _paintMode == FPT_PaintModeEnum.FlowPaintMode;
 
-            if (paintDirection.magnitude > distance * editorData.GetBrushMoveSensitivity())
+            bool colorPaintDraw = (click && !_drawing) || (_preHitPosition != hitPosition);
+            colorPaintDraw &= _paintMode == FPT_PaintModeEnum.ColorPaintMode;
+
+            if (colorPaintDraw || flowPaintDraw)
             {
                 _meshProcess.PaintModeMeshTriangleUpdate(_preHitPosition);
-
-                if (!_prePaint)
-                {
-                    Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
-                    Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
-                }
 
                 _copyTargetPaintMaterial.SetMatrix(_modelMatrixSPID, matrix);
                 _copyTargetPaintMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
@@ -357,12 +360,15 @@ namespace FlowPaintTool
                 Graphics.ExecuteCommandBuffer(_paintCommandBuffer);
 
                 _preHitPosition = hitPosition;
-                _prePaint = true;
+                _drawing = true;
             }
 
-            if (_prePaint && !click)
+            if (_drawing && !click)
             {
-                ResetRenderTexture(_paintRenderTexture, Color.clear);
+                Graphics.ExecuteCommandBuffer(_bleedCommandBuffer);
+
+                Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
+                Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
                 ResetRenderTexture(_densityRenderTexture, Color.clear);
 
                 int maxIndex = _memoryCount - 1;
@@ -390,7 +396,7 @@ namespace FlowPaintTool
 
                 FPT_EditorWindow.RepaintInspectorWindow();
 
-                _prePaint = false;
+                _drawing = false;
             }
 
             _preHit = hit;
