@@ -233,12 +233,10 @@ namespace FlowPaintTool
 
             if (_actualSRGB)
             {
-                _copyFlowResultMaterial.EnableKeyword("IS_SRGB");
                 _copyColorResultMaterial.EnableKeyword("IS_SRGB");
             }
             else
             {
-                _copyFlowResultMaterial.DisableKeyword("IS_SRGB");
                 _copyColorResultMaterial.DisableKeyword("IS_SRGB");
             }
             // GenerateMaterial End
@@ -303,6 +301,19 @@ namespace FlowPaintTool
 
 
 
+        private Color GammaToLinearSpace(Color color)
+        {
+            float r = color.r;
+            float g = color.g;
+            float b = color.b;
+
+            color.r = r * (r * (r * 0.305306011f + 0.682171111f) + 0.012522878f);
+            color.g = g * (g * (g * 0.305306011f + 0.682171111f) + 0.012522878f);
+            color.b = b * (b * (b * 0.305306011f + 0.682171111f) + 0.012522878f);
+
+            return color;
+        }
+
         public void PaintProcess(Matrix4x4 matrix)
         {
             bool hit = _fptMain.PaintToolRaycast(out RaycastHit raycastHit);
@@ -353,7 +364,14 @@ namespace FlowPaintTool
                 {
                     int editRGBA = (editorData.GetEditR() ? 1 : 0) + (editorData.GetEditG() ? 2 : 0) + (editorData.GetEditB() ? 4 : 0) + (editorData.GetEditA() ? 8 : 0);
 
-                    _copyTargetPaintMaterial.SetColor(_paintColorSPID, editorData.GetPaintColor());
+                    Color paintColor = editorData.GetPaintColor();
+
+                    if (_actualSRGB)
+                    {
+                        paintColor = GammaToLinearSpace(paintColor);
+                    }
+
+                    _copyTargetPaintMaterial.SetColor(_paintColorSPID, paintColor);
                     _copyTargetPaintMaterial.SetInt(_editRGBASPID, editRGBA);
                 }
 

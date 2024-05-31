@@ -40,25 +40,21 @@ namespace FlowPaintTool
                 if (string.IsNullOrEmpty(absolutePath))
                     return;
 
-                string relativePath = string.Empty;
-                bool existTextureImporter = false;
-                string dataPath = Application.dataPath;
-                bool isStartsDataPath = absolutePath.StartsWith(dataPath);
-
-                if (isStartsDataPath)
-                {
-                    relativePath = absolutePath.Remove(0, dataPath.Length - 6);
-                    existTextureImporter = AssetImporter.GetAtPath(relativePath) is TextureImporter;
-
-                    File.WriteAllBytes(absolutePath, texture2D.EncodeToPNG());
-                    AssetDatabase.ImportAsset(relativePath);
-                }
-                else
-                {
-                    File.WriteAllBytes(absolutePath, texture2D.EncodeToPNG());
-                }
-
                 Debug.Log("Output path : " + absolutePath);
+
+                string dataPath = Application.dataPath;
+
+                if (!absolutePath.StartsWith(dataPath))
+                {
+                    File.WriteAllBytes(absolutePath, texture2D.EncodeToPNG());
+                    return;
+                }
+
+                string relativePath = absolutePath.Remove(0, dataPath.Length - 6);
+                bool existTextureImporter = AssetImporter.GetAtPath(relativePath) is TextureImporter;
+
+                File.WriteAllBytes(absolutePath, texture2D.EncodeToPNG());
+                AssetDatabase.ImportAsset(relativePath);
 
                 if (existTextureImporter)
                     return;

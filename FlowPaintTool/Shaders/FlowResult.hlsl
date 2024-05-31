@@ -168,9 +168,9 @@ void GeometryShaderStage(triangle V2G input[3], inout TriangleStream<G2F> stream
 
 float4 FragmentShaderStage(G2F input) : SV_Target
 {
-    float4 color = lerp(tex2D(_MainTex, input.uv), float4(0.0, 1.0, 1.0, 1.0), input.directionDisplay);
+    float4 color = input.directionDisplay ? float4(0.0, 1.0, 1.0, 1.0) : tex2D(_MainTex, input.uv);
     
-#if (!defined(UNITY_COLORSPACE_GAMMA)) && (!defined(IS_SRGB))
+#if !defined(UNITY_COLORSPACE_GAMMA)
     color.rgb = GammaToLinearSpace(color.rgb);
 #endif
     
