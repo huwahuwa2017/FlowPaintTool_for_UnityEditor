@@ -446,6 +446,8 @@ namespace FlowPaintTool
 
             --_undoMemoryIndex;
             Graphics.Blit(_undoMemoryRenderTextureArray[_undoMemoryIndex], _outputRenderTexture);
+            Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
+            Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
             FPT_EditorWindow.RepaintInspectorWindow();
         }
 
@@ -455,6 +457,8 @@ namespace FlowPaintTool
 
             ++_undoMemoryIndex;
             Graphics.Blit(_undoMemoryRenderTextureArray[_undoMemoryIndex], _outputRenderTexture);
+            Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
+            Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
             FPT_EditorWindow.RepaintInspectorWindow();
         }
 
