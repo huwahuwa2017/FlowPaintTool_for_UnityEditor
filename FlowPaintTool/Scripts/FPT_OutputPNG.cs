@@ -28,7 +28,7 @@ namespace FlowPaintTool
         {
             Texture2D copyTexture2D = RenderTextureToTexture2D(renderTexture);
             OpenDialog(copyTexture2D, title);
-            UnityEngine.Object.Destroy(copyTexture2D);
+            UnityEngine.Object.DestroyImmediate(copyTexture2D);
         }
 
         public static void OpenDialog(Texture2D texture2D, string title = "")
