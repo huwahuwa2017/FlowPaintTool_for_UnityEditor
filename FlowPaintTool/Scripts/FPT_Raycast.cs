@@ -14,6 +14,8 @@ namespace FlowPaintTool
 
         private Material _material_WorldPosition = null;
 
+        private float _accuracy = 0.001f;
+
         public FPT_Raycast()
         {
             RenderTextureDescriptor rtd = new RenderTextureDescriptor(1, 1, GraphicsFormat.R32G32B32A32_SFloat, 16);
@@ -37,7 +39,7 @@ namespace FlowPaintTool
                 viewMatrix.SetRow(2, -temp05);
             }
 
-            Matrix4x4 projectionMatrix = Matrix4x4.Ortho(-1f, 1f, -1f, 1f, 0f, maxDistance);
+            Matrix4x4 projectionMatrix = Matrix4x4.Ortho(-_accuracy, _accuracy, -_accuracy, _accuracy, 0f, maxDistance);
 
             FPT_TextureOperation.ClearRenderTexture(_rt, Color.clear);
 
