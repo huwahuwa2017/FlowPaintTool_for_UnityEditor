@@ -64,7 +64,7 @@ namespace FlowPaintTool
             if (!started)
             {
                 GUILayout.Label("3D Flow Paint Tool", FPT_GUIStyle.GetBigCenterLabel());
-                GUILayout.Label("Version 68", FPT_GUIStyle.GetBigCenterLabel());
+                GUILayout.Label("Version 69", FPT_GUIStyle.GetBigCenterLabel());
 
                 GUILayout.Space(40);
 

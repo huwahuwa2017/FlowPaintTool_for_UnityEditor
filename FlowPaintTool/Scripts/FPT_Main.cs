@@ -77,13 +77,31 @@ namespace FlowPaintTool
 
             _paintRenderObject = new GameObject("PaintRender");
             _paintRenderObject.transform.SetParent(transform, false);
-            _paintRenderObject.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
-            _paintRenderObject.AddComponent<MeshRenderer>().sharedMaterials = paintRenderMaterials;
-
             _maskRenderObject = new GameObject("MaskRender");
             _maskRenderObject.transform.SetParent(transform, false);
-            _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
-            _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = maskRenderMaterials;
+
+            if (_fptData._sorceRenderer is SkinnedMeshRenderer srcsmr)
+            {
+                SkinnedMeshRenderer prosmr = _paintRenderObject.AddComponent<SkinnedMeshRenderer>();
+                prosmr.localBounds = srcsmr.localBounds;
+                prosmr.bones = srcsmr.bones;
+                prosmr.sharedMesh = _fptData._startMesh;
+                prosmr.sharedMaterials = paintRenderMaterials;
+
+                SkinnedMeshRenderer mrosmr = _maskRenderObject.AddComponent<SkinnedMeshRenderer>();
+                mrosmr.localBounds = srcsmr.localBounds;
+                mrosmr.bones = srcsmr.bones;
+                mrosmr.sharedMesh = _meshProcess.GetMaskModeMesh();
+                mrosmr.sharedMaterials = maskRenderMaterials;
+            }
+            else
+            {
+                _paintRenderObject.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
+                _paintRenderObject.AddComponent<MeshRenderer>().sharedMaterials = paintRenderMaterials;
+
+                _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
+                _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = maskRenderMaterials;
+            }
 
             sw.Stop();
             Debug.Log("Start calculation time : " + sw.Elapsed);
