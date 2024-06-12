@@ -13,7 +13,7 @@ namespace FlowPaintTool
     {
         private static FPT_EditorData _staticInstance = null;
 
-        public static FPT_EditorData GetStaticInstance()
+        public static FPT_EditorData GetSingleton()
         {
             if (_staticInstance == null)
             {

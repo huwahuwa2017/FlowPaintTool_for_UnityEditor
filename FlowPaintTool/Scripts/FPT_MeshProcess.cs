@@ -105,7 +105,7 @@ namespace FlowPaintTool
             _pd_AdjacentIndexArray = new Vector3Int[_polygonCount];
             int[] duplicateResult = new int[_polygonCount];
             {
-                ComputeShader cs_adjacentPolygon = FPT_Assets.GetStaticInstance().GetAdjacentPolygonComputeShader();
+                ComputeShader cs_adjacentPolygon = FPT_Assets.GetSingleton().GetAdjacentPolygonComputeShader();
 
                 int adjacent_Main_KI = cs_adjacentPolygon.FindKernel("Adjacent_Main");
                 int duplicate_Main_KI = cs_adjacentPolygon.FindKernel("Duplicate_Main");
@@ -250,7 +250,9 @@ namespace FlowPaintTool
 
         public void MaskProcess()
         {
-            bool hit = _fptMain.PaintToolRaycast(out Vector3 point);
+            bool hit = _fptMain.PaintToolRaycast(out Vector3 hitPosition);
+
+            FPT_Core.GetSingleton().MoveRangeVisualizar(hit, hitPosition);
 
             if (!hit) return;
 
@@ -260,8 +262,7 @@ namespace FlowPaintTool
 
             if (click)
             {
-                Vector3 hitPosition = point;
-                float brushSize = FPT_EditorData.GetStaticInstance().GetBrushSize();
+                float brushSize = FPT_EditorData.GetSingleton().GetBrushSize();
                 float sqrRange = brushSize * brushSize;
 
                 foreach (int pdIndex in _pd_IndexArray)

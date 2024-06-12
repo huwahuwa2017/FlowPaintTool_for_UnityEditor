@@ -21,7 +21,7 @@ namespace FlowPaintTool
 
             _commandBuffer = new CommandBuffer();
 
-            _material_WorldPosition = FPT_Assets.GetStaticInstance().GetMaterial_WorldPosition();
+            _material_WorldPosition = FPT_Assets.GetSingleton().GetMaterial_WorldPosition();
         }
 
         public bool Raycast(Renderer renderer, int[] subMeshIndexs, Ray ray, out Vector3 point, float maxDistance)

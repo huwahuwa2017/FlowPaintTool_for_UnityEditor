@@ -113,7 +113,7 @@ namespace FlowPaintTool
             _fptMain = fptMain;
             _meshProcess = meshProcess;
 
-            FPT_Assets assets = FPT_Assets.GetStaticInstance();
+            FPT_Assets assets = FPT_Assets.GetSingleton();
             Material fillMaterial = assets.GetFillMaterial();
 
             // GenerateRenderTexture Start
@@ -274,8 +274,8 @@ namespace FlowPaintTool
         {
             if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {
-                _copyFlowResultMaterial.SetFloat("_DisplayNormalAmount", FPT_EditorData.GetStaticInstance().GetDisplayNormalAmount());
-                _copyFlowResultMaterial.SetFloat("_DisplayNormalLength", FPT_EditorData.GetStaticInstance().GetDisplayNormalLength());
+                _copyFlowResultMaterial.SetFloat("_DisplayNormalAmount", FPT_EditorData.GetSingleton().GetDisplayNormalAmount());
+                _copyFlowResultMaterial.SetFloat("_DisplayNormalLength", FPT_EditorData.GetSingleton().GetDisplayNormalLength());
             }
 
             for (int index = 0; index < _bleedRange; ++index)
@@ -308,8 +308,9 @@ namespace FlowPaintTool
 
         public void PaintProcess(Matrix4x4 matrix)
         {
-            bool hit = _fptMain.PaintToolRaycast(out Vector3 point);
-            Vector3 hitPosition = point;
+            bool hit = _fptMain.PaintToolRaycast(out Vector3 hitPosition);
+
+            FPT_Core.GetSingleton().MoveRangeVisualizar(hit, hitPosition);
 
             bool leftClick = Input.GetMouseButton(0);
             bool rightClick = false; // Input.GetMouseButton(1);
@@ -320,7 +321,7 @@ namespace FlowPaintTool
                 _preHitPosition = hitPosition;
             }
 
-            FPT_EditorData editorData = FPT_EditorData.GetStaticInstance();
+            FPT_EditorData editorData = FPT_EditorData.GetSingleton();
 
             Vector3 paintDirection = hitPosition - _preHitPosition;
             float distance = (hitPosition - FPT_Main.GetCamera().transform.position).magnitude;

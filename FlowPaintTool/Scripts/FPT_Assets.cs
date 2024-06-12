@@ -10,7 +10,7 @@ namespace FlowPaintTool
     {
         private static FPT_Assets _staticInstance = null;
 
-        public static FPT_Assets GetStaticInstance()
+        public static FPT_Assets GetSingleton()
         {
             if (_staticInstance == null)
             {

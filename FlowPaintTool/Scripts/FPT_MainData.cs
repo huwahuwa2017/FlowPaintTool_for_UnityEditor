@@ -233,14 +233,14 @@ namespace FlowPaintTool
 
             if (GUILayout.Button(TextData.StartThePaintTool) && !isError)
             {
-                EditorUtility.SetDirty(FPT_EditorData.GetStaticInstance());
+                EditorUtility.SetDirty(FPT_EditorData.GetSingleton());
 
-                FPT_Parameter[] flowPaintToolControl = UnityEngine.Object.FindObjectsOfType<FPT_Parameter>();
+                FPT_Core[] flowPaintToolControl = UnityEngine.Object.FindObjectsOfType<FPT_Core>();
 
                 if (flowPaintToolControl.Length == 0)
                 {
                     GameObject go0 = new GameObject("PaintToolControl");
-                    go0.AddComponent<FPT_Parameter>();
+                    go0.AddComponent<FPT_Core>();
                 }
 
                 if (flagSMR)

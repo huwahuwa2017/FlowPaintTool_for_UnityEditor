@@ -68,8 +68,8 @@ namespace FlowPaintTool
 
             Material[] maskRenderMaterials = new Material[]
             {
-                FPT_Assets.GetStaticInstance().GetMaterial_MaskOff(),
-                FPT_Assets.GetStaticInstance().GetMaterial_MaskOn()
+                FPT_Assets.GetSingleton().GetMaterial_MaskOff(),
+                FPT_Assets.GetSingleton().GetMaterial_MaskOn()
             };
 
             Material[] paintRenderMaterials = Enumerable.Repeat(maskRenderMaterials[1], _fptData._startMesh.subMeshCount).ToArray();
@@ -88,7 +88,7 @@ namespace FlowPaintTool
             sw.Stop();
             Debug.Log("Start calculation time : " + sw.Elapsed);
 
-            FPT_EditorData.GetStaticInstance().DisableMaterialView();
+            FPT_EditorData.GetSingleton().DisableMaterialView();
             FPT_EditorWindow.GetInspectorWindow();
             Selection.instanceIDs = new int[] { gameObject.GetInstanceID() };
             Undo.ClearAll();
@@ -120,7 +120,7 @@ namespace FlowPaintTool
             }
             else
             {
-                FPT_EditorData editorData = FPT_EditorData.GetStaticInstance();
+                FPT_EditorData editorData = FPT_EditorData.GetSingleton();
 
                 if (editorData.GetEnableMaskMode())
                 {
@@ -193,7 +193,7 @@ namespace FlowPaintTool
 
             public override void OnInspectorGUI()
             {
-                FPT_EditorData.GetStaticInstance().InspectorGUI(_instance._meshProcess, _instance._shaderProcess, _instance._fptData._paintMode);
+                FPT_EditorData.GetSingleton().InspectorGUI(_instance._meshProcess, _instance._shaderProcess, _instance._fptData._paintMode);
             }
         }
     }

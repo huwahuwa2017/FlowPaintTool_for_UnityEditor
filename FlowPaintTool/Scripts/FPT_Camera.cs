@@ -28,7 +28,7 @@ namespace FlowPaintTool
 
             if (Input.GetMouseButton(2))
             {
-                float cameraRotateSpeed = FPT_EditorData.GetStaticInstance().GetCameraRotateSpeed();
+                float cameraRotateSpeed = FPT_EditorData.GetSingleton().GetCameraRotateSpeed();
 
                 _eulerAngle.x -= Input.GetAxis("Mouse Y") * cameraRotateSpeed;
                 _eulerAngle.y += Input.GetAxis("Mouse X") * cameraRotateSpeed;
@@ -64,13 +64,13 @@ namespace FlowPaintTool
                 _speedVector.z -= Math.Sign(_speedVector.z);
             }
 
-            int cameraInertia = FPT_EditorData.GetStaticInstance().GetCameraInertia();
+            int cameraInertia = FPT_EditorData.GetSingleton().GetCameraInertia();
 
             _speedVector.x = Mathf.Clamp(_speedVector.x, -cameraInertia, cameraInertia);
             _speedVector.y = Mathf.Clamp(_speedVector.y, -cameraInertia, cameraInertia);
             _speedVector.z = Mathf.Clamp(_speedVector.z, -cameraInertia, cameraInertia);
 
-            float moveSpeed = FPT_EditorData.GetStaticInstance().GetCameraMoveSpeed();
+            float moveSpeed = FPT_EditorData.GetSingleton().GetCameraMoveSpeed();
             moveSpeed = (_key_leftShift) ? moveSpeed * 3f : moveSpeed;
 
             Vector3 speed = (Vector3)_speedVector / cameraInertia * moveSpeed;

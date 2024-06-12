@@ -22,19 +22,19 @@ namespace FlowPaintTool
         [MenuItem(MenuPathJapanese, false, 20)]
         private static void Japanese()
         {
-            FPT_EditorData.GetStaticInstance().ChangeLanguageType(FPT_LanguageTypeEnum.Japanese);
+            FPT_EditorData.GetSingleton().ChangeLanguageType(FPT_LanguageTypeEnum.Japanese);
         }
 
         [MenuItem(MenuPathEnglish, false, 21)]
         private static void English()
         {
-            FPT_EditorData.GetStaticInstance().ChangeLanguageType(FPT_LanguageTypeEnum.English);
+            FPT_EditorData.GetSingleton().ChangeLanguageType(FPT_LanguageTypeEnum.English);
         }
 
         [MenuItem("FlowPaintTool/Reset Parameter", false, 40)]
         private static void ResetParameter()
         {
-            FPT_EditorData.GetStaticInstance().ResetParameter();
+            FPT_EditorData.GetSingleton().ResetParameter();
         }
 
 
@@ -55,7 +55,7 @@ namespace FlowPaintTool
 
         private void OnGUI()
         {
-            FPT_EditorData.GetStaticInstance().UpdateLanguageType();
+            FPT_EditorData.GetSingleton().UpdateLanguageType();
 
             bool started = EditorApplication.isPlaying;
 
@@ -64,7 +64,7 @@ namespace FlowPaintTool
             if (!started)
             {
                 GUILayout.Label("3D Flow Paint Tool", FPT_GUIStyle.GetBigCenterLabel());
-                GUILayout.Label("Version 66", FPT_GUIStyle.GetBigCenterLabel());
+                GUILayout.Label("Version 67", FPT_GUIStyle.GetBigCenterLabel());
 
                 GUILayout.Space(40);
 
@@ -99,7 +99,7 @@ namespace FlowPaintTool
                 return;
             }
 
-            FPT_EditorData.GetStaticInstance().EditorWindowGUI(selectTransform);
+            FPT_EditorData.GetSingleton().EditorWindowGUI(selectTransform);
         }
 
         private void OnInspectorUpdate()
