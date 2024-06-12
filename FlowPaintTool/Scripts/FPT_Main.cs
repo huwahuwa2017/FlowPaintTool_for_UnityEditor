@@ -43,12 +43,10 @@ namespace FlowPaintTool
         private FPT_MainData _fptData = default;
         private FPT_MeshProcess _meshProcess = null;
         private FPT_ShaderProcess _shaderProcess = null;
+        private FPT_Raycast _raycast = null;
 
         private GameObject _paintRenderObject = null;
         private GameObject _maskRenderObject = null;
-        private GameObject _meshColiderObject = null;
-
-        private MeshCollider _meshColider = null;
 
         private bool _selected = false;
         private bool _preSelected = false;
@@ -66,6 +64,7 @@ namespace FlowPaintTool
 
             _meshProcess = new FPT_MeshProcess(this, _fptData);
             _shaderProcess = new FPT_ShaderProcess(this, _fptData, _meshProcess, GetInstanceID());
+            _raycast = new FPT_Raycast();
 
             Material[] maskRenderMaterials = new Material[]
             {
@@ -85,11 +84,6 @@ namespace FlowPaintTool
             _maskRenderObject.transform.SetParent(transform, false);
             _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
             _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = maskRenderMaterials;
-
-            _meshColiderObject = new GameObject("MeshColider");
-            _meshColiderObject.transform.SetParent(transform, false);
-            _meshColider = _meshColiderObject.AddComponent<MeshCollider>();
-            _meshColider.sharedMesh = _fptData._startMesh;
 
             sw.Stop();
             Debug.Log("Start calculation time : " + sw.Elapsed);
@@ -158,9 +152,11 @@ namespace FlowPaintTool
             _fptData = fptData;
         }
 
-        public bool PaintToolRaycast(out RaycastHit raycastHit)
+        public bool PaintToolRaycast(out Vector3 point)
         {
-            return _meshColider.Raycast(GetCamera().ScreenPointToRay(Input.mousePosition), out raycastHit, 1024f);
+            Ray ray = GetCamera().ScreenPointToRay(Input.mousePosition);
+            int[] indexs = new int[] { _fptData._targetSubMesh };
+            return _raycast.Raycast(_fptData._sorceRenderer, indexs, ray, out point, 1024f);
         }
 
         public void LinkedUnmask()

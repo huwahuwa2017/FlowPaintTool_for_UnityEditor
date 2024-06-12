@@ -8,8 +8,16 @@ using UnityEngine.Experimental.Rendering;
 
 namespace FlowPaintTool
 {
-    public static class FPT_OutputPNG
+    public static class FPT_TextureOperation
     {
+        public static void ClearRenderTexture(RenderTexture rt, Color color)
+        {
+            RenderTexture temp = RenderTexture.active;
+            RenderTexture.active = rt;
+            GL.Clear(true, true, color);
+            RenderTexture.active = temp;
+        }
+
         public static Texture2D RenderTextureToTexture2D(RenderTexture renderTexture, TextureCreationFlags textureCreationFlags = TextureCreationFlags.None)
         {
             RenderTexture temp = RenderTexture.active;

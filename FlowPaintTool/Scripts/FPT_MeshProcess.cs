@@ -250,7 +250,7 @@ namespace FlowPaintTool
 
         public void MaskProcess()
         {
-            bool hit = _fptMain.PaintToolRaycast(out RaycastHit raycastHit);
+            bool hit = _fptMain.PaintToolRaycast(out Vector3 point);
 
             if (!hit) return;
 
@@ -260,7 +260,7 @@ namespace FlowPaintTool
 
             if (click)
             {
-                Vector3 hitPosition = raycastHit.point;
+                Vector3 hitPosition = point;
                 float brushSize = FPT_EditorData.GetStaticInstance().GetBrushSize();
                 float sqrRange = brushSize * brushSize;
 

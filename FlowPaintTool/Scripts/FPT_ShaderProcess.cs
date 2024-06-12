@@ -104,14 +104,6 @@ namespace FlowPaintTool
             mat.EnableKeyword("UV_CHANNEL_" + targetUVChannel);
         }
 
-        private void ResetRenderTexture(RenderTexture rt, Color color)
-        {
-            RenderTexture temp = RenderTexture.active;
-            RenderTexture.active = rt;
-            GL.Clear(true, true, color);
-            RenderTexture.active = temp;
-        }
-
         public FPT_ShaderProcess(FPT_Main fptMain, FPT_MainData fptData, FPT_MeshProcess meshProcess, int InstanceID)
         {
             _paintMode = fptData._paintMode;
@@ -169,11 +161,11 @@ namespace FlowPaintTool
                 {
                     if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
                     {
-                        ResetRenderTexture(_outputRenderTexture, new Color(0.5f, 0.5f, 1.0f));
+                        FPT_TextureOperation.ClearRenderTexture(_outputRenderTexture, new Color(0.5f, 0.5f, 1.0f));
                     }
                     else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
                     {
-                        ResetRenderTexture(_outputRenderTexture, Color.black);
+                        FPT_TextureOperation.ClearRenderTexture(_outputRenderTexture, Color.black);
                     }
                 }
             }
@@ -204,7 +196,7 @@ namespace FlowPaintTool
 
             Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
             Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
-            ResetRenderTexture(_densityRenderTexture, Color.clear);
+            FPT_TextureOperation.ClearRenderTexture(_densityRenderTexture, Color.clear);
 
             _undoMemoryRenderTextureArray = Enumerable.Range(0, _memoryCount).Select(I => new RenderTexture(rtd_main)).ToArray();
             Graphics.Blit(_outputRenderTexture, _undoMemoryRenderTextureArray[0]);
@@ -316,8 +308,8 @@ namespace FlowPaintTool
 
         public void PaintProcess(Matrix4x4 matrix)
         {
-            bool hit = _fptMain.PaintToolRaycast(out RaycastHit raycastHit);
-            Vector3 hitPosition = raycastHit.point;
+            bool hit = _fptMain.PaintToolRaycast(out Vector3 point);
+            Vector3 hitPosition = point;
 
             bool leftClick = Input.GetMouseButton(0);
             bool rightClick = false; // Input.GetMouseButton(1);
@@ -387,7 +379,7 @@ namespace FlowPaintTool
 
                 Graphics.Blit(_outputRenderTexture, _preOutputRenderTexture);
                 Graphics.Blit(_outputRenderTexture, _paintRenderTexture);
-                ResetRenderTexture(_densityRenderTexture, Color.clear);
+                FPT_TextureOperation.ClearRenderTexture(_densityRenderTexture, Color.clear);
 
                 int maxIndex = _memoryCount - 1;
 
@@ -490,7 +482,7 @@ namespace FlowPaintTool
 
             if (GUILayout.Button(TextData.OutputPNGFile))
             {
-                FPT_OutputPNG.OpenDialog(_outputRenderTexture, TextData.OutputPNGFile);
+                FPT_TextureOperation.OpenDialog(_outputRenderTexture, TextData.OutputPNGFile);
             }
         }
     }

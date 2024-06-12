@@ -8,6 +8,7 @@ MonoImporter:
       type: 3}
   - _adjacentPolygonComputeShader: {fileID: 7200000, guid: 64b9ef2a511dc1440b231129636551ac,
       type: 3}
+  - _unpackNormalMaterial: {instanceID: 0}
   - _fillMaterial: {fileID: 2100000, guid: 6bfc4fb899ef4184b9363ecf20685859, type: 2}
   - _fillBleedMaterial: {fileID: 2100000, guid: 2af4c2c6cd8f36e4d9fe7a077eede320,
       type: 2}
@@ -15,12 +16,10 @@ MonoImporter:
       type: 2}
   - _colorPaintMaterial: {fileID: 2100000, guid: 694c3c56e2854804393814f8a7f7a3f9,
       type: 2}
-  - _densityMaterial: {fileID: 2100000, guid: 8da2c61444e43f74a8d913407d63cd06, type: 2}
   - _flowMergeMaterial: {fileID: 2100000, guid: b8aa7dcbceab11842bfa00407aa1de1d,
       type: 2}
   - _colorMergeMaterial: {fileID: 2100000, guid: ab79b5282467b2b4eb1b228f6d103fae,
       type: 2}
-  - _cutoutMaterial: {fileID: 2100000, guid: f7cc8b09ae6f6f1489358dc15bb30a25, type: 2}
   - _bleedMaterial: {fileID: 2100000, guid: d67c9b575014ae240ba65506a8e16752, type: 2}
   - _flowResultMaterial: {fileID: 2100000, guid: dd0cae9ab1a0a5b4594e99e8d2703992,
       type: 2}
@@ -28,6 +27,8 @@ MonoImporter:
       type: 2}
   - _material_MaskOff: {fileID: 2100000, guid: b346d3dddb9e119479a2143682a95ed5, type: 2}
   - _material_MaskOn: {fileID: 2100000, guid: 66b3d84b280c23048999db53c1fb9705, type: 2}
+  - _material_WorldPosition: {fileID: 2100000, guid: 54f54e33fe5c1684c8fda400959c54bf,
+      type: 2}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

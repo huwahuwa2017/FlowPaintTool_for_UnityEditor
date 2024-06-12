@@ -41,8 +41,6 @@ namespace FlowPaintTool
         [SerializeField]
         private Material _colorPaintMaterial = null;
         [SerializeField]
-        private Material _densityMaterial = null;
-        [SerializeField]
         private Material _flowMergeMaterial = null;
         [SerializeField]
         private Material _colorMergeMaterial = null;
@@ -57,6 +55,9 @@ namespace FlowPaintTool
         private Material _material_MaskOff = null;
         [SerializeField]
         private Material _material_MaskOn = null;
+
+        [SerializeField]
+        private Material _material_WorldPosition = null;
 
         public GameObject GetRangeVisualizationPrefab() => _rangeVisualizationPrefab;
 
@@ -76,6 +77,8 @@ namespace FlowPaintTool
 
         public Material GetMaterial_MaskOff() => _material_MaskOff;
         public Material GetMaterial_MaskOn() => _material_MaskOn;
+
+        public Material GetMaterial_WorldPosition() => _material_WorldPosition;
     }
 }
 
