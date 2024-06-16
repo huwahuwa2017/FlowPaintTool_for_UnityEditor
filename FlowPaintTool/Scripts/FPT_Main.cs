@@ -51,29 +51,32 @@ namespace FlowPaintTool
         private bool _selected = false;
         private bool _preSelected = false;
 
+        private int[] _subMeshIndexArray = null;
+
         private void Start()
         {
+            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
+            sw.Start();
+
             if (PlayerSettings.colorSpace == ColorSpace.Linear)
             {
                 string log = (_fptData._actualSRGB) ? "sRGB enabled" : "sRGB disabled";
                 Debug.Log(log);
             }
 
-            System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
-            sw.Start();
+            _subMeshIndexArray = Enumerable.Range(0, _fptData._startMesh.subMeshCount).ToArray();
 
             _meshProcess = new FPT_MeshProcess(this, _fptData);
             _shaderProcess = new FPT_ShaderProcess(this, _fptData, _meshProcess, GetInstanceID());
             _raycast = new FPT_Raycast();
 
-            Material[] maskRenderMaterials = new Material[]
-            {
-                FPT_Assets.GetSingleton().GetMaterial_MaskOff(),
-                FPT_Assets.GetSingleton().GetMaterial_MaskOn()
-            };
+            Material offMaterial = FPT_Assets.GetSingleton().GetMaskOff_Material();
 
-            Material[] paintRenderMaterials = Enumerable.Repeat(maskRenderMaterials[1], _fptData._startMesh.subMeshCount).ToArray();
-            paintRenderMaterials[_fptData._targetSubMesh] = _shaderProcess.GetPaintRenderMaterial();
+            Material[] paintRenderMaterials = Enumerable.Repeat(offMaterial, _fptData._startMesh.subMeshCount).ToArray();
+            paintRenderMaterials[_fptData._targetSubMesh] = _shaderProcess.GetResultMaterial();
+
+            Material[] maskRenderMaterials = Enumerable.Repeat(offMaterial, _fptData._startMesh.subMeshCount).ToArray();
+            maskRenderMaterials[_fptData._targetSubMesh] = _shaderProcess.GetPolygonMaskResultMaterial();
 
             _paintRenderObject = new GameObject("PaintRender");
             _paintRenderObject.transform.SetParent(transform, false);
@@ -91,7 +94,7 @@ namespace FlowPaintTool
                 SkinnedMeshRenderer mrosmr = _maskRenderObject.AddComponent<SkinnedMeshRenderer>();
                 mrosmr.localBounds = srcsmr.localBounds;
                 mrosmr.bones = srcsmr.bones;
-                mrosmr.sharedMesh = _meshProcess.GetMaskModeMesh();
+                mrosmr.sharedMesh = _fptData._startMesh;
                 mrosmr.sharedMaterials = maskRenderMaterials;
             }
             else
@@ -99,34 +102,53 @@ namespace FlowPaintTool
                 _paintRenderObject.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
                 _paintRenderObject.AddComponent<MeshRenderer>().sharedMaterials = paintRenderMaterials;
 
-                _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _meshProcess.GetMaskModeMesh();
+                _maskRenderObject.AddComponent<MeshFilter>().sharedMesh = _fptData._startMesh;
                 _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = maskRenderMaterials;
             }
 
-            sw.Stop();
-            Debug.Log("Start calculation time : " + sw.Elapsed);
-
-            FPT_EditorData.GetSingleton().DisableMaterialView();
+            FPT_EditorData.GetSingleton().DisablePreviewMode();
             FPT_EditorWindow.GetInspectorWindow();
             Selection.instanceIDs = new int[] { gameObject.GetInstanceID() };
             Undo.ClearAll();
+
+            sw.Stop();
+            Debug.Log("Start calculation time : " + sw.Elapsed);
         }
 
 
 
         private void FixedUpdate()
         {
-            _selected = Selection.activeTransform == transform;
+            _shaderProcess.MaterialUpdate();
+
+            _selected = transform == Selection.activeTransform;
 
             if (_selected)
             {
                 _activeInstance = this;
+
+                FPT_EditorData editorData = FPT_EditorData.GetSingleton();
+
+                if (editorData.GetEnableMaskMode())
+                {
+                    _fptData._sorceRenderer.enabled = false;
+                    _paintRenderObject.SetActive(false);
+                    _maskRenderObject.SetActive(true);
+
+                    _shaderProcess.MaskProcess();
+                }
+                else
+                {
+                    bool enablePreviewMode = editorData.GetEnablePreviewMode();
+
+                    _fptData._sorceRenderer.enabled = enablePreviewMode;
+                    _paintRenderObject.SetActive(!enablePreviewMode);
+                    _maskRenderObject.SetActive(false);
+
+                    _shaderProcess.PaintProcess();
+                }
             }
-
-            _meshProcess.CenterRecalculation(transform.localToWorldMatrix);
-            _shaderProcess.MaterialUpdate();
-
-            if (!_selected)
+            else
             {
                 _paintRenderObject.SetActive(false);
                 _maskRenderObject.SetActive(false);
@@ -134,29 +156,6 @@ namespace FlowPaintTool
                 if (_preSelected)
                 {
                     _fptData._sorceRenderer.enabled = true;
-                }
-            }
-            else
-            {
-                FPT_EditorData editorData = FPT_EditorData.GetSingleton();
-
-                if (editorData.GetEnableMaskMode())
-                {
-                    _paintRenderObject.SetActive(false);
-                    _maskRenderObject.SetActive(true);
-                    _fptData._sorceRenderer.enabled = false;
-
-                    _meshProcess.MaskProcess();
-                }
-                else
-                {
-                    bool enablePreviewMode = editorData.GetEnablePreviewMode();
-
-                    _paintRenderObject.SetActive(!enablePreviewMode);
-                    _maskRenderObject.SetActive(false);
-                    _fptData._sorceRenderer.enabled = enablePreviewMode;
-
-                    _shaderProcess.PaintProcess(transform.localToWorldMatrix);
                 }
             }
 
@@ -173,18 +172,17 @@ namespace FlowPaintTool
         public bool PaintToolRaycast(out Vector3 point)
         {
             Ray ray = GetCamera().ScreenPointToRay(Input.mousePosition);
-            int[] indexs = new int[] { _fptData._targetSubMesh };
-            return _raycast.Raycast(_fptData._sorceRenderer, indexs, ray, out point, 1024f);
+            return _raycast.Raycast(_fptData._sorceRenderer, _subMeshIndexArray, ray, out point, 1024f);
         }
 
         public void LinkedUnmask()
         {
-            _meshProcess.LinkedUnmask();
+            _shaderProcess.LinkedUnmask();
         }
 
         public void LinkedMask()
         {
-            _meshProcess.LinkedMask();
+            _shaderProcess.LinkedMask();
         }
 
         public void RenderTextureUndo()
@@ -211,7 +209,7 @@ namespace FlowPaintTool
 
             public override void OnInspectorGUI()
             {
-                FPT_EditorData.GetSingleton().InspectorGUI(_instance._meshProcess, _instance._shaderProcess, _instance._fptData._paintMode);
+                FPT_EditorData.GetSingleton().InspectorGUI(_instance._shaderProcess, _instance._fptData._paintMode);
             }
         }
     }

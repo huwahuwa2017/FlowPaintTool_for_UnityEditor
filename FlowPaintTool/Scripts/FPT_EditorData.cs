@@ -169,13 +169,13 @@ namespace FlowPaintTool
             FPT_EditorWindow.RepaintInspectorWindow();
         }
 
-        public void ChangeEnableMaskMode()
+        public void ChangeMaskMode()
         {
             _enableMaskMode = !_enableMaskMode;
             FPT_EditorWindow.RepaintInspectorWindow();
         }
 
-        public void ChangeEnableMaterialView()
+        public void ChangePreviewMode()
         {
             if (_enableMaskMode) return;
 
@@ -198,12 +198,10 @@ namespace FlowPaintTool
 
 
 
-        public void DisableMaterialView()
+        public void DisablePreviewMode()
         {
             _enablePreviewMode = false;
         }
-
-
 
         public void ChangeOperationInstructions()
         {
@@ -376,7 +374,7 @@ namespace FlowPaintTool
             GUILayout.Space(20);
         }
 
-        public void InspectorGUI(FPT_MeshProcess meshProcess, FPT_ShaderProcess shaderProcess, FPT_PaintModeEnum paintMode)
+        public void InspectorGUI(FPT_ShaderProcess shaderProcess, FPT_PaintModeEnum paintMode)
         {
             UpdateLanguageType();
 
@@ -384,7 +382,7 @@ namespace FlowPaintTool
 
             if (_enableMaskMode)
             {
-                meshProcess.MeshProcessGUI();
+                shaderProcess.MeshProcessGUI();
             }
             else if (paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {

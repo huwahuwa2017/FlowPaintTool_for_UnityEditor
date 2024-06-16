@@ -67,12 +67,12 @@ namespace FlowPaintTool
 
             if (!_preInputKeyTab && inputKeyTab)
             {
-                editorData.ChangeEnableMaskMode();
+                editorData.ChangeMaskMode();
             }
 
             if (!_preInputKeyZ && inputKeyZ)
             {
-                editorData.ChangeEnableMaterialView();
+                editorData.ChangePreviewMode();
             }
 
 

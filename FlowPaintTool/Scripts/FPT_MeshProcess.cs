@@ -1,105 +1,44 @@
 ﻿#if UNITY_EDITOR
 
+using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
-using UnityEditor;
 using UnityEngine;
 
 namespace FlowPaintTool
 {
-    using TextData = FPT_Language.FPT_MeshProcessText;
-
     public class FPT_MeshProcess
     {
-        private Mesh _paintModeMesh = null;
-        private Mesh _maskModeMesh = null;
-
         private int _polygonCount = 0;
-        private Vector3[] _vertices;
 
         private IEnumerable<int> _pd_IndexArray = null;
-        private Vector3Int[] _pd_VertexIndexArray = null;
         private Vector3Int[] _pd_AdjacentIndexArray = null;
         private bool[] _pd_DuplicateUVArray = null;
         private int[][] _pd_duplicatePolygonIndexArrayArray = null;
-        private Vector3[] _pd_CenterArray = null;
+
         private bool[] _pd_MaskArray = null;
-        private bool[] _pd_MaskResultArray = null;
-
-        private FPT_Main _fptMain = null;
-        private Matrix4x4 _preMatrix = Matrix4x4.zero;
-
-        public Mesh GetPaintModeMesh() => _paintModeMesh;
-
-        public Mesh GetMaskModeMesh() => _maskModeMesh;
-
-
-
-        private void MaskModeMeshTriangleUpdate()
-        {
-            List<int> triangleList0 = new List<int>(_polygonCount);
-            List<int> triangleList1 = new List<int>(_polygonCount);
-
-            foreach (int pdIndex in _pd_IndexArray)
-            {
-                Vector3Int vIndex = _pd_VertexIndexArray[pdIndex];
-
-                if (_pd_MaskArray[pdIndex])
-                {
-                    triangleList1.Add(vIndex.x);
-                    triangleList1.Add(vIndex.y);
-                    triangleList1.Add(vIndex.z);
-                }
-                else
-                {
-                    triangleList0.Add(vIndex.x);
-                    triangleList0.Add(vIndex.y);
-                    triangleList0.Add(vIndex.z);
-                }
-            }
-
-            _maskModeMesh.SetTriangles(triangleList0, 0);
-            _maskModeMesh.SetTriangles(triangleList1, 1);
-        }
+        private bool[] _pd_ThinningArray = null;
+        private byte[] _thinningArrayTemp0 = null;
 
         public FPT_MeshProcess(FPT_Main fptMain, FPT_MainData fptData)
         {
-            _fptMain = fptMain;
+            Vector3[] vertices = fptData._startMesh.vertices;
 
-            Mesh startMesh = fptData._startMesh;
-            int targetUVChannel = fptData._targetUVChannel;
-            float uv_Epsilon = fptData._uv_Epsilon;
-            int targetSubMesh = fptData._targetSubMesh;
-            int subMeshCount = startMesh.subMeshCount;
-
-            _maskModeMesh = Object.Instantiate(startMesh);
-            _maskModeMesh.MarkDynamic();
-            _maskModeMesh.triangles = new int[0];
-            _maskModeMesh.subMeshCount = 2;
-
-            _paintModeMesh = Object.Instantiate(_maskModeMesh);
-            _paintModeMesh.subMeshCount = 1;
-
-
-
-            _vertices = startMesh.vertices;
             List<Vector2> uvs = new List<Vector2>();
-            startMesh.GetUVs(targetUVChannel, uvs);
-            int[] triangles = startMesh.GetTriangles(targetSubMesh);
+            fptData._startMesh.GetUVs(fptData._targetUVChannel, uvs);
+
+            int[] triangles = fptData._startMesh.GetTriangles(fptData._targetSubMesh);
             _polygonCount = triangles.Length / 3;
 
             _pd_IndexArray = Enumerable.Range(0, _polygonCount);
-
-            _pd_VertexIndexArray = _pd_IndexArray.
-                Select(I => new Vector3Int(triangles[I * 3], triangles[I * 3 + 1], triangles[I * 3 + 2])).
-                ToArray();
-
-            _pd_CenterArray = new Vector3[_polygonCount];
             _pd_MaskArray = new bool[_polygonCount];
-            _pd_MaskResultArray = new bool[_polygonCount];
+            _pd_ThinningArray = new bool[_polygonCount];
+
+            int polygonDataTexSize = (int)Math.Ceiling(Math.Sqrt(_polygonCount));
+            _thinningArrayTemp0 = new byte[polygonDataTexSize * polygonDataTexSize];
 
             // Compute shader Start
             _pd_AdjacentIndexArray = new Vector3Int[_polygonCount];
@@ -110,19 +49,19 @@ namespace FlowPaintTool
                 int adjacent_Main_KI = cs_adjacentPolygon.FindKernel("Adjacent_Main");
                 int duplicate_Main_KI = cs_adjacentPolygon.FindKernel("Duplicate_Main");
 
-                ComputeBuffer cb_Vertices = new ComputeBuffer(_vertices.Count(), Marshal.SizeOf(typeof(Vector3)));
+                ComputeBuffer cb_Vertices = new ComputeBuffer(vertices.Count(), Marshal.SizeOf(typeof(Vector3)));
                 ComputeBuffer cb_UVs = new ComputeBuffer(uvs.Count(), Marshal.SizeOf(typeof(Vector2)));
                 ComputeBuffer cb_Triangles = new ComputeBuffer(triangles.Count(), Marshal.SizeOf(typeof(int)));
                 ComputeBuffer cb_AdjacentResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector3Int)));
                 ComputeBuffer cb_CenterUVResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(Vector2)));
                 ComputeBuffer cb_DuplicateResult = new ComputeBuffer(_polygonCount, Marshal.SizeOf(typeof(int)));
 
-                cb_Vertices.SetData(_vertices);
+                cb_Vertices.SetData(vertices);
                 cb_UVs.SetData(uvs);
                 cb_Triangles.SetData(triangles);
 
                 cs_adjacentPolygon.SetInt("_TriangleCount", _polygonCount);
-                cs_adjacentPolygon.SetFloat("_Epsilon", uv_Epsilon);
+                cs_adjacentPolygon.SetFloat("_Epsilon", fptData._uv_Epsilon);
                 cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Vertices", cb_Vertices);
                 cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_UVs", cb_UVs);
                 cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Triangles", cb_Triangles);
@@ -175,35 +114,15 @@ namespace FlowPaintTool
 
             _pd_duplicatePolygonIndexArrayArray = duplicatePolygonIndexArray.ToArray();
             // Generate _duplicatePolygonListList End
-
-            MaskModeMeshTriangleUpdate();
         }
 
 
 
-        public void CenterRecalculation(Matrix4x4 matrix)
+        public void ThinningTextureUpdate(Texture2D sqrMagnitudeTexture, Texture2D thinningTexture)
         {
-            if (_preMatrix == matrix) return;
+            byte[] data = sqrMagnitudeTexture.GetRawTextureData();
 
-            _preMatrix = matrix;
-
-            Vector3[] vpArray = _vertices.Select(I => matrix.MultiplyPoint3x4(I)).ToArray();
-
-            foreach (int pdIndex in _pd_IndexArray)
-            {
-                Vector3Int vIndex = _pd_VertexIndexArray[pdIndex];
-                _pd_CenterArray[pdIndex] = (vpArray[vIndex.x] + vpArray[vIndex.y] + vpArray[vIndex.z]) / 3f;
-            }
-        }
-
-
-
-        public void PaintModeMeshTriangleUpdate(Vector3 hitPosition)
-        {
-            foreach (int pdIndex in _pd_IndexArray)
-            {
-                _pd_MaskResultArray[pdIndex] = _pd_DuplicateUVArray[pdIndex] || _pd_MaskArray[pdIndex];
-            }
+            Array.Copy(_pd_DuplicateUVArray, _pd_ThinningArray, _pd_DuplicateUVArray.Length);
 
             foreach (int[] duplicatePolygonList in _pd_duplicatePolygonIndexArrayArray)
             {
@@ -216,7 +135,7 @@ namespace FlowPaintTool
 
                     if (_pd_MaskArray[pdIndex]) continue;
 
-                    float sqrDistance = (hitPosition - _pd_CenterArray[pdIndex]).sqrMagnitude;
+                    float sqrDistance = BitConverter.ToSingle(data, pdIndex * 4);
 
                     if (sqrDistance < minSqrDistance)
                     {
@@ -227,54 +146,17 @@ namespace FlowPaintTool
 
                 if (targetPolygonIndex != -1)
                 {
-                    _pd_MaskResultArray[targetPolygonIndex] = false;
+                    _pd_ThinningArray[targetPolygonIndex] = false;
                 }
             }
 
-            List<int> triangleList0 = new List<int>(_polygonCount);
-
-            foreach (int pdIndex in _pd_IndexArray)
+            for (int index = 0; index < _pd_ThinningArray.Length; ++index)
             {
-                if (_pd_MaskResultArray[pdIndex]) continue;
-
-                Vector3Int vIndex = _pd_VertexIndexArray[pdIndex];
-                triangleList0.Add(vIndex.x);
-                triangleList0.Add(vIndex.y);
-                triangleList0.Add(vIndex.z);
+                _thinningArrayTemp0[index] = _pd_ThinningArray[index] ? (byte)255 : (byte)0;
             }
 
-            _paintModeMesh.SetTriangles(triangleList0, 0);
-        }
-
-
-
-        public void MaskProcess()
-        {
-            bool hit = _fptMain.PaintToolRaycast(out Vector3 hitPosition);
-
-            FPT_Core.GetSingleton().MoveRangeVisualizar(hit, hitPosition);
-
-            if (!hit) return;
-
-            bool leftClick = Input.GetMouseButton(0);
-            bool rightClick = Input.GetMouseButton(1);
-            bool click = leftClick || rightClick;
-
-            if (click)
-            {
-                float brushSize = FPT_EditorData.GetSingleton().GetBrushSize();
-                float sqrRange = brushSize * brushSize;
-
-                foreach (int pdIndex in _pd_IndexArray)
-                {
-                    if ((hitPosition - _pd_CenterArray[pdIndex]).sqrMagnitude < sqrRange)
-                    {
-                        _pd_MaskArray[pdIndex] = rightClick;
-                    }
-                }
-
-                MaskModeMeshTriangleUpdate();
-            }
+            thinningTexture.LoadRawTextureData(_thinningArrayTemp0);
+            thinningTexture.Apply();
         }
 
 
@@ -307,89 +189,34 @@ namespace FlowPaintTool
             return adjacentTriangles;
         }
 
-        public void LinkedUnmask()
+        public void LinkedUnmask(Texture2D maskTexture)
         {
-            IEnumerable<int> temp0 = _pd_IndexArray.Where(I => !_pd_MaskArray[I]);
+            byte[] data = maskTexture.GetRawTextureData();
+            IEnumerable<int> temp0 = _pd_IndexArray.Where(I => data[I] == 0);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
             foreach (int temp2 in temp1)
             {
-                _pd_MaskArray[temp2] = false;
+                data[temp2] = 0;
             }
 
-            MaskModeMeshTriangleUpdate();
+            maskTexture.LoadRawTextureData(data);
+            maskTexture.Apply();
         }
 
-        public void LinkedMask()
+        public void LinkedMask(Texture2D maskTexture)
         {
-            IEnumerable<int> temp0 = _pd_IndexArray.Where(I => _pd_MaskArray[I]);
+            byte[] data = maskTexture.GetRawTextureData();
+            IEnumerable<int> temp0 = _pd_IndexArray.Where(I => data[I] != 0);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
             foreach (int temp2 in temp1)
             {
-                _pd_MaskArray[temp2] = true;
+                data[temp2] = 255;
             }
 
-            MaskModeMeshTriangleUpdate();
-        }
-
-
-
-        public void MeshProcessGUI()
-        {
-            EditorGUILayout.Space(20);
-
-            EditorGUILayout.BeginHorizontal();
-            {
-                if (GUILayout.Button(TextData.LinkedMask))
-                {
-                    LinkedMask();
-                }
-
-                if (GUILayout.Button(TextData.LinkedUnmask))
-                {
-                    LinkedUnmask();
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(20);
-
-            EditorGUILayout.BeginHorizontal();
-            {
-                if (GUILayout.Button(TextData.MaskAll))
-                {
-                    foreach (int pdIndex in _pd_IndexArray)
-                    {
-                        _pd_MaskArray[pdIndex] = true;
-                    }
-
-                    MaskModeMeshTriangleUpdate();
-                }
-
-                if (GUILayout.Button(TextData.UnmaskAll))
-                {
-                    foreach (int pdIndex in _pd_IndexArray)
-                    {
-                        _pd_MaskArray[pdIndex] = false;
-                    }
-
-                    MaskModeMeshTriangleUpdate();
-                }
-
-                if (GUILayout.Button(TextData.InvertAll))
-                {
-                    foreach (int pdIndex in _pd_IndexArray)
-                    {
-                        _pd_MaskArray[pdIndex] = !_pd_MaskArray[pdIndex];
-                    }
-
-                    MaskModeMeshTriangleUpdate();
-                }
-            }
-            EditorGUILayout.EndHorizontal();
-
-            EditorGUILayout.Space(20);
+            maskTexture.LoadRawTextureData(data);
+            maskTexture.Apply();
         }
     }
 }

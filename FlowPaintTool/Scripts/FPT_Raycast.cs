@@ -10,6 +10,8 @@ namespace FlowPaintTool
     {
         private RenderTexture _rt = null;
 
+        private Texture2D _memory = null;
+
         private CommandBuffer _commandBuffer = null;
 
         private Material _material_WorldPosition = null;
@@ -21,9 +23,11 @@ namespace FlowPaintTool
             RenderTextureDescriptor rtd = new RenderTextureDescriptor(1, 1, GraphicsFormat.R32G32B32A32_SFloat, 16);
             _rt = new RenderTexture(rtd);
 
+            _memory = FPT_TextureOperation.GenerateMemoryTexture(_rt);
+
             _commandBuffer = new CommandBuffer();
 
-            _material_WorldPosition = FPT_Assets.GetSingleton().GetMaterial_WorldPosition();
+            _material_WorldPosition = FPT_Assets.GetSingleton().GetWorldPositionMaterial();
         }
 
         public bool Raycast(Renderer renderer, int[] subMeshIndexs, Ray ray, out Vector3 point, float maxDistance)
@@ -54,12 +58,11 @@ namespace FlowPaintTool
 
             Graphics.ExecuteCommandBuffer(_commandBuffer);
 
-            Texture2D texture2D = FPT_TextureOperation.RenderTextureToTexture2D(_rt);
-            Color color = texture2D.GetPixel(0, 0);
+            FPT_TextureOperation.DataTransfer(_rt, _memory);
+            Color color = _memory.GetPixel(0, 0);
             point.x = color.r;
             point.y = color.g;
             point.z = color.b;
-            Object.DestroyImmediate(texture2D);
 
             return color.a != 0f;
         }

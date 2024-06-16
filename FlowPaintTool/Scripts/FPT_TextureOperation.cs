@@ -18,19 +18,26 @@ namespace FlowPaintTool
             RenderTexture.active = temp;
         }
 
-        public static Texture2D RenderTextureToTexture2D(RenderTexture renderTexture, TextureCreationFlags textureCreationFlags = TextureCreationFlags.None)
+        public static Texture2D GenerateMemoryTexture(RenderTexture renderTexture)
+        {
+            int mipCount = renderTexture.mipmapCount;
+            TextureCreationFlags textureCreationFlags = (mipCount != 1) ? TextureCreationFlags.MipChain : TextureCreationFlags.None;
+            return new Texture2D(renderTexture.width, renderTexture.height, renderTexture.graphicsFormat, mipCount, textureCreationFlags);
+        }
+
+        public static void DataTransfer(RenderTexture source, Texture2D dest)
         {
             RenderTexture temp = RenderTexture.active;
-            RenderTexture.active = renderTexture;
-
-            int width = renderTexture.width;
-            int height = renderTexture.height;
-            Texture2D copyTexture2D = new Texture2D(width, height, renderTexture.graphicsFormat, textureCreationFlags);
-            copyTexture2D.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-            copyTexture2D.Apply();
-
+            RenderTexture.active = source;
+            dest.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
+            //dest.Apply();
             RenderTexture.active = temp;
+        }
 
+        public static Texture2D RenderTextureToTexture2D(RenderTexture renderTexture)
+        {
+            Texture2D copyTexture2D = GenerateMemoryTexture(renderTexture);
+            DataTransfer(renderTexture, copyTexture2D);
             return copyTexture2D;
         }
 

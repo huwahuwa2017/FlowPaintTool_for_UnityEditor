@@ -41,21 +41,29 @@ namespace FlowPaintTool
         [SerializeField]
         private Material _colorPaintMaterial = null;
         [SerializeField]
+        private Material _polygonMaskMaterial = null;
+
+        [SerializeField]
         private Material _flowMergeMaterial = null;
         [SerializeField]
         private Material _colorMergeMaterial = null;
         [SerializeField]
         private Material _bleedMaterial = null;
+
         [SerializeField]
         private Material _flowResultMaterial = null;
         [SerializeField]
         private Material _colorResultMaterial = null;
+        [SerializeField]
+        private Material _polygonMaskResultMaterial = null;
 
         [SerializeField]
         private Material _material_MaskOff = null;
         [SerializeField]
         private Material _material_MaskOn = null;
 
+        [SerializeField]
+        private Material _material_SqrMagnitude = null;
         [SerializeField]
         private Material _material_WorldPosition = null;
 
@@ -69,16 +77,21 @@ namespace FlowPaintTool
 
         public Material GetFlowPaintMaterial() => _flowPaintMaterial;
         public Material GetColorPaintMaterial() => _colorPaintMaterial;
+        public Material GetPolygonMaskMaterial() => _polygonMaskMaterial;
+
         public Material GetFlowMergeMaterial() => _flowMergeMaterial;
         public Material GetColorMergeMaterial() => _colorMergeMaterial;
         public Material GetBleedMaterial() => _bleedMaterial;
+
         public Material GetFlowResultMaterial() => _flowResultMaterial;
         public Material GetColorResultMaterial() => _colorResultMaterial;
+        public Material GetPolygonMaskResultMaterial() => _polygonMaskResultMaterial;
 
-        public Material GetMaterial_MaskOff() => _material_MaskOff;
-        public Material GetMaterial_MaskOn() => _material_MaskOn;
+        public Material GetMaskOff_Material() => _material_MaskOff;
+        public Material GetMaskOnMaterial() => _material_MaskOn;
 
-        public Material GetMaterial_WorldPosition() => _material_WorldPosition;
+        public Material GetSqrMagnitudeMaterial() => _material_SqrMagnitude;
+        public Material GetWorldPositionMaterial() => _material_WorldPosition;
     }
 }
 
