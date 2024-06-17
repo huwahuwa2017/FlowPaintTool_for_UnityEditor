@@ -283,3 +283,20 @@ float FragmentShaderStage_SqrMagnitude(G2F input) : SV_Target
 {
     return input.data;
 }
+
+
+
+V2F VertexShaderStage_WorldPosition(I2V input)
+{
+    float3 wPos = mul(UNITY_MATRIX_M, input.lPos).xyz;
+
+    V2F output = (V2F) 0;
+    output.cPos = UnityWorldToClipPos(wPos);
+    output.wPos = wPos;
+    return output;
+}
+
+float4 FragmentShaderStage_WorldPosition(V2F input) : SV_Target
+{
+    return float4(input.wPos, 1.0);
+}

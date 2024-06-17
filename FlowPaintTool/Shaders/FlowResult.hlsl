@@ -10,8 +10,8 @@ struct TessellationFactor
 struct I2V
 {
     float4 lPos : POSITION;
-    float3 normal : NORMAL;
-    float4 tangent : TANGENT;
+    float3 lNormal : NORMAL;
+    float4 lTangent : TANGENT;
     float2 uv : TARGET_UV_CHANNEL;
 };
 
@@ -59,7 +59,7 @@ float3x3 ScalarMul(float3x3 mat, float scalar)
 V2G VertexShaderStage(I2V input)
 {
     float4 wPos = mul(UNITY_MATRIX_M, input.lPos);
-    float3x3 matrixT2W = Matrix_T2W(input.normal, input.tangent);
+    float3x3 matrixT2W = Matrix_T2W(input.lNormal, input.lTangent);
     
     V2G output = (V2G) 0;
     output.wPos = wPos.xyz;
