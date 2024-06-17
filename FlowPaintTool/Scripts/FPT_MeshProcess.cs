@@ -18,12 +18,11 @@ namespace FlowPaintTool
         private Vector3Int[] _pd_AdjacentIndexArray = null;
         private bool[] _pd_DuplicateUVArray = null;
         private int[][] _pd_duplicatePolygonIndexArrayArray = null;
-
-        private bool[] _pd_MaskArray = null;
         private bool[] _pd_ThinningArray = null;
+
         private byte[] _thinningArrayTemp0 = null;
 
-        public FPT_MeshProcess(FPT_Main fptMain, FPT_MainData fptData)
+        public FPT_MeshProcess(FPT_MainData fptData)
         {
             Vector3[] vertices = fptData._startMesh.vertices;
 
@@ -34,7 +33,6 @@ namespace FlowPaintTool
             _polygonCount = triangles.Length / 3;
 
             _pd_IndexArray = Enumerable.Range(0, _polygonCount);
-            _pd_MaskArray = new bool[_polygonCount];
             _pd_ThinningArray = new bool[_polygonCount];
 
             int polygonDataTexSize = (int)Math.Ceiling(Math.Sqrt(_polygonCount));
@@ -118,10 +116,8 @@ namespace FlowPaintTool
 
 
 
-        public void ThinningTextureUpdate(Texture2D sqrMagnitudeTexture, Texture2D thinningTexture)
+        public byte[] ThinningTextureUpdate(byte[] data)
         {
-            byte[] data = sqrMagnitudeTexture.GetRawTextureData();
-
             Array.Copy(_pd_DuplicateUVArray, _pd_ThinningArray, _pd_DuplicateUVArray.Length);
 
             foreach (int[] duplicatePolygonList in _pd_duplicatePolygonIndexArrayArray)
@@ -132,9 +128,6 @@ namespace FlowPaintTool
                 for (int index = 0; index < duplicatePolygonList.Length; index++)
                 {
                     int pdIndex = duplicatePolygonList[index];
-
-                    if (_pd_MaskArray[pdIndex]) continue;
-
                     float sqrDistance = BitConverter.ToSingle(data, pdIndex * 4);
 
                     if (sqrDistance < minSqrDistance)
@@ -155,8 +148,7 @@ namespace FlowPaintTool
                 _thinningArrayTemp0[index] = _pd_ThinningArray[index] ? (byte)255 : (byte)0;
             }
 
-            thinningTexture.LoadRawTextureData(_thinningArrayTemp0);
-            thinningTexture.Apply();
+            return _thinningArrayTemp0;
         }
 
 
@@ -189,9 +181,8 @@ namespace FlowPaintTool
             return adjacentTriangles;
         }
 
-        public void LinkedUnmask(Texture2D maskTexture)
+        public void UnmaskLinked(byte[] data)
         {
-            byte[] data = maskTexture.GetRawTextureData();
             IEnumerable<int> temp0 = _pd_IndexArray.Where(I => data[I] == 0);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
@@ -199,14 +190,10 @@ namespace FlowPaintTool
             {
                 data[temp2] = 0;
             }
-
-            maskTexture.LoadRawTextureData(data);
-            maskTexture.Apply();
         }
 
-        public void LinkedMask(Texture2D maskTexture)
+        public void MaskLinked(byte[] data)
         {
-            byte[] data = maskTexture.GetRawTextureData();
             IEnumerable<int> temp0 = _pd_IndexArray.Where(I => data[I] != 0);
             ConcurrentBag<int> temp1 = GetAllConnectedTriangles(temp0);
 
@@ -214,9 +201,6 @@ namespace FlowPaintTool
             {
                 data[temp2] = 255;
             }
-
-            maskTexture.LoadRawTextureData(data);
-            maskTexture.Apply();
         }
     }
 }

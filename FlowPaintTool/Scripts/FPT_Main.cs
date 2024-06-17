@@ -41,9 +41,7 @@ namespace FlowPaintTool
 
 
         private FPT_MainData _fptData = default;
-        private FPT_MeshProcess _meshProcess = null;
         private FPT_ShaderProcess _shaderProcess = null;
-        private FPT_Raycast _raycast = null;
 
         private GameObject _paintRenderObject = null;
         private GameObject _maskRenderObject = null;
@@ -51,24 +49,12 @@ namespace FlowPaintTool
         private bool _selected = false;
         private bool _preSelected = false;
 
-        private int[] _subMeshIndexArray = null;
-
         private void Start()
         {
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             sw.Start();
 
-            if (PlayerSettings.colorSpace == ColorSpace.Linear)
-            {
-                string log = (_fptData._actualSRGB) ? "sRGB enabled" : "sRGB disabled";
-                Debug.Log(log);
-            }
-
-            _subMeshIndexArray = Enumerable.Range(0, _fptData._startMesh.subMeshCount).ToArray();
-
-            _meshProcess = new FPT_MeshProcess(this, _fptData);
-            _shaderProcess = new FPT_ShaderProcess(this, _fptData, _meshProcess, GetInstanceID());
-            _raycast = new FPT_Raycast();
+            _shaderProcess = new FPT_ShaderProcess(_fptData, GetInstanceID());
 
             Material offMaterial = FPT_Assets.GetSingleton().GetMaskOff_Material();
 
@@ -119,7 +105,7 @@ namespace FlowPaintTool
 
         private void FixedUpdate()
         {
-            _shaderProcess.MaterialUpdate();
+            _shaderProcess.MaterialFixedUpdate();
 
             _selected = transform == Selection.activeTransform;
 
@@ -169,20 +155,16 @@ namespace FlowPaintTool
             _fptData = fptData;
         }
 
-        public bool PaintToolRaycast(out Vector3 point)
-        {
-            Ray ray = GetCamera().ScreenPointToRay(Input.mousePosition);
-            return _raycast.Raycast(_fptData._sorceRenderer, _subMeshIndexArray, ray, out point, 1024f);
-        }
+
 
         public void LinkedUnmask()
         {
-            _shaderProcess.LinkedUnmask();
+            _shaderProcess.UnmaskLinked();
         }
 
         public void LinkedMask()
         {
-            _shaderProcess.LinkedMask();
+            _shaderProcess.MaskLinked();
         }
 
         public void RenderTextureUndo()

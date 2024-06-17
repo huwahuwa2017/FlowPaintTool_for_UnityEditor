@@ -60,15 +60,14 @@ namespace FlowPaintTool
             }
         }
 
-        public static class FPT_MeshProcessText
+        public static class FPT_MaskText
         {
             // MeshProcessGUI Start
-            public static string LinkedMask;
-            public static string LinkedUnmask;
+            public static string MaskLinked;
+            public static string UnmaskLinked;
             public static string MaskAll;
             public static string UnmaskAll;
-            public static string InvertAll;
-            public static string SubMeshIndex;
+            public static string InvertMasked;
             public static string Mask;
             public static string Unmask;
             public static string Invert;
@@ -78,24 +77,22 @@ namespace FlowPaintTool
             {
                 if (languageType == FPT_LanguageTypeEnum.Japanese)
                 {
-                    LinkedMask = "接続マスク";
-                    LinkedUnmask = "接続アンマスク";
+                    MaskLinked = "接続マスク";
+                    UnmaskLinked = "接続アンマスク";
                     MaskAll = "すべてマスク";
                     UnmaskAll = "すべてアンマスク";
-                    InvertAll = "すべて反転";
-                    SubMeshIndex = "サブメッシュ インデックス : ";
+                    InvertMasked = "マスクを反転";
                     Mask = "マスク";
                     Unmask = "アンマスク";
                     Invert = "反転";
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
-                    LinkedMask = "Linked mask";
-                    LinkedUnmask = "Linked unmask";
+                    MaskLinked = "Mask linked";
+                    UnmaskLinked = "Unmask linked";
                     MaskAll = "Mask all";
                     UnmaskAll = "Unmask all";
-                    InvertAll = "Invert all";
-                    SubMeshIndex = "Sub Mesh index : ";
+                    InvertMasked = "Invert masked";
                     Mask = "Mask";
                     Unmask = "Unmask";
                     Invert = "Invert";
@@ -376,7 +373,7 @@ namespace FlowPaintTool
 
             FPT_EditorWindowText.ChangeLanguage(_language);
             FPT_ShaderProcessText.ChangeLanguage(_language);
-            FPT_MeshProcessText.ChangeLanguage(_language);
+            FPT_MaskText.ChangeLanguage(_language);
             FPT_MainDataText.ChangeLanguage(_language);
             FPT_EditorDataText.ChangeLanguage(_language);
             FPT_ParameterText.ChangeLanguage(_language);

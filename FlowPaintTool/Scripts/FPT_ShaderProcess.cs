@@ -10,8 +10,8 @@ using UnityEngine.Rendering;
 
 namespace FlowPaintTool
 {
-    using MP_TextData = FPT_Language.FPT_MeshProcessText;
     using TextData = FPT_Language.FPT_ShaderProcessText;
+    using TextData_Mask = FPT_Language.FPT_MaskText;
 
     public class FPT_ShaderProcess
     {
@@ -84,7 +84,7 @@ namespace FlowPaintTool
         private FPT_PaintModeEnum _paintMode = FPT_PaintModeEnum.FlowPaintMode;
         private int _bleedRange = 4;
         private bool _actualSRGB = false;
-        private int _memoryCount = 0;
+        private int _memoryCount = 1;
 
         private Vector3 _preHitPosition = Vector3.zero;
         private bool _drawing = false;
@@ -95,8 +95,10 @@ namespace FlowPaintTool
 
         private int _polygonDataTexSize = 0;
 
-        private FPT_Main _fptMain = null;
         private FPT_MeshProcess _meshProcess = null;
+        private FPT_Raycast _raycast = null;
+        private Renderer _sorceRenderer = null;
+        private int[] _subMeshIndexArray = null;
 
         public Material GetResultMaterial() => _copyTargetResultMaterial;
 
@@ -126,14 +128,18 @@ namespace FlowPaintTool
             mat.EnableKeyword("UV_CHANNEL_" + targetUVChannel);
         }
 
-        public FPT_ShaderProcess(FPT_Main fptMain, FPT_MainData fptData, FPT_MeshProcess meshProcess, int InstanceID)
+        public FPT_ShaderProcess(FPT_MainData fptData, int instanceID)
         {
+            _meshProcess = new FPT_MeshProcess(fptData);
+            _raycast = new FPT_Raycast();
+
+            _sorceRenderer = fptData._sorceRenderer;
             _paintMode = fptData._paintMode;
             _bleedRange = fptData._bleedRange;
             _actualSRGB = fptData._actualSRGB;
             _memoryCount = fptData._maxUndoCount + 1;
-            _fptMain = fptMain;
-            _meshProcess = meshProcess;
+
+            _subMeshIndexArray = Enumerable.Range(0, fptData._startMesh.subMeshCount).ToArray();
 
             int dataCount = fptData._startMesh.GetTriangles(fptData._targetSubMesh).Length / 3;
             _polygonDataTexSize = (int)Math.Ceiling(Math.Sqrt(dataCount));
@@ -151,10 +157,8 @@ namespace FlowPaintTool
 
             _outputRenderTexture = new RenderTexture(rtd_main);
             {
-                _outputRenderTexture.filterMode = FilterMode.Point;
-
                 string path = Path.GetDirectoryName(Path.GetDirectoryName(AssetDatabase.GetAssetPath(fillMaterial)));
-                path = Path.Combine(path, $"RT{InstanceID}.renderTexture");
+                path = Path.Combine(path, $"RT{instanceID}.renderTexture");
                 AssetDatabase.CreateAsset(_outputRenderTexture, path);
                 _outputRenderTexturePath = path;
 
@@ -270,7 +274,7 @@ namespace FlowPaintTool
             _paintCommandBuffer.Blit(_paintRenderTexture, _tempRT_SPIDs[0]);
             _paintCommandBuffer.Blit(_densityRenderTexture, _tempRT_SPIDs[1]);
             _paintCommandBuffer.SetRenderTarget(_tempRT_RTIDs, _tempRT_RTIDs[0]);
-            _paintCommandBuffer.DrawRenderer(fptData._sorceRenderer, _copyTargetPaintMaterial, fptData._targetSubMesh);
+            _paintCommandBuffer.DrawRenderer(_sorceRenderer, _copyTargetPaintMaterial, fptData._targetSubMesh);
             _paintCommandBuffer.Blit(_tempRT_SPIDs[0], _paintRenderTexture);
             _paintCommandBuffer.Blit(_tempRT_SPIDs[1], _densityRenderTexture);
             _paintCommandBuffer.Blit(_preOutputRenderTexture, _outputRenderTexture, _copyTargetMergeMaterial);
@@ -297,19 +301,19 @@ namespace FlowPaintTool
             _polygonMaskCommandBuffer = new CommandBuffer();
             _polygonMaskCommandBuffer.GetTemporaryRT(_tempRT_SPIDs[0], rtd_R8_PolygonData);
             _polygonMaskCommandBuffer.SetRenderTarget(_tempRT_SPIDs[0]);
-            _polygonMaskCommandBuffer.DrawRenderer(fptData._sorceRenderer, _copyPolygonMaskMaterial, fptData._targetSubMesh);
+            _polygonMaskCommandBuffer.DrawRenderer(_sorceRenderer, _copyPolygonMaskMaterial, fptData._targetSubMesh);
             _polygonMaskCommandBuffer.Blit(_tempRT_SPIDs[0], _polygonMaskRT);
             _polygonMaskCommandBuffer.ReleaseTemporaryRT(_tempRT_SPIDs[0]);
 
             _sqrMagnitudeCommandBuffer = new CommandBuffer();
             _sqrMagnitudeCommandBuffer.SetRenderTarget(_sqrMagnitudeRT);
-            _sqrMagnitudeCommandBuffer.DrawRenderer(fptData._sorceRenderer, _copySqrMagnitudeMaterial, fptData._targetSubMesh);
+            _sqrMagnitudeCommandBuffer.DrawRenderer(_sorceRenderer, _copySqrMagnitudeMaterial, fptData._targetSubMesh);
             // GenerateCommandBuffer End
         }
 
 
 
-        public void MaterialUpdate()
+        public void MaterialFixedUpdate()
         {
             if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {
@@ -336,6 +340,12 @@ namespace FlowPaintTool
 
 
 
+        private bool PaintToolRaycast(out Vector3 point)
+        {
+            Ray ray = FPT_Main.GetCamera().ScreenPointToRay(Input.mousePosition);
+            return _raycast.Raycast(_sorceRenderer, _subMeshIndexArray, ray, out point, 1024f);
+        }
+
         private Color GammaToLinearSpace(Color color)
         {
             float r = color.r;
@@ -351,7 +361,7 @@ namespace FlowPaintTool
 
         public void PaintProcess()
         {
-            bool hit = _fptMain.PaintToolRaycast(out Vector3 hitPosition);
+            bool hit = PaintToolRaycast(out Vector3 hitPosition);
 
             FPT_Core.GetSingleton().MoveRangeVisualizar(hit, hitPosition);
 
@@ -380,7 +390,10 @@ namespace FlowPaintTool
                 _copySqrMagnitudeMaterial.SetVector(_textureSizeSPID, new Vector2(_polygonDataTexSize, _polygonDataTexSize));
                 Graphics.ExecuteCommandBuffer(_sqrMagnitudeCommandBuffer);
                 FPT_TextureOperation.DataTransfer(_sqrMagnitudeRT, _sqrMagnitudeT2D);
-                _meshProcess.ThinningTextureUpdate(_sqrMagnitudeT2D, _polygonThinningT2D);
+                byte[] input = _sqrMagnitudeT2D.GetRawTextureData();
+                byte[] output = _meshProcess.ThinningTextureUpdate(input);
+                _polygonThinningT2D.LoadRawTextureData(output);
+                _polygonThinningT2D.Apply();
 
                 _copyTargetPaintMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
                 _copyTargetPaintMaterial.SetVector(_hitPositionSPID, hitPosition);
@@ -449,8 +462,6 @@ namespace FlowPaintTool
 
                 _redoMemoryIndex = _undoMemoryIndex;
 
-                FPT_EditorWindow.RepaintInspectorWindow();
-
                 _drawing = false;
             }
 
@@ -459,7 +470,7 @@ namespace FlowPaintTool
 
         public void MaskProcess()
         {
-            bool hit = _fptMain.PaintToolRaycast(out Vector3 hitPosition);
+            bool hit = PaintToolRaycast(out Vector3 hitPosition);
 
             FPT_Core.GetSingleton().MoveRangeVisualizar(hit, hitPosition);
 
@@ -472,7 +483,9 @@ namespace FlowPaintTool
                 _preHitPosition = hitPosition;
             }
 
-            if ((click && !_drawing) || (_preHitPosition != hitPosition))
+            bool colorPaintDraw = (click && !_drawing) || (_preHitPosition != hitPosition);
+
+            if (colorPaintDraw)
             {
                 float changeMask = leftClick ? 0.0f : 1.0f;
 
@@ -497,31 +510,41 @@ namespace FlowPaintTool
 
 
 
-        public void AllUnmask()
+        public void UnmaskAll()
         {
             FPT_TextureOperation.ClearRenderTexture(_polygonMaskRT, Color.clear);
         }
 
-        public void AllMask()
+        public void MaskAll()
         {
             FPT_TextureOperation.ClearRenderTexture(_polygonMaskRT, Color.white);
         }
 
-        public void LinkedUnmask()
+        public void UnmaskLinked()
         {
             FPT_TextureOperation.DataTransfer(_polygonMaskRT, _polygonMaskT2D);
-            _meshProcess.LinkedUnmask(_polygonMaskT2D);
+            byte[] data = _polygonMaskT2D.GetRawTextureData();
+
+            _meshProcess.UnmaskLinked(data);
+
+            _polygonMaskT2D.LoadRawTextureData(data);
+            _polygonMaskT2D.Apply();
             Graphics.Blit(_polygonMaskT2D, _polygonMaskRT);
         }
 
-        public void LinkedMask()
+        public void MaskLinked()
         {
             FPT_TextureOperation.DataTransfer(_polygonMaskRT, _polygonMaskT2D);
-            _meshProcess.LinkedMask(_polygonMaskT2D);
+            byte[] data = _polygonMaskT2D.GetRawTextureData();
+
+            _meshProcess.MaskLinked(data);
+
+            _polygonMaskT2D.LoadRawTextureData(data);
+            _polygonMaskT2D.Apply();
             Graphics.Blit(_polygonMaskT2D, _polygonMaskRT);
         }
 
-        public void InvertMask()
+        public void InvertMasked()
         {
             FPT_TextureOperation.DataTransfer(_polygonMaskRT, _polygonMaskT2D);
             byte[] data = _polygonMaskT2D.GetRawTextureData();
@@ -599,14 +622,14 @@ namespace FlowPaintTool
 
             EditorGUILayout.BeginHorizontal();
             {
-                if (GUILayout.Button(MP_TextData.LinkedMask))
+                if (GUILayout.Button(TextData_Mask.MaskAll))
                 {
-                    LinkedMask();
+                    MaskAll();
                 }
 
-                if (GUILayout.Button(MP_TextData.LinkedUnmask))
+                if (GUILayout.Button(TextData_Mask.UnmaskAll))
                 {
-                    LinkedUnmask();
+                    UnmaskAll();
                 }
             }
             EditorGUILayout.EndHorizontal();
@@ -615,22 +638,24 @@ namespace FlowPaintTool
 
             EditorGUILayout.BeginHorizontal();
             {
-                if (GUILayout.Button(MP_TextData.MaskAll))
+                if (GUILayout.Button(TextData_Mask.MaskLinked))
                 {
-                    AllMask();
+                    MaskLinked();
                 }
 
-                if (GUILayout.Button(MP_TextData.UnmaskAll))
+                if (GUILayout.Button(TextData_Mask.UnmaskLinked))
                 {
-                    AllUnmask();
-                }
-
-                if (GUILayout.Button(MP_TextData.InvertAll))
-                {
-                    InvertMask();
+                    UnmaskLinked();
                 }
             }
             EditorGUILayout.EndHorizontal();
+
+            EditorGUILayout.Space(20);
+
+            if (GUILayout.Button(TextData_Mask.InvertMasked))
+            {
+                InvertMasked();
+            }
 
             EditorGUILayout.Space(20);
         }
