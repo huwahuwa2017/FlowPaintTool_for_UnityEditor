@@ -23,7 +23,7 @@ namespace FlowPaintTool
             RenderTextureDescriptor rtd = new RenderTextureDescriptor(1, 1, GraphicsFormat.R32G32B32A32_SFloat, 16);
             _rt = new RenderTexture(rtd);
 
-            _memory = FPT_TextureOperation.GenerateMemoryTexture(_rt);
+            _memory = FPT_TextureOperation.GenerateTexture2D(_rt);
 
             _commandBuffer = new CommandBuffer();
 

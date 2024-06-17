@@ -229,8 +229,8 @@ namespace FlowPaintTool
             FPT_TextureOperation.ClearRenderTexture(_sqrMagnitudeRT, Color.clear);
             Graphics.Blit(_outputRenderTexture, _undoMemoryRenderTextureArray[0]);
 
-            _polygonMaskT2D = FPT_TextureOperation.GenerateMemoryTexture(_polygonMaskRT);
-            _sqrMagnitudeT2D = FPT_TextureOperation.GenerateMemoryTexture(_sqrMagnitudeRT);
+            _polygonMaskT2D = FPT_TextureOperation.GenerateTexture2D(_polygonMaskRT);
+            _sqrMagnitudeT2D = FPT_TextureOperation.GenerateTexture2D(_sqrMagnitudeRT);
             _polygonThinningT2D = new Texture2D(_polygonDataTexSize, _polygonDataTexSize, GraphicsFormat.R8_UNorm, TextureCreationFlags.None);
             // GenerateRenderTexture End
 

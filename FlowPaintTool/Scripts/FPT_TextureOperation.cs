@@ -18,7 +18,7 @@ namespace FlowPaintTool
             RenderTexture.active = temp;
         }
 
-        public static Texture2D GenerateMemoryTexture(RenderTexture renderTexture)
+        public static Texture2D GenerateTexture2D(RenderTexture renderTexture)
         {
             int mipCount = renderTexture.mipmapCount;
             TextureCreationFlags textureCreationFlags = (mipCount != 1) ? TextureCreationFlags.MipChain : TextureCreationFlags.None;
@@ -34,16 +34,10 @@ namespace FlowPaintTool
             RenderTexture.active = temp;
         }
 
-        public static Texture2D RenderTextureToTexture2D(RenderTexture renderTexture)
-        {
-            Texture2D copyTexture2D = GenerateMemoryTexture(renderTexture);
-            DataTransfer(renderTexture, copyTexture2D);
-            return copyTexture2D;
-        }
-
         public static void OpenDialog(RenderTexture renderTexture, string title = "")
         {
-            Texture2D copyTexture2D = RenderTextureToTexture2D(renderTexture);
+            Texture2D copyTexture2D = GenerateTexture2D(renderTexture);
+            DataTransfer(renderTexture, copyTexture2D);
             OpenDialog(copyTexture2D, title);
             UnityEngine.Object.DestroyImmediate(copyTexture2D);
         }
