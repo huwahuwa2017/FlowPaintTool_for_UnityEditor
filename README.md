@@ -7,11 +7,6 @@ Unityのエディター拡張で、「方向」や「流れ」を表現するた
 https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/assets/42481055/ff16965c-98d0-47e9-a2ee-ea9b8d898097  
 
 ### 準備
-Unity 2019.4.31f1 (3D Built-in Render Pipeline)  
-あるいは  
-VCC 2.1.1 (Avatar Project)  
-でプロジェクトを用意して起動してください
-
 [Releases](https://github.com/huwahuwa2017/FlowPaintTool_for_UnityEditor/releases)からunitypackageをダウンロードしてプロジェクトにインポートしてください
 
 対象となる3Dモデルのインポート設定のRead/Write有効にして、Hierarcyへ配置してください
