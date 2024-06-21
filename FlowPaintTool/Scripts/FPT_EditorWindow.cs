@@ -47,7 +47,14 @@ namespace FlowPaintTool
 
         public static void RepaintInspectorWindow()
         {
-            GetInspectorWindow(false, null, false).Repaint();
+            //GetInspectorWindow(false, null, false).Repaint();
+
+            Type type = typeof(EditorWindow).Assembly.GetType("UnityEditor.InspectorWindow");
+
+            foreach (EditorWindow window in Resources.FindObjectsOfTypeAll(type))
+            {
+                window.Repaint();
+            }
         }
 
 
@@ -63,7 +70,7 @@ namespace FlowPaintTool
             if (!started)
             {
                 GUILayout.Label("3D Flow Paint Tool", FPT_GUIStyle.GetBigCenterLabel());
-                GUILayout.Label("Version 73", FPT_GUIStyle.GetBigCenterLabel());
+                GUILayout.Label("Version 74", FPT_GUIStyle.GetBigCenterLabel());
 
                 GUILayout.Space(40);
 

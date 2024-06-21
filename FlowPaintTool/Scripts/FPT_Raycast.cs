@@ -20,7 +20,7 @@ namespace FlowPaintTool
 
         public FPT_Raycast()
         {
-            RenderTextureDescriptor rtd = new RenderTextureDescriptor(1, 1, GraphicsFormat.R32G32B32A32_SFloat, 16);
+            RenderTextureDescriptor rtd = new RenderTextureDescriptor(1, 1, GraphicsFormat.R32G32B32A32_SFloat, 32);
             _rt = new RenderTexture(rtd);
 
             _memory = FPT_TextureOperation.GenerateTexture2D(_rt);
