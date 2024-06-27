@@ -328,11 +328,16 @@ namespace FlowPaintTool
 
                     EditorGUILayout.BeginHorizontal();
                     {
-                        EditorGUILayout.Space();
+                        GUILayout.Space(15);
 
                         if (GUILayout.Button(TextData.InputGazeVector))
                         {
                             _fixedDirectionVector = FPT_Main.GetCamera().transform.forward;
+                        }
+
+                        if (GUILayout.Button(TextData.Flip))
+                        {
+                            _fixedDirectionVector = -_fixedDirectionVector;
                         }
                     }
                     EditorGUILayout.EndHorizontal();
