@@ -58,23 +58,24 @@ float DF_Capsule(float3 p, float3 a, float3 b)
     return length(ap - ab * saturate(SafeDivision(dot(ap, ab), dot(ab, ab))));
 }
 
-float Density(float2 cPosXY, float invAattenuation)
+float Density_0(float2 cPosXY, float invAattenuation)
 {
     float attenuation = 1.0 - invAattenuation;
     
-    float type0 = 1.0;
-    float type1 = attenuation;
-    float type2 = (3.0 - 2.0 * attenuation) * attenuation * attenuation;
-    float type3 = attenuation * attenuation;
-    float type4 = 1.0 - invAattenuation * invAattenuation;
+    float tempArray[] =
+    {
+        1.0,
+        attenuation,
+        (3.0 - 2.0 * attenuation) * attenuation * attenuation,
+        attenuation * attenuation,
+        1.0 - invAattenuation * invAattenuation
+    };
     
-    type0 *= _BrushType == 0;
-    type1 *= _BrushType == 1;
-    type2 *= _BrushType == 2;
-    type3 *= _BrushType == 3;
-    type4 *= _BrushType == 4;
-    
-    float density = type0 + type1 + type2 + type3 + type4;
+    return tempArray[_BrushType];
+}
+
+float Density_1(float2 cPosXY, float density)
+{
     float preDensity = _DensityTex[uint2(cPosXY)].r;
     return max(preDensity, density * _BrushStrength);
 }
@@ -142,10 +143,12 @@ F2O FragmentShaderStage_FlowPaint(V2F input)
     float attenuation = 1.0 - invAattenuation;
     clip(attenuation);
     
+    float density = Density_0(input.cPos.xy, invAattenuation);
+    
     float4 baseColor = _PaintTex[uint2(input.cPos.xy)];
     float3 vector_10 = baseColor.rgb * 2.0 - 1.0;
     float3 localDirection = normalize(input.direction);
-    vector_10 = lerp(vector_10, localDirection, saturate(attenuation + (baseColor.a == 0.0)));
+    vector_10 = lerp(vector_10, localDirection, saturate(density));
     vector_10 = normalize(vector_10);
     
     float z = clamp(vector_10.z, _FixedHeightMin, _FixedHeightMax);
@@ -157,7 +160,7 @@ F2O FragmentShaderStage_FlowPaint(V2F input)
     
     F2O output = (F2O) 0;
     output.color0 = float4(vector_12 * 0.5 + 0.5, 1.0);
-    output.color1 = Density(input.cPos.xy, invAattenuation);
+    output.color1 = Density_1(input.cPos.xy, density);
     return output;
 }
 
@@ -207,7 +210,7 @@ F2O FragmentShaderStage_ColorPaint(V2F input)
     
     F2O output = (F2O) 0;
     output.color0 = paintColor;
-    output.color1 = Density(input.cPos.xy, invAattenuation);
+    output.color1 = Density_1(input.cPos.xy, Density_0(input.cPos.xy, invAattenuation));
     return output;
 }
 

@@ -330,9 +330,9 @@ namespace FlowPaintTool
                     {
                         GUILayout.Space(15);
 
-                        if (GUILayout.Button(TextData.InputGazeVector))
+                        if (GUILayout.Button(TextData.InputReverseGazeVector))
                         {
-                            _fixedDirectionVector = FPT_Main.GetCamera().transform.forward;
+                            _fixedDirectionVector = -FPT_Main.GetCamera().transform.forward;
                         }
 
                         if (GUILayout.Button(TextData.Flip))

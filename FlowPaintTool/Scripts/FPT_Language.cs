@@ -212,7 +212,7 @@ namespace FlowPaintTool
             public static string MaximumHeight;
             public static string FixedDirection;
             public static string FixedDirectionVector;
-            public static string InputGazeVector;
+            public static string InputReverseGazeVector;
             public static string Flip;
             public static string DisplayNormalLength;
             public static string DisplayNormalAmount;
@@ -249,7 +249,7 @@ namespace FlowPaintTool
                     MaximumHeight = "高さの上限";
                     FixedDirection = "方向の固定";
                     FixedDirectionVector = "方向ベクトル";
-                    InputGazeVector = "視線ベクトルを入力";
+                    InputReverseGazeVector = "逆視線ベクトルを入力";
                     Flip = "反転";
                     DisplayNormalLength = "表示する法線の長さ";
                     DisplayNormalAmount = "表示する法線の量";
@@ -281,7 +281,7 @@ namespace FlowPaintTool
                     MaximumHeight = "Maximum height";
                     FixedDirection = "Fixed direction";
                     FixedDirectionVector = "Direction vector";
-                    InputGazeVector = "Input gaze vector";
+                    InputReverseGazeVector = "Input reverse gaze vector";
                     Flip = "Flip";
                     DisplayNormalLength = "Display normal length";
                     DisplayNormalAmount = "Display normal amount";
