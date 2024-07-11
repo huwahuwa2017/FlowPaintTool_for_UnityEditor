@@ -76,6 +76,8 @@ namespace FlowPaintTool
                 TextureImporter importer = AssetImporter.GetAtPath(relativePath) as TextureImporter;
                 importer.sRGBTexture = GraphicsFormatUtility.IsSRGBFormat(texture2D.graphicsFormat);
                 importer.maxTextureSize = tempMax;
+
+                AssetDatabase.ImportAsset(relativePath);
             }
             catch (Exception e)
             {

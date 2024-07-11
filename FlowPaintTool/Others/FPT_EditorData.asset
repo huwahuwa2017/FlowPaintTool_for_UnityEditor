@@ -30,6 +30,6 @@ MonoBehaviour:
     _textureExist: 0
     _actualSRGB: 0
   _cameraRotateSpeed: 3
-  _cameraMoveSpeed: 0.05
+  _cameraMoveSpeed: 0.02
   _cameraInertia: 6
   _languageType: 1
