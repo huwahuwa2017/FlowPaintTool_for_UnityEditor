@@ -46,8 +46,13 @@ namespace FlowPaintTool
         private GameObject _paintRenderObject = null;
         private GameObject _maskRenderObject = null;
 
+        private SkinnedMeshRenderer _sourceSMR = null;
+        private SkinnedMeshRenderer _paintSMR = null;
+        private SkinnedMeshRenderer _maskSMR = null;
+
         private bool _selected = false;
         private bool _preSelected = false;
+        private bool _isSkinnedMeshRenderer = false;
 
         private void Start()
         {
@@ -71,17 +76,21 @@ namespace FlowPaintTool
 
             if (_fptData._sorceRenderer is SkinnedMeshRenderer srcsmr)
             {
-                SkinnedMeshRenderer prosmr = _paintRenderObject.AddComponent<SkinnedMeshRenderer>();
-                prosmr.localBounds = srcsmr.localBounds;
-                prosmr.bones = srcsmr.bones;
-                prosmr.sharedMesh = _fptData._startMesh;
-                prosmr.sharedMaterials = paintRenderMaterials;
+                _isSkinnedMeshRenderer = true;
 
-                SkinnedMeshRenderer mrosmr = _maskRenderObject.AddComponent<SkinnedMeshRenderer>();
-                mrosmr.localBounds = srcsmr.localBounds;
-                mrosmr.bones = srcsmr.bones;
-                mrosmr.sharedMesh = _fptData._startMesh;
-                mrosmr.sharedMaterials = maskRenderMaterials;
+                _sourceSMR = srcsmr;
+
+                _paintSMR = _paintRenderObject.AddComponent<SkinnedMeshRenderer>();
+                _paintSMR.localBounds = _sourceSMR.localBounds;
+                _paintSMR.bones = _sourceSMR.bones;
+                _paintSMR.sharedMesh = _fptData._startMesh;
+                _paintSMR.sharedMaterials = paintRenderMaterials;
+
+                _maskSMR = _maskRenderObject.AddComponent<SkinnedMeshRenderer>();
+                _maskSMR.localBounds = _sourceSMR.localBounds;
+                _maskSMR.bones = _sourceSMR.bones;
+                _maskSMR.sharedMesh = _fptData._startMesh;
+                _maskSMR.sharedMaterials = maskRenderMaterials;
             }
             else
             {
@@ -143,6 +152,21 @@ namespace FlowPaintTool
                 {
                     _fptData._sorceRenderer.enabled = true;
                 }
+            }
+
+            if (_isSkinnedMeshRenderer)
+            {
+                int blendShapeCount = _sourceSMR.sharedMesh.blendShapeCount;
+
+                for (int index = 0; index < blendShapeCount; ++index)
+                {
+                    float val = _sourceSMR.GetBlendShapeWeight(index);
+                    _paintSMR.SetBlendShapeWeight(index, val);
+                    _maskSMR.SetBlendShapeWeight(index, val);
+                }
+
+                _paintSMR.localBounds = _sourceSMR.localBounds;
+                _maskSMR.localBounds = _sourceSMR.localBounds;
             }
 
             _preSelected = _selected;
