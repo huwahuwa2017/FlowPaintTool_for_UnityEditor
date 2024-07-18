@@ -18,6 +18,8 @@ namespace FlowPaintTool
             RenderTexture.active = temp;
         }
 
+
+
         public static Texture2D GenerateTexture2D(RenderTexture renderTexture)
         {
             int mipCount = renderTexture.mipmapCount;
@@ -34,37 +36,29 @@ namespace FlowPaintTool
             RenderTexture.active = temp;
         }
 
-        public static void OpenDialog(RenderTexture renderTexture, string title = "")
-        {
-            Texture2D copyTexture2D = GenerateTexture2D(renderTexture);
-            DataTransfer(renderTexture, copyTexture2D);
-            OpenDialog(copyTexture2D, title);
-            UnityEngine.Object.DestroyImmediate(copyTexture2D);
-        }
 
-        public static void OpenDialog(Texture2D texture2D, string title = "")
+
+        public static void OutputPNG(string outputPath, Texture2D texture2D)
         {
             try
             {
-                string absolutePath = EditorUtility.SaveFilePanel(title, "Assets", "texture", "png");
-
-                if (string.IsNullOrEmpty(absolutePath))
+                if (string.IsNullOrEmpty(outputPath))
                     return;
 
-                Debug.Log("Output path : " + absolutePath);
+                Debug.Log("Output png path : " + outputPath);
 
                 string dataPath = Application.dataPath;
 
-                if (!absolutePath.StartsWith(dataPath))
+                if (!outputPath.StartsWith(dataPath))
                 {
-                    File.WriteAllBytes(absolutePath, texture2D.EncodeToPNG());
+                    File.WriteAllBytes(outputPath, texture2D.EncodeToPNG());
                     return;
                 }
 
-                string relativePath = absolutePath.Remove(0, dataPath.Length - 6);
+                string relativePath = outputPath.Remove(0, dataPath.Length - 6);
                 bool existTextureImporter = AssetImporter.GetAtPath(relativePath) is TextureImporter;
 
-                File.WriteAllBytes(absolutePath, texture2D.EncodeToPNG());
+                File.WriteAllBytes(outputPath, texture2D.EncodeToPNG());
                 AssetDatabase.ImportAsset(relativePath);
 
                 if (existTextureImporter)
@@ -83,6 +77,20 @@ namespace FlowPaintTool
             {
                 Debug.LogError(e.ToString());
             }
+        }
+
+        public static void OutputPNG_OpenDialog(Texture2D texture2D)
+        {
+            string outputPath = EditorUtility.SaveFilePanel("Output PNG", "Assets", "texture", "png");
+            OutputPNG(outputPath, texture2D);
+        }
+
+        public static void OutputPNG_OpenDialog(RenderTexture renderTexture)
+        {
+            Texture2D copyTexture2D = GenerateTexture2D(renderTexture);
+            DataTransfer(renderTexture, copyTexture2D);
+            OutputPNG_OpenDialog(copyTexture2D);
+            UnityEngine.Object.DestroyImmediate(copyTexture2D);
         }
     }
 }

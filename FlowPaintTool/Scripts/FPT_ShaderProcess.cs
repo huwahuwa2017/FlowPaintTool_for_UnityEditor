@@ -612,7 +612,7 @@ namespace FlowPaintTool
 
             if (GUILayout.Button(TextData.OutputPNGFile))
             {
-                FPT_TextureOperation.OpenDialog(_outputRenderTexture, TextData.OutputPNGFile);
+                FPT_TextureOperation.OutputPNG_OpenDialog(_outputRenderTexture);
             }
         }
 
