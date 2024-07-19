@@ -10,8 +10,6 @@ namespace FlowPaintTool
     {
         private static FPT_Main _activeInstance = null;
 
-        private static Camera _camera = null;
-
         public static FPT_Main GetActiveInstance()
         {
             if (_activeInstance != null && _activeInstance._selected)
@@ -22,26 +20,11 @@ namespace FlowPaintTool
             return null;
         }
 
-        public static Camera GetCamera()
-        {
-            if (_camera == null)
-            {
-                _camera = Camera.main;
-            }
-
-            if (_camera == null)
-            {
-                GameObject cameraObject = new GameObject("Camera");
-                _camera = cameraObject.AddComponent<Camera>();
-            }
-
-            return _camera;
-        }
-
 
 
         private FPT_MainData _fptData = default;
         private FPT_ShaderProcess _shaderProcess = null;
+        private FPT_EditorData _fptEditorData = null;
 
         private GameObject _paintRenderObject = null;
         private GameObject _maskRenderObject = null;
@@ -54,8 +37,11 @@ namespace FlowPaintTool
         private bool _preSelected = false;
         private bool _isSkinnedMeshRenderer = false;
 
-        private void Start()
+        public void ManualStart(FPT_MainData fptData)
         {
+            _fptData = fptData;
+            _fptEditorData = FPT_EditorData.GetSingleton();
+
             System.Diagnostics.Stopwatch sw = new System.Diagnostics.Stopwatch();
             sw.Start();
 
@@ -101,7 +87,7 @@ namespace FlowPaintTool
                 _maskRenderObject.AddComponent<MeshRenderer>().sharedMaterials = maskRenderMaterials;
             }
 
-            FPT_EditorData.GetSingleton().DisablePreviewMode();
+            _fptEditorData.DisablePreviewMode();
             FPT_EditorWindow.GetInspectorWindow();
             Selection.instanceIDs = new int[] { gameObject.GetInstanceID() };
             Undo.ClearAll();
@@ -122,9 +108,7 @@ namespace FlowPaintTool
             {
                 _activeInstance = this;
 
-                FPT_EditorData editorData = FPT_EditorData.GetSingleton();
-
-                if (editorData.GetEnableMaskMode())
+                if (_fptEditorData.GetEnableMaskMode())
                 {
                     _fptData._sorceRenderer.enabled = false;
                     _paintRenderObject.SetActive(false);
@@ -134,7 +118,7 @@ namespace FlowPaintTool
                 }
                 else
                 {
-                    bool enablePreviewMode = editorData.GetEnablePreviewMode();
+                    bool enablePreviewMode = _fptEditorData.GetEnablePreviewMode();
 
                     _fptData._sorceRenderer.enabled = enablePreviewMode;
                     _paintRenderObject.SetActive(!enablePreviewMode);
@@ -170,13 +154,6 @@ namespace FlowPaintTool
             }
 
             _preSelected = _selected;
-        }
-
-
-
-        public void SetData(FPT_MainData fptData)
-        {
-            _fptData = fptData;
         }
 
 

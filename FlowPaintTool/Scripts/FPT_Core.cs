@@ -1,6 +1,7 @@
 ﻿#if UNITY_EDITOR
 
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -13,7 +14,35 @@ namespace FlowPaintTool
     {
         private static FPT_Core _instance = null;
 
-        public static FPT_Core GetSingleton() => _instance;
+        public static FPT_Core GetSingleton()
+        {
+            if(_instance == null)
+            {
+                GameObject go0 = new GameObject("PaintToolControl");
+                _instance = go0.AddComponent<FPT_Core>();
+                _instance.ManualStart();
+            }
+
+            return _instance;
+        }
+
+        private static Camera _camera = null;
+
+        public static Camera GetCamera()
+        {
+            if (_camera == null)
+            {
+                _camera = Camera.main;
+            }
+
+            if (_camera == null)
+            {
+                GameObject cameraObject = new GameObject("Camera");
+                _camera = cameraObject.AddComponent<Camera>();
+            }
+
+            return _camera;
+        }
 
 
 
@@ -26,24 +55,38 @@ namespace FlowPaintTool
         private bool _preInputKeyLeftBracket = false;
         private bool _preInputKeyRightBracket = false;
 
-        private bool _focus = false;
+        private bool[] _focus = new bool[3];
 
-        private void Start()
+        private List<FPT_Main> _ftpMainList = new List<FPT_Main>();
+
+        private FPT_EditorData _fptEditorData = null;
+
+        public bool GetPrePreFocus() => _focus[2];
+
+        public void GenerateFPT_Main(FPT_MainData fpt_MainData)
         {
+            GameObject go1 = new GameObject("PaintTool");
+            go1.transform.SetParent(Selection.activeTransform, false);
+
+            FPT_Main fptMain = go1.AddComponent<FPT_Main>();
+            fptMain.ManualStart(fpt_MainData);
+            _ftpMainList.Add(fptMain);
+        }
+
+        public void ManualStart()
+        {
+            _fptEditorData = FPT_EditorData.GetSingleton();
+
             _rangeVisualizar = Instantiate(FPT_Assets.GetSingleton().GetRangeVisualizationPrefab());
             _rangeVisualizar.transform.SetParent(transform, false);
 
-            Camera camera = FPT_Main.GetCamera();
+            Camera camera = GetCamera();
             camera.nearClipPlane = Math.Min(camera.nearClipPlane, 0.01f);
-            camera.gameObject.AddComponent<FPT_Camera>();
-
-            _instance = this;
+            camera.gameObject.AddComponent<FPT_Camera>().ManualStart();
         }
 
         private void Update()
         {
-            FPT_EditorData editorData = FPT_EditorData.GetSingleton();
-
             bool inputKeyTab = Input.GetKey(KeyCode.Tab);
             bool inputKeyZ = Input.GetKey(KeyCode.Z);
             bool inputKeyPlus = Input.GetKey(KeyCode.KeypadPlus);
@@ -57,22 +100,22 @@ namespace FlowPaintTool
 
             if (Input.GetKey(KeyCode.R))
             {
-                editorData.ChangeBrushSize(scrollDelta);
+                _fptEditorData.ChangeBrushSize(scrollDelta);
             }
 
             if (Input.GetKey(KeyCode.F))
             {
-                editorData.ChangeBrushStrength(scrollDelta);
+                _fptEditorData.ChangeBrushStrength(scrollDelta);
             }
 
             if (!_preInputKeyTab && inputKeyTab)
             {
-                editorData.ChangeMaskMode();
+                _fptEditorData.ChangeMaskMode();
             }
 
             if (!_preInputKeyZ && inputKeyZ)
             {
-                editorData.ChangePreviewMode();
+                _fptEditorData.ChangePreviewMode();
             }
 
 
@@ -81,7 +124,7 @@ namespace FlowPaintTool
 
             if (fptMain != null)
             {
-                if (editorData.GetEnableMaskMode())
+                if (_fptEditorData.GetEnableMaskMode())
                 {
                     if (!_preInputKeyPlus && inputKeyPlus)
                     {
@@ -123,16 +166,17 @@ namespace FlowPaintTool
             {
                 _rangeVisualizar.SetActive(false);
             }
+
+            _focus[2] = _focus[1];
+            _focus[1] = _focus[0];
         }
 
 
 
         private void OnGUI()
         {
-            if (_focus)
+            if (_focus[0])
             {
-                FPT_EditorData editorData = FPT_EditorData.GetSingleton();
-
                 bool flag0 = FPT_Main.GetActiveInstance() != null;
 
                 string[] rTextArray1 = new string[]
@@ -162,7 +206,7 @@ namespace FlowPaintTool
 
                 if (flag0)
                 {
-                    if (!editorData.GetEnableMaskMode())
+                    if (!_fptEditorData.GetEnableMaskMode())
                     {
                         rTextArray2[0] = TextData.Paint;
 
@@ -179,7 +223,7 @@ namespace FlowPaintTool
                     rTextArray2[4] = TextData.BrushStrength;
                     rTextArray2[5] = TextData.MaskMode;
 
-                    if (!editorData.GetEnableMaskMode())
+                    if (!_fptEditorData.GetEnableMaskMode())
                     {
                         rTextArray2[6] = TextData.PreviewMode;
                         rTextArray2[7] = TextData.Undo;
@@ -191,7 +235,7 @@ namespace FlowPaintTool
                         rTextArray2[10] = TextData.LinkedMask;
                     }
 
-                    if (!editorData.GetEnableMaskMode())
+                    if (!_fptEditorData.GetEnableMaskMode())
                     {
                         lTextArray2[0] = "Mouse left";
 
@@ -208,7 +252,7 @@ namespace FlowPaintTool
                     lTextArray2[4] = "F + Mouse scroll";
                     lTextArray2[5] = "Tab";
 
-                    if (!editorData.GetEnableMaskMode())
+                    if (!_fptEditorData.GetEnableMaskMode())
                     {
                         lTextArray2[6] = "Z";
                         lTextArray2[7] = "[";
@@ -227,11 +271,11 @@ namespace FlowPaintTool
                 {
                     GUILayout.BeginVertical(FPT_GUIStyle.GetWindow());
                     {
-                        if (editorData.GetOperationInstructions())
+                        if (_fptEditorData.GetOperationInstructions())
                         {
                             if (GUILayout.Button("Hide operation instructions"))
                             {
-                                editorData.ChangeOperationInstructions();
+                                _fptEditorData.ChangeOperationInstructions();
                             }
 
                             GUILayout.Space(10);
@@ -280,7 +324,7 @@ namespace FlowPaintTool
                         {
                             if (GUILayout.Button("View operation instructions"))
                             {
-                                editorData.ChangeOperationInstructions();
+                                _fptEditorData.ChangeOperationInstructions();
                             }
                         }
                     }
@@ -302,7 +346,7 @@ namespace FlowPaintTool
 
         private void OnApplicationFocus(bool focus)
         {
-            _focus = focus;
+            _focus[0] = focus;
         }
 
         public void MoveRangeVisualizar(bool hit, Vector3 point)
@@ -311,10 +355,10 @@ namespace FlowPaintTool
 
             if (hit)
             {
-                float scale = FPT_EditorData.GetSingleton().GetBrushSize() * 2f;
+                float scale = _fptEditorData.GetBrushSize() * 2f;
                 Transform temp0 = _rangeVisualizar.transform;
                 temp0.position = point;
-                temp0.rotation = FPT_Main.GetCamera().transform.rotation;
+                temp0.rotation = GetCamera().transform.rotation;
                 temp0.localScale = new Vector3(scale, scale, scale);
             }
         }

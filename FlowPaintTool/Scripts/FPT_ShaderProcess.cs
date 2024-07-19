@@ -95,6 +95,9 @@ namespace FlowPaintTool
 
         private int _polygonDataTexSize = 0;
 
+        private FPT_Core _fptCore = null;
+        private FPT_EditorData _fptEditorData = null;
+
         private FPT_MeshProcess _meshProcess = null;
         private FPT_Raycast _raycast = null;
         private Renderer _sorceRenderer = null;
@@ -130,6 +133,9 @@ namespace FlowPaintTool
 
         public FPT_ShaderProcess(FPT_MainData fptData, int instanceID)
         {
+            _fptCore = FPT_Core.GetSingleton();
+            _fptEditorData = FPT_EditorData.GetSingleton();
+
             _meshProcess = new FPT_MeshProcess(fptData);
             _raycast = new FPT_Raycast();
 
@@ -317,8 +323,8 @@ namespace FlowPaintTool
         {
             if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
             {
-                _copyTargetResultMaterial.SetFloat("_DisplayNormalAmount", FPT_EditorData.GetSingleton().GetDisplayNormalAmount());
-                _copyTargetResultMaterial.SetFloat("_DisplayNormalLength", FPT_EditorData.GetSingleton().GetDisplayNormalLength());
+                _copyTargetResultMaterial.SetFloat("_DisplayNormalAmount", _fptEditorData.GetDisplayNormalAmount());
+                _copyTargetResultMaterial.SetFloat("_DisplayNormalLength", _fptEditorData.GetDisplayNormalLength());
             }
 
             for (int index = 0; index < _bleedRange; ++index)
@@ -342,7 +348,7 @@ namespace FlowPaintTool
 
         private bool PaintToolRaycast(out Vector3 point)
         {
-            Ray ray = FPT_Main.GetCamera().ScreenPointToRay(Input.mousePosition);
+            Ray ray = FPT_Core.GetCamera().ScreenPointToRay(Input.mousePosition);
             return _raycast.Raycast(_sorceRenderer, _subMeshIndexArray, ray, out point, 1024f);
         }
 
@@ -362,8 +368,9 @@ namespace FlowPaintTool
         public void PaintProcess()
         {
             bool hit = PaintToolRaycast(out Vector3 hitPosition);
+            hit &= _fptCore.GetPrePreFocus();
 
-            FPT_Core.GetSingleton().MoveRangeVisualizar(hit, hitPosition);
+            _fptCore.MoveRangeVisualizar(hit, hitPosition);
 
             bool leftClick = Input.GetMouseButton(0);
             bool rightClick = false; // Input.GetMouseButton(1);
@@ -374,11 +381,9 @@ namespace FlowPaintTool
                 _preHitPosition = hitPosition;
             }
 
-            FPT_EditorData editorData = FPT_EditorData.GetSingleton();
-
             Vector3 paintDirection = hitPosition - _preHitPosition;
-            float distance = (hitPosition - FPT_Main.GetCamera().transform.position).magnitude;
-            bool flowPaintDraw = paintDirection.magnitude > distance * editorData.GetBrushMoveSensitivity();
+            float distance = (hitPosition - FPT_Core.GetCamera().transform.position).magnitude;
+            bool flowPaintDraw = paintDirection.magnitude > distance * _fptEditorData.GetBrushMoveSensitivity();
             flowPaintDraw &= _paintMode == FPT_PaintModeEnum.FlowPaintMode;
 
             bool colorPaintDraw = (click && !_drawing) || (_preHitPosition != hitPosition);
@@ -397,29 +402,29 @@ namespace FlowPaintTool
 
                 _copyTargetPaintMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
                 _copyTargetPaintMaterial.SetVector(_hitPositionSPID, hitPosition);
-                _copyTargetPaintMaterial.SetFloat(_brushSizeSPID, editorData.GetBrushSize());
-                _copyTargetPaintMaterial.SetFloat(_brushStrengthSPID, editorData.GetBrushStrength());
-                _copyTargetPaintMaterial.SetInt(_brushTypeSPID, (int)editorData.GetBrushShape());
+                _copyTargetPaintMaterial.SetFloat(_brushSizeSPID, _fptEditorData.GetBrushSize());
+                _copyTargetPaintMaterial.SetFloat(_brushStrengthSPID, _fptEditorData.GetBrushStrength());
+                _copyTargetPaintMaterial.SetInt(_brushTypeSPID, (int)_fptEditorData.GetBrushShape());
 
                 if (_paintMode == FPT_PaintModeEnum.FlowPaintMode)
                 {
-                    paintDirection = editorData.GetFixedDirection() ? editorData.GetFixedDirectionVector() : paintDirection;
+                    paintDirection = _fptEditorData.GetFixedDirection() ? _fptEditorData.GetFixedDirectionVector() : paintDirection;
 
                     _copyTargetPaintMaterial.SetVector(_paintDirectionSPID, paintDirection);
-                    _copyTargetPaintMaterial.SetInt(_fixedHeightSPID, Convert.ToInt32(editorData.GetHeightLimit()));
-                    _copyTargetPaintMaterial.SetFloat(_fixedHeightMinSPID, editorData.GetMinHeight());
-                    _copyTargetPaintMaterial.SetFloat(_fixedHeightMaxSPID, editorData.GetMaxHeight());
+                    _copyTargetPaintMaterial.SetInt(_fixedHeightSPID, Convert.ToInt32(_fptEditorData.GetHeightLimit()));
+                    _copyTargetPaintMaterial.SetFloat(_fixedHeightMinSPID, _fptEditorData.GetMinHeight());
+                    _copyTargetPaintMaterial.SetFloat(_fixedHeightMaxSPID, _fptEditorData.GetMaxHeight());
                 }
                 else if (_paintMode == FPT_PaintModeEnum.ColorPaintMode)
                 {
-                    Color paintColor = editorData.GetPaintColor();
+                    Color paintColor = _fptEditorData.GetPaintColor();
 
                     if (_actualSRGB)
                     {
                         paintColor = GammaToLinearSpace(paintColor);
                     }
 
-                    int editRGBA = (editorData.GetEditR() ? 1 : 0) + (editorData.GetEditG() ? 2 : 0) + (editorData.GetEditB() ? 4 : 0) + (editorData.GetEditA() ? 8 : 0);
+                    int editRGBA = (_fptEditorData.GetEditR() ? 1 : 0) + (_fptEditorData.GetEditG() ? 2 : 0) + (_fptEditorData.GetEditB() ? 4 : 0) + (_fptEditorData.GetEditA() ? 8 : 0);
 
                     _copyTargetPaintMaterial.SetColor(_paintColorSPID, paintColor);
                     _copyTargetPaintMaterial.SetInt(_editRGBASPID, editRGBA);
@@ -472,7 +477,7 @@ namespace FlowPaintTool
         {
             bool hit = PaintToolRaycast(out Vector3 hitPosition);
 
-            FPT_Core.GetSingleton().MoveRangeVisualizar(hit, hitPosition);
+            _fptCore.MoveRangeVisualizar(hit, hitPosition);
 
             bool leftClick = Input.GetMouseButton(0);
             bool rightClick = Input.GetMouseButton(1);
@@ -492,7 +497,7 @@ namespace FlowPaintTool
                 _copyPolygonMaskMaterial.SetFloat(_changeMaskSPID, changeMask);
                 _copyPolygonMaskMaterial.SetVector(_preHitPositionSPID, _preHitPosition);
                 _copyPolygonMaskMaterial.SetVector(_hitPositionSPID, hitPosition);
-                _copyPolygonMaskMaterial.SetFloat(_brushSizeSPID, FPT_EditorData.GetSingleton().GetBrushSize());
+                _copyPolygonMaskMaterial.SetFloat(_brushSizeSPID, _fptEditorData.GetBrushSize());
 
                 Graphics.ExecuteCommandBuffer(_polygonMaskCommandBuffer);
 

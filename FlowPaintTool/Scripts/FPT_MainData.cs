@@ -109,7 +109,7 @@ namespace FlowPaintTool
                 }
             }
 
-            if((_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets) && (_startTexture == null))
+            if ((_startTextureLoadMode == FPT_StartTextureLoadModeEnum.Assets) && (_startTexture == null))
             {
                 EditorGUILayout.HelpBox(TextData.IfYouWantToStartThePaintToolWithoutAStartingTexture, MessageType.Error);
                 isError = true;
@@ -129,7 +129,7 @@ namespace FlowPaintTool
             return isError;
         }
 
-        public void EditorWindowGUI(Transform selectTransform)
+        public void EditorWindowGUI()
         {
             _paintMode = (FPT_PaintModeEnum)EditorGUILayout.EnumPopup(TextData.PaintMode, _paintMode);
 
@@ -174,7 +174,7 @@ namespace FlowPaintTool
 
             GUILayout.Space(40);
 
-            GameObject selectObject = selectTransform.gameObject;
+            GameObject selectObject = Selection.activeTransform.gameObject;
 
             SkinnedMeshRenderer temp3 = selectObject.GetComponent<SkinnedMeshRenderer>();
             MeshFilter temp4 = selectObject.GetComponent<MeshFilter>();
@@ -233,16 +233,6 @@ namespace FlowPaintTool
 
             if (GUILayout.Button(TextData.StartThePaintTool) && !isError)
             {
-                EditorUtility.SetDirty(FPT_EditorData.GetSingleton());
-
-                FPT_Core[] flowPaintToolControl = UnityEngine.Object.FindObjectsOfType<FPT_Core>();
-
-                if (flowPaintToolControl.Length == 0)
-                {
-                    GameObject go0 = new GameObject("PaintToolControl");
-                    go0.AddComponent<FPT_Core>();
-                }
-
                 if (flagSMR)
                 {
                     _sorceRenderer = temp3;
@@ -252,9 +242,9 @@ namespace FlowPaintTool
                     _sorceRenderer = temp5;
                 }
 
-                GameObject go1 = new GameObject("PaintTool");
-                go1.transform.SetParent(selectTransform, false);
-                go1.AddComponent<FPT_Main>().SetData(this);
+                EditorUtility.SetDirty(FPT_EditorData.GetSingleton());
+
+                FPT_Core.GetSingleton().GenerateFPT_Main(this);
             }
         }
     }

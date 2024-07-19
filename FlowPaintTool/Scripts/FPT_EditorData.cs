@@ -248,9 +248,9 @@ namespace FlowPaintTool
 
 
 
-        public void EditorWindowGUI(Transform selectTransform)
+        public void EditorWindowGUI()
         {
-            _mainData.EditorWindowGUI(selectTransform);
+            _mainData.EditorWindowGUI();
         }
 
         private void CommonGUI(FPT_ShaderProcess shaderProcess)
@@ -332,7 +332,7 @@ namespace FlowPaintTool
 
                         if (GUILayout.Button(TextData.InputReverseGazeVector))
                         {
-                            _fixedDirectionVector = -FPT_Main.GetCamera().transform.forward;
+                            _fixedDirectionVector = -FPT_Core.GetCamera().transform.forward;
                         }
 
                         if (GUILayout.Button(TextData.Flip))

@@ -11,13 +11,23 @@ namespace FlowPaintTool
         private Vector3Int _speedVector = Vector3Int.zero;
         private bool _key_w, _key_a, _key_s, _key_d, _key_e, _key_q, _key_leftShift;
 
-        private void Start()
+        private bool _focus = false;
+
+        private FPT_Core _fptCore = null;
+        private FPT_EditorData _fptEditorData = null;
+
+        public void ManualStart()
         {
             _eulerAngle = transform.rotation.eulerAngles;
+            _fptCore = FPT_Core.GetSingleton();
+            _fptEditorData = FPT_EditorData.GetSingleton();
         }
 
         private void Update()
         {
+            if (!_focus)
+                return;
+
             _key_w = Input.GetKey(KeyCode.W);
             _key_a = Input.GetKey(KeyCode.A);
             _key_s = Input.GetKey(KeyCode.S);
@@ -28,7 +38,7 @@ namespace FlowPaintTool
 
             if (Input.GetMouseButton(2))
             {
-                float cameraRotateSpeed = FPT_EditorData.GetSingleton().GetCameraRotateSpeed();
+                float cameraRotateSpeed = _fptEditorData.GetCameraRotateSpeed();
 
                 _eulerAngle.x -= Input.GetAxis("Mouse Y") * cameraRotateSpeed;
                 _eulerAngle.y += Input.GetAxis("Mouse X") * cameraRotateSpeed;
@@ -42,6 +52,8 @@ namespace FlowPaintTool
 
         private void FixedUpdate()
         {
+            _focus = _fptCore.GetPrePreFocus();
+
             if (_key_d) _speedVector.x += 1;
             if (_key_a) _speedVector.x -= 1;
             if (_key_e) _speedVector.y += 1;
@@ -64,13 +76,13 @@ namespace FlowPaintTool
                 _speedVector.z -= Math.Sign(_speedVector.z);
             }
 
-            int cameraInertia = FPT_EditorData.GetSingleton().GetCameraInertia();
+            int cameraInertia = _fptEditorData.GetCameraInertia();
 
             _speedVector.x = Mathf.Clamp(_speedVector.x, -cameraInertia, cameraInertia);
             _speedVector.y = Mathf.Clamp(_speedVector.y, -cameraInertia, cameraInertia);
             _speedVector.z = Mathf.Clamp(_speedVector.z, -cameraInertia, cameraInertia);
 
-            float moveSpeed = FPT_EditorData.GetSingleton().GetCameraMoveSpeed();
+            float moveSpeed = _fptEditorData.GetCameraMoveSpeed();
             moveSpeed = (_key_leftShift) ? moveSpeed * 3f : moveSpeed;
 
             Vector3 speed = (Vector3)_speedVector / cameraInertia * moveSpeed;
