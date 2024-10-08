@@ -13,6 +13,8 @@ namespace FlowPaintTool
         public const string MenuPathJapanese = "FlowPaintTool/Japanese";
         public const string MenuPathEnglish = "FlowPaintTool/English";
 
+        private static readonly int _version = 83;
+
         [MenuItem("FlowPaintTool/Open", false, 0)]
         private static void Open()
         {
@@ -70,7 +72,7 @@ namespace FlowPaintTool
             if (!started)
             {
                 GUILayout.Label("3D Flow Paint Tool", FPT_GUIStyle.GetBigCenterLabel());
-                GUILayout.Label("Version 82", FPT_GUIStyle.GetBigCenterLabel());
+                GUILayout.Label("Version " + _version.ToString(), FPT_GUIStyle.GetBigCenterLabel());
 
                 GUILayout.Space(40);
 
