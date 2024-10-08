@@ -365,7 +365,7 @@ namespace FlowPaintTool
             return color;
         }
 
-        public void PaintProcess()
+        public void PaintProcess(bool forceDrawing)
         {
             bool hit = PaintToolRaycast(out Vector3 hitPosition);
             hit &= _fptCore.GetPrePreFocus();
@@ -436,7 +436,7 @@ namespace FlowPaintTool
                 _drawing = true;
             }
 
-            if (_drawing && !click)
+            if (_drawing && !click && !forceDrawing)
             {
                 Graphics.ExecuteCommandBuffer(_bleedCommandBuffer);
 

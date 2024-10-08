@@ -37,6 +37,22 @@ namespace FlowPaintTool
         private bool _preSelected = false;
         private bool _isSkinnedMeshRenderer = false;
 
+        private bool _forceDrawing = false;
+
+        [ContextMenu("ForceDrawingOn")]
+        private void ForceDrawingOn()
+        {
+            _forceDrawing = true;
+        }
+
+        [ContextMenu("ForceDrawingOff")]
+        private void ForceDrawingOff()
+        {
+            _forceDrawing = false;
+        }
+
+
+
         public void ManualStart(FPT_MainData fptData)
         {
             _fptData = fptData;
@@ -124,7 +140,7 @@ namespace FlowPaintTool
                     _paintRenderObject.SetActive(!enablePreviewMode);
                     _maskRenderObject.SetActive(false);
 
-                    _shaderProcess.PaintProcess();
+                    _shaderProcess.PaintProcess(_forceDrawing);
                 }
             }
             else
