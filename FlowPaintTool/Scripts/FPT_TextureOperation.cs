@@ -47,7 +47,7 @@ namespace FlowPaintTool
                 if (string.IsNullOrEmpty(outputPath))
                     return;
 
-                Debug.Log("Output png path : " + outputPath);
+                Debug.Log($"Output png : {outputPath}\nGraphicsFormat : {texture2D.graphicsFormat}");
 
                 string dataPath = Application.dataPath;
 

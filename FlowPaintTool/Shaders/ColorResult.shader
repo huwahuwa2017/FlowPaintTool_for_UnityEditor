@@ -24,10 +24,10 @@
 			#pragma multi_compile_local UV_CHANNEL_0 UV_CHANNEL_1 UV_CHANNEL_2 UV_CHANNEL_3 UV_CHANNEL_4 UV_CHANNEL_5 UV_CHANNEL_6 UV_CHANNEL_7
 			#pragma multi_compile_local _ IS_SRGB
 
-			#pragma vertex VertexShaderStage
-			#pragma fragment FragmentShaderStage
+			#pragma vertex VertexShaderStage_ColorResult
+			#pragma fragment FragmentShaderStage_ColorResult
 
-			#include "ColorResult.hlsl"
+			#include "Result.hlsl"
 
 			ENDCG
 		}

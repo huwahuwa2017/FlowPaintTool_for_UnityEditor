@@ -242,6 +242,8 @@ namespace FlowPaintTool
                     _sorceRenderer = temp5;
                 }
 
+                Debug.Log("sRGB : " + _actualSRGB.ToString());
+
                 EditorUtility.SetDirty(FPT_EditorData.GetSingleton());
 
                 FPT_Core.GetSingleton().GenerateFPT_Main(this);

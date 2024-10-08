@@ -232,7 +232,7 @@ namespace FlowPaintTool
             _fixedDirection = false;
             _fixedDirectionVector = Vector3.down;
             _displayNormalLength = 0.02f;
-            _displayNormalAmount = 64f;
+            _displayNormalAmount = 16f;
 
             _paintColor = Color.white;
             _editR = true;
