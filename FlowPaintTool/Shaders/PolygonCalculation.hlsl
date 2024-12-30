@@ -56,6 +56,8 @@ void Adjacent_Main(uint id : SV_DispatchThreadID)
     float2 g = _UVs[index0];
     float2 h = _UVs[index1];
     float2 i = _UVs[index2];
+    
+    _CenterUVResult[id] = (g + h + i) * _ReciprocalThree;
 
     float temp20 = cross(float3(h - g, 0.0), float3(i - h, 0.0)).z;
     int tempZ0 = sign(temp20) * (abs(temp20) > _SquareEpsilon);
@@ -83,20 +85,15 @@ void Adjacent_Main(uint id : SV_DispatchThreadID)
         float3 e = _Vertices[index4];
         float3 f = _Vertices[index5];
 
-        bool flagA = ShareEdgeA_Vector2(g, h, i, j, k, l) && ShareEdgeA_Vector3(a, b, c, d, e, f);
-        bool flagB = ShareEdgeB_Vector2(g, h, i, j, k, l) && ShareEdgeB_Vector3(a, b, c, d, e, f);
-        bool flagC = ShareEdgeC_Vector2(g, h, i, j, k, l) && ShareEdgeC_Vector3(a, b, c, d, e, f);
-
-        result.x = result.x + (index - result.x) * (flagA);
-        result.y = result.y + (index - result.y) * (flagB);
-        result.z = result.z + (index - result.z) * (flagC);
+        bool3 flag;
+        flag.x = ShareEdgeA_Vector2(g, h, i, j, k, l) && ShareEdgeA_Vector3(a, b, c, d, e, f);
+        flag.y = ShareEdgeB_Vector2(g, h, i, j, k, l) && ShareEdgeB_Vector3(a, b, c, d, e, f);
+        flag.z = ShareEdgeC_Vector2(g, h, i, j, k, l) && ShareEdgeC_Vector3(a, b, c, d, e, f);
+        
+        result = flag ? index : result;
     }
     
     _AdjacentResult[id] = result;
-    
-    
-    
-    _CenterUVResult[id] = (g + h + i) * _ReciprocalThree;
 }
 
 [numthreads(1, 1, 1)]
