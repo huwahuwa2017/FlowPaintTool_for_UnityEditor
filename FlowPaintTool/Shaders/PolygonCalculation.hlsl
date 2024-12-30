@@ -8,37 +8,24 @@ RWStructuredBuffer<int> _DuplicateResult;
 uint _TriangleCount;
 float _Epsilon;
 
-static float _ReciprocalThree = 1.0 / 3.0;
 static float _SquareEpsilon = _Epsilon * _Epsilon;
 
-bool ShareEdgeA_Vector3(float3 a, float3 b, float3 c, float3 d, float3 e, float3 f)
+bool3 ShareEdge_Vector3(float3 a, float3 b, float3 c, float3 d, float3 e, float3 f)
 {
-    return (all(e == b) && all(d == c)) || (all(f == b) && all(e == c)) || (all(d == b) && all(f == c));
+    bool3 flag;
+    flag.x = (all(e == b) && all(d == c)) || (all(f == b) && all(e == c)) || (all(d == b) && all(f == c));
+    flag.y = (all(e == c) && all(d == a)) || (all(f == c) && all(e == a)) || (all(d == c) && all(f == a));
+    flag.z = (all(e == a) && all(d == b)) || (all(f == a) && all(e == b)) || (all(d == a) && all(f == b));
+    return flag;
 }
 
-bool ShareEdgeB_Vector3(float3 a, float3 b, float3 c, float3 d, float3 e, float3 f)
+bool3 ShareEdge_Vector2(float2 a, float2 b, float2 c, float2 d, float2 e, float2 f)
 {
-    return (all(e == c) && all(d == a)) || (all(f == c) && all(e == a)) || (all(d == c) && all(f == a));
-}
-
-bool ShareEdgeC_Vector3(float3 a, float3 b, float3 c, float3 d, float3 e, float3 f)
-{
-    return (all(e == a) && all(d == b)) || (all(f == a) && all(e == b)) || (all(d == a) && all(f == b));
-}
-
-bool ShareEdgeA_Vector2(float2 a, float2 b, float2 c, float2 d, float2 e, float2 f)
-{
-    return (all(e == b) && all(d == c)) || (all(f == b) && all(e == c)) || (all(d == b) && all(f == c));
-}
-
-bool ShareEdgeB_Vector2(float2 a, float2 b, float2 c, float2 d, float2 e, float2 f)
-{
-    return (all(e == c) && all(d == a)) || (all(f == c) && all(e == a)) || (all(d == c) && all(f == a));
-}
-
-bool ShareEdgeC_Vector2(float2 a, float2 b, float2 c, float2 d, float2 e, float2 f)
-{
-    return (all(e == a) && all(d == b)) || (all(f == a) && all(e == b)) || (all(d == a) && all(f == b));
+    bool3 flag;
+    flag.x = (all(e == b) && all(d == c)) || (all(f == b) && all(e == c)) || (all(d == b) && all(f == c));
+    flag.y = (all(e == c) && all(d == a)) || (all(f == c) && all(e == a)) || (all(d == c) && all(f == a));
+    flag.z = (all(e == a) && all(d == b)) || (all(f == a) && all(e == b)) || (all(d == a) && all(f == b));
+    return flag;
 }
 
 [numthreads(1, 1, 1)]
@@ -57,7 +44,7 @@ void Adjacent_Main(uint id : SV_DispatchThreadID)
     float2 h = _UVs[index1];
     float2 i = _UVs[index2];
     
-    _CenterUVResult[id] = (g + h + i) * _ReciprocalThree;
+    _CenterUVResult[id] = (g + h + i) / 3.0;
 
     float temp20 = cross(float3(h - g, 0.0), float3(i - h, 0.0)).z;
     int tempZ0 = sign(temp20) * (abs(temp20) > _SquareEpsilon);
@@ -85,11 +72,7 @@ void Adjacent_Main(uint id : SV_DispatchThreadID)
         float3 e = _Vertices[index4];
         float3 f = _Vertices[index5];
 
-        bool3 flag;
-        flag.x = ShareEdgeA_Vector2(g, h, i, j, k, l) && ShareEdgeA_Vector3(a, b, c, d, e, f);
-        flag.y = ShareEdgeB_Vector2(g, h, i, j, k, l) && ShareEdgeB_Vector3(a, b, c, d, e, f);
-        flag.z = ShareEdgeC_Vector2(g, h, i, j, k, l) && ShareEdgeC_Vector3(a, b, c, d, e, f);
-        
+        bool3 flag = ShareEdge_Vector2(g, h, i, j, k, l) && ShareEdge_Vector3(a, b, c, d, e, f);
         result = flag ? index : result;
     }
     
