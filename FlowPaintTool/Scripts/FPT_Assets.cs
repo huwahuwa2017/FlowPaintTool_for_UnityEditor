@@ -27,7 +27,7 @@ namespace FlowPaintTool
         private GameObject _rangeVisualizationPrefab = null;
 
         [SerializeField]
-        private ComputeShader _adjacentPolygonComputeShader = null;
+        private ComputeShader _linkSelectionComputeShader = null;
 
         [SerializeField]
         private Material _unpackNormalMaterial = null;
@@ -69,7 +69,7 @@ namespace FlowPaintTool
 
         public GameObject GetRangeVisualizationPrefab() => _rangeVisualizationPrefab;
 
-        public ComputeShader GetAdjacentPolygonComputeShader() => _adjacentPolygonComputeShader;
+        public ComputeShader GetLinkSelectionComputeShader() => _linkSelectionComputeShader;
 
         public Material GetUnpackNormalMaterial() => _unpackNormalMaterial;
         public Material GetFillMaterial() => _fillMaterial;

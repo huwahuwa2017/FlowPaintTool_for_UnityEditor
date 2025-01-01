@@ -1,4 +1,0 @@
-﻿#pragma kernel Adjacent_Main
-#pragma kernel Duplicate_Main
-
-#include "PolygonCalculation.hlsl"

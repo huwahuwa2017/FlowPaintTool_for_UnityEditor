@@ -42,11 +42,6 @@ namespace FlowPaintTool
             _pd_AdjacentIndexArray = new Vector3Int[_polygonCount];
             int[] duplicateResult = new int[_polygonCount];
             {
-                ComputeShader cs_adjacentPolygon = FPT_Assets.GetSingleton().GetAdjacentPolygonComputeShader();
-
-                int adjacent_Main_KI = cs_adjacentPolygon.FindKernel("Adjacent_Main");
-                int duplicate_Main_KI = cs_adjacentPolygon.FindKernel("Duplicate_Main");
-
                 ComputeBuffer cb_Vertices = new ComputeBuffer(vertices.Count(), Marshal.SizeOf(typeof(Vector3)));
                 ComputeBuffer cb_UVs = new ComputeBuffer(uvs.Count(), Marshal.SizeOf(typeof(Vector2)));
                 ComputeBuffer cb_Triangles = new ComputeBuffer(triangles.Count(), Marshal.SizeOf(typeof(int)));
@@ -58,19 +53,24 @@ namespace FlowPaintTool
                 cb_UVs.SetData(uvs);
                 cb_Triangles.SetData(triangles);
 
-                cs_adjacentPolygon.SetInt("_TriangleCount", _polygonCount);
-                cs_adjacentPolygon.SetFloat("_Epsilon", fptData._uv_Epsilon);
-                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Vertices", cb_Vertices);
-                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_UVs", cb_UVs);
-                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_Triangles", cb_Triangles);
-                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_AdjacentResult", cb_AdjacentResult);
-                cs_adjacentPolygon.SetBuffer(adjacent_Main_KI, "_CenterUVResult", cb_CenterUVResult);
-                cs_adjacentPolygon.Dispatch(adjacent_Main_KI, _polygonCount, 1, 1);
+                ComputeShader computeShader = FPT_Assets.GetSingleton().GetLinkSelectionComputeShader();
+
+                int adjacent_Main_KI = computeShader.FindKernel("Adjacent_Main");
+                int duplicate_Main_KI = computeShader.FindKernel("Duplicate_Main");
+
+                computeShader.SetInt("_TriangleCount", _polygonCount);
+                computeShader.SetFloat("_Epsilon", fptData._uv_Epsilon);
+                computeShader.SetBuffer(adjacent_Main_KI, "_Vertices", cb_Vertices);
+                computeShader.SetBuffer(adjacent_Main_KI, "_UVs", cb_UVs);
+                computeShader.SetBuffer(adjacent_Main_KI, "_Triangles", cb_Triangles);
+                computeShader.SetBuffer(adjacent_Main_KI, "_AdjacentResult", cb_AdjacentResult);
+                computeShader.SetBuffer(adjacent_Main_KI, "_CenterUVResult", cb_CenterUVResult);
+                computeShader.Dispatch(adjacent_Main_KI, _polygonCount, 1, 1);
                 cb_AdjacentResult.GetData(_pd_AdjacentIndexArray);
 
-                cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_CenterUVResult", cb_CenterUVResult);
-                cs_adjacentPolygon.SetBuffer(duplicate_Main_KI, "_DuplicateResult", cb_DuplicateResult);
-                cs_adjacentPolygon.Dispatch(duplicate_Main_KI, _polygonCount, 1, 1);
+                computeShader.SetBuffer(duplicate_Main_KI, "_CenterUVResult", cb_CenterUVResult);
+                computeShader.SetBuffer(duplicate_Main_KI, "_DuplicateResult", cb_DuplicateResult);
+                computeShader.Dispatch(duplicate_Main_KI, _polygonCount, 1, 1);
                 cb_DuplicateResult.GetData(duplicateResult);
 
                 cb_Vertices.Release();

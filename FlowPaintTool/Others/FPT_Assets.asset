@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rangeVisualizationPrefab: {fileID: 397955714262424194, guid: e61f00e9c08c3cc4abc2c2d9d578ff34,
     type: 3}
-  _adjacentPolygonComputeShader: {fileID: 7200000, guid: 64b9ef2a511dc1440b231129636551ac,
+  _linkSelectionComputeShader: {fileID: 7200000, guid: 64b9ef2a511dc1440b231129636551ac,
     type: 3}
   _unpackNormalMaterial: {fileID: 2100000, guid: 34926120e08478247bda0119ab9f28dd,
     type: 2}

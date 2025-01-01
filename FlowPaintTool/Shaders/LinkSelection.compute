@@ -1,0 +1,4 @@
+﻿#pragma kernel Adjacent_Main
+#pragma kernel Duplicate_Main
+
+#include "LinkSelection.hlsl"
