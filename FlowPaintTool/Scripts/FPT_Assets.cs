@@ -67,6 +67,9 @@ namespace FlowPaintTool
         [SerializeField]
         private Material _material_WorldPosition = null;
 
+        [SerializeField]
+        private Material _material_TextureEdit = null;
+
         public GameObject GetRangeVisualizationPrefab() => _rangeVisualizationPrefab;
 
         public ComputeShader GetLinkSelectionComputeShader() => _linkSelectionComputeShader;
@@ -92,6 +95,8 @@ namespace FlowPaintTool
 
         public Material GetSqrMagnitudeMaterial() => _material_SqrMagnitude;
         public Material GetWorldPositionMaterial() => _material_WorldPosition;
+
+        public Material GetTextureEditMaterial() => _material_TextureEdit;
     }
 }
 

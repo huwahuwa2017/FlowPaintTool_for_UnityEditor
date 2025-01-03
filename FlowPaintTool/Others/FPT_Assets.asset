@@ -38,3 +38,5 @@ MonoBehaviour:
     type: 2}
   _material_WorldPosition: {fileID: 2100000, guid: 54f54e33fe5c1684c8fda400959c54bf,
     type: 2}
+  _material_TextureEdit: {fileID: 2100000, guid: cfd79c2e1834bf540a9ef0127e2718f4,
+    type: 2}
