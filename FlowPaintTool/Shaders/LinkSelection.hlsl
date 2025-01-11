@@ -10,22 +10,31 @@ float _Epsilon;
 
 static float _SquareEpsilon = _Epsilon * _Epsilon;
 
-bool3 ShareEdge_Vector3(float3 a, float3 b, float3 c, float3 d, float3 e, float3 f)
+bool3 ShareEdge_int(int a, int b, int c, int d, int e, int f)
 {
-    bool3 flag;
-    flag.x = (all(e == b) && all(d == c)) || (all(f == b) && all(e == c)) || (all(d == b) && all(f == c));
-    flag.y = (all(e == c) && all(d == a)) || (all(f == c) && all(e == a)) || (all(d == c) && all(f == a));
-    flag.z = (all(e == a) && all(d == b)) || (all(f == a) && all(e == b)) || (all(d == a) && all(f == b));
-    return flag;
+    bool3 dd = bool3(all(a == d), all(b == d), all(c == d));
+    bool3 ee = bool3(all(a == e), all(b == e), all(c == e));
+    bool3 ff = bool3(all(a == f), all(b == f), all(c == f));
+    
+    return (ee.yzx && dd.zxy) || (ff.yzx && ee.zxy) || (dd.yzx && ff.zxy);
 }
 
-bool3 ShareEdge_Vector2(float2 a, float2 b, float2 c, float2 d, float2 e, float2 f)
+bool3 ShareEdge_float2(float2 a, float2 b, float2 c, float2 d, float2 e, float2 f)
 {
-    bool3 flag;
-    flag.x = (all(e == b) && all(d == c)) || (all(f == b) && all(e == c)) || (all(d == b) && all(f == c));
-    flag.y = (all(e == c) && all(d == a)) || (all(f == c) && all(e == a)) || (all(d == c) && all(f == a));
-    flag.z = (all(e == a) && all(d == b)) || (all(f == a) && all(e == b)) || (all(d == a) && all(f == b));
-    return flag;
+    bool3 dd = bool3(all(a == d), all(b == d), all(c == d));
+    bool3 ee = bool3(all(a == e), all(b == e), all(c == e));
+    bool3 ff = bool3(all(a == f), all(b == f), all(c == f));
+    
+    return (ee.yzx && dd.zxy) || (ff.yzx && ee.zxy) || (dd.yzx && ff.zxy);
+}
+
+bool3 ShareEdge_float3(float3 a, float3 b, float3 c, float3 d, float3 e, float3 f)
+{
+    bool3 dd = bool3(all(a == d), all(b == d), all(c == d));
+    bool3 ee = bool3(all(a == e), all(b == e), all(c == e));
+    bool3 ff = bool3(all(a == f), all(b == f), all(c == f));
+    
+    return (ee.yzx && dd.zxy) || (ff.yzx && ee.zxy) || (dd.yzx && ff.zxy);
 }
 
 [numthreads(1, 1, 1)]
@@ -72,7 +81,7 @@ void Adjacent_Main(uint id : SV_DispatchThreadID)
         float3 e = _Vertices[index4];
         float3 f = _Vertices[index5];
 
-        bool3 flag = ShareEdge_Vector2(g, h, i, j, k, l) && ShareEdge_Vector3(a, b, c, d, e, f);
+        bool3 flag = ShareEdge_float2(g, h, i, j, k, l) && ShareEdge_float3(a, b, c, d, e, f);
         result = flag ? index : result;
     }
     
