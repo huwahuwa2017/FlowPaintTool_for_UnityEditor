@@ -103,13 +103,14 @@ V2G HullShaderStage_FlowResult(InputPatch<V2G, 3> input, uint id : SV_OutputCont
 TessellationFactor PatchConstantFunction_FlowResult(InputPatch<V2G, 3> input)
 {
     float area = length(cross(input[1].wPos - input[0].wPos, input[2].wPos - input[0].wPos)) * 0.5;
-    float temp_4 = min(sqrt(area) * _DisplayNormalAmount, 64.0);
+    float temp0 = min(sqrt(area) * _DisplayNormalAmount, 64.0);
+    temp0 = max(temp0, 1.0);
     
     TessellationFactor output;
-    output.tessFactor[0] = max(temp_4, 1.0);
-    output.tessFactor[1] = max(temp_4, 1.0);
-    output.tessFactor[2] = max(temp_4, 1.0);
-    output.insideTessFactor = temp_4;
+    output.tessFactor[0] = temp0;
+    output.tessFactor[1] = temp0;
+    output.tessFactor[2] = temp0;
+    output.insideTessFactor = temp0;
     return output;
 }
 
