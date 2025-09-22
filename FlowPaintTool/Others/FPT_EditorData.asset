@@ -33,3 +33,4 @@ MonoBehaviour:
   _cameraMoveSpeed: 0.02
   _cameraInertia: 6
   _languageType: 1
+  _brushMoveSensitivity: 0.02

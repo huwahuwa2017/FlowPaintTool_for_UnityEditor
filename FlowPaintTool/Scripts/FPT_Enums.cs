@@ -19,8 +19,8 @@ namespace FlowPaintTool
         Constant,
         Linear,
         Smooth,
-        Squared,
-        InverseSquared
+        Squared,        // Linear^2
+        InverseSquared  // 1 - (1 - Linear)^2
     }
 
     public enum FPT_LanguageTypeEnum

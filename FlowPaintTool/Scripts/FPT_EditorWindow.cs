@@ -13,7 +13,7 @@ namespace FlowPaintTool
         public const string MenuPathJapanese = "FlowPaintTool/Japanese";
         public const string MenuPathEnglish = "FlowPaintTool/English";
 
-        private static readonly int _version = 92;
+        private static readonly int _version = 93;
 
         [MenuItem("FlowPaintTool/Open", false, 0)]
         private static void Open()
