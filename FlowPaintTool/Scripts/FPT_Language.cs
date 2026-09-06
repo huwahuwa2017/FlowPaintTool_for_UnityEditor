@@ -39,7 +39,7 @@ namespace FlowPaintTool
             public static string RenderTextureForPreview;
             public static string Undo;
             public static string Redo;
-            public static string OutputPNGFile;
+            public static string ExportPNGFile;
 
             public static void ChangeLanguage(FPT_LanguageTypeEnum languageType)
             {
@@ -48,14 +48,14 @@ namespace FlowPaintTool
                     RenderTextureForPreview = "プレビュー用レンダー テクスチャ";
                     Undo = "Undo";
                     Redo = "Redo";
-                    OutputPNGFile = "PNGファイルを出力";
+                    ExportPNGFile = "png ファイルを出力";
                 }
                 else if (languageType == FPT_LanguageTypeEnum.English)
                 {
                     RenderTextureForPreview = "RenderTexture for preview";
                     Undo = "Undo";
                     Redo = "Redo";
-                    OutputPNGFile = "Output PNG file";
+                    ExportPNGFile = "Export png file";
                 }
             }
         }

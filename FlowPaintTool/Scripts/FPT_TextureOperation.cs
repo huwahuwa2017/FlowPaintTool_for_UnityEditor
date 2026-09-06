@@ -40,27 +40,27 @@ namespace FlowPaintTool
 
 
 
-        public static void OutputPNG(string outputPath, Texture2D texture2D)
+        public static void ExportPNG(string path, Texture2D texture2D)
         {
             try
             {
-                if (string.IsNullOrEmpty(outputPath))
+                if (string.IsNullOrEmpty(path))
                     return;
 
-                Debug.Log($"Output png : {outputPath}\nGraphicsFormat : {texture2D.graphicsFormat}");
+                Debug.Log($"Export png : {path}\nGraphicsFormat : {texture2D.graphicsFormat}");
 
                 string dataPath = Application.dataPath;
 
-                if (!outputPath.StartsWith(dataPath))
+                if (!path.StartsWith(dataPath))
                 {
-                    File.WriteAllBytes(outputPath, texture2D.EncodeToPNG());
+                    File.WriteAllBytes(path, texture2D.EncodeToPNG());
                     return;
                 }
 
-                string relativePath = outputPath.Remove(0, dataPath.Length - 6);
+                string relativePath = path.Remove(0, dataPath.Length - 6);
                 bool existTextureImporter = AssetImporter.GetAtPath(relativePath) is TextureImporter;
 
-                File.WriteAllBytes(outputPath, texture2D.EncodeToPNG());
+                File.WriteAllBytes(path, texture2D.EncodeToPNG());
                 AssetDatabase.ImportAsset(relativePath);
 
                 if (existTextureImporter)
@@ -81,24 +81,24 @@ namespace FlowPaintTool
             }
         }
 
-        public static void OutputPNG(string outputPath, RenderTexture renderTexture)
+        public static void ExportPNG(string path, RenderTexture renderTexture)
         {
             Texture2D copyTexture2D = GenerateTexture2D(renderTexture);
             DataTransfer(renderTexture, copyTexture2D);
-            OutputPNG(outputPath, copyTexture2D);
+            ExportPNG(path, copyTexture2D);
             UnityEngine.Object.DestroyImmediate(copyTexture2D);
         }
 
-        public static void OutputPNG_OpenDialog(Texture2D texture2D)
+        public static void ExportPNG_OpenDialog(Texture2D texture2D)
         {
-            string outputPath = EditorUtility.SaveFilePanel("Output PNG", "Assets", "texture", "png");
-            OutputPNG(outputPath, texture2D);
+            string path = EditorUtility.SaveFilePanel("Export png", "Assets", "texture", "png");
+            ExportPNG(path, texture2D);
         }
 
-        public static void OutputPNG_OpenDialog(RenderTexture renderTexture)
+        public static void ExportPNG_OpenDialog(RenderTexture renderTexture)
         {
-            string outputPath = EditorUtility.SaveFilePanel("Output PNG", "Assets", "texture", "png");
-            OutputPNG(outputPath, renderTexture);
+            string path = EditorUtility.SaveFilePanel("Export png", "Assets", "texture", "png");
+            ExportPNG(path, renderTexture);
         }
     }
 }

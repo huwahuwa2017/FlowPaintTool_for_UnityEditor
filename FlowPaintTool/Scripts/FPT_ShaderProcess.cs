@@ -615,9 +615,9 @@ namespace FlowPaintTool
 
             EditorGUILayout.Space(20);
 
-            if (GUILayout.Button(TextData.OutputPNGFile))
+            if (GUILayout.Button(TextData.ExportPNGFile))
             {
-                FPT_TextureOperation.OutputPNG_OpenDialog(_outputRenderTexture);
+                FPT_TextureOperation.ExportPNG_OpenDialog(_outputRenderTexture);
             }
         }
 

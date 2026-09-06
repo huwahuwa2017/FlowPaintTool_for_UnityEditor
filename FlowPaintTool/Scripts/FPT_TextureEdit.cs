@@ -27,7 +27,7 @@ namespace FlowPaintTool
             RenderTexture rt = new RenderTexture(rtd);
 
             Graphics.Blit(texture, rt, material);
-            FPT_TextureOperation.OutputPNG_OpenDialog(rt);
+            FPT_TextureOperation.ExportPNG_OpenDialog(rt);
             //Object.DestroyImmediate(rt);
         }
     }
